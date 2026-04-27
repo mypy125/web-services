@@ -1,0 +1,75 @@
+service:
+  timeout:
+    connect: 5000
+    read: 30000
+    write: 30000
+  max:
+    connections: 100
+
+user:
+  service:
+    url: http://localhost:8082/api/users
+    timeout: 5000
+    retry:
+      attempts: 3
+
+seller:
+  service:
+    url: http://localhost:8083/api/sellers
+    timeout: 5000
+    retry:
+      attempts: 3
+
+cart:
+  service:
+    url: http://localhost:8084/api/carts
+    timeout: 5000
+    retry:
+      attempts: 3
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      cartService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      sellerService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+
+  retry:
+    instances:
+      userService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - java.net.ConnectException
+      cartService:
+        maxAttempts: 3
+        waitDuration: 1s
+      sellerService:
+        maxAttempts: 3
+        waitDuration: 1s
+
+  timelimiter:
+    instances:
+      userService:
+        timeoutDuration: 5s
+      cartService:
+        timeoutDuration: 5s
+      sellerService:
+        timeoutDuration: 5s
