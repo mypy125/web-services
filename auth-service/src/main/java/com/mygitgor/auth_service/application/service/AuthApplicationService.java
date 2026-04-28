@@ -240,36 +240,28 @@ public class AuthApplicationService {
                 .doOnError(error -> log.error("Seller registration failed for: {}", command.getEmail(), error));
     }
 
-    /**
-     * Verify seller email and complete registration
-     */
     @Transactional
     public Mono<AuthResponseDto> verifySellerAndLogin(String email, String otp) {
         log.info("Verifying seller email: {}", email);
 
         return Mono.fromCallable(() -> new Email(email))
                 .flatMap(emailVo ->
-                        // Validate OTP
                         otpDomainService.validateOtp(emailVo, otp, OtpPurpose.EMAIL_VERIFICATION)
                                 .flatMap(valid -> {
                                     if (!valid) {
                                         return Mono.error(new DomainException("Invalid or expired OTP"));
                                     }
 
-                                    // Verify seller email in Seller Service
                                     return sellerPort.verifySellerEmail(emailVo);
                                 })
                                 .flatMap(seller -> {
-                                    // Check if documents are also verified
                                     if (seller.getVerificationStatus() == VerificationStatus.DOCUMENTS_VERIFIED) {
-                                        // Activate seller if all verifications are complete
                                         return sellerPort.activateSeller(seller.getId())
                                                 .then(sellerPort.getSellerByEmail(emailVo));
                                     }
                                     return Mono.just(seller);
                                 })
                                 .flatMap(seller -> {
-                                    // Authenticate in auth aggregate
                                     return authDomainService.authenticateWithOtp(
                                                     emailVo,
                                                     otp,
@@ -442,7 +434,6 @@ public class AuthApplicationService {
                 });
     }
 
-    // Private helper methods
 
     private Mono<Void> updateLastLogin(Email email, UserRole role) {
         if (role == UserRole.ROLE_CUSTOMER) {

@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 @Getter
 public class AuthAggregate extends AbstractAggregateRoot<AuthAggregate> {
-
     private Email email;
     private UserId userId;
     private UserRole role;
@@ -243,7 +242,6 @@ public class AuthAggregate extends AbstractAggregateRoot<AuthAggregate> {
                 .filter(VerificationCode::isValid)
                 .findFirst()
                 .orElseThrow(() -> {
-                    // Публикуем событие неудачной верификации
                     registerEvent(OtpVerifiedEvent.failure(
                             this,
                             otpValue,
