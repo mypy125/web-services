@@ -2,6 +2,7 @@ package com.mygitgor.auth_service.domain.specification;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
+import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,6 @@ public class TokenValiditySpecification {
     }
 
     private boolean isBlacklisted(Token token) {
-        return blacklistedTokenRepository.existsByTokenValue(token.getValue().toString());
+        return blacklistedTokenRepository.existsByToken(token.getValue().toString());
     }
 }

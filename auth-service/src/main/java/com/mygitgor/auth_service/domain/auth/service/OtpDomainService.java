@@ -31,14 +31,11 @@ public class OtpDomainService {
     private final ApplicationEventPublisher eventPublisher;
 
     public VerificationCode generateOtp(Email email, UserRole role, OtpPurpose purpose) {
-        // 1. Invalidate existing OTPs for this email and purpose
         invalidateExistingOtps(email, purpose);
 
-        // 2. Generate new OTP
         String otpValue = generateSecureOtp();
         Otp otp = new Otp(otpValue, OTP_VALIDITY_MINUTES);
 
-        // 3. Create verification code entity
         VerificationCode verificationCode = VerificationCode.builder()
                 .id(UUID.randomUUID())
                 .otp(otp)
@@ -49,10 +46,8 @@ public class OtpDomainService {
                 .used(false)
                 .build();
 
-        // 4. Save
         VerificationCode savedCode = verificationCodeRepository.save(verificationCode);
 
-        // 5. Publish domain event
         eventPublisher.publishEvent(OtpGeneratedEvent.builder()
                 .email(email.toString())
                 .otp(otpValue)
@@ -71,10 +66,8 @@ public class OtpDomainService {
                 .filter(code -> code.getPurpose() == purpose)
                 .orElseThrow(() -> new DomainException("OTP not found"));
 
-        // Check validity
         otpValiditySpec.check(verificationCode);
 
-        // Mark as used
         verificationCode.markAsUsed();
         verificationCodeRepository.save(verificationCode);
 

@@ -20,10 +20,8 @@ public class TokenDomainService {
     private final TokenValiditySpecification tokenValiditySpec;
 
     public Token generateToken(Email email, UserId userId, UserRole role) {
-        // 1. Generate JWT via infrastructure
         String jwtValue = jwtPort.generateToken(email.toString(), userId.toString(), role);
 
-        // 2. Create token entity
         Token token = Token.builder()
                 .value(new TokenValue(jwtValue))
                 .email(email)
@@ -34,10 +32,8 @@ public class TokenDomainService {
                 .status(TokenStatus.ACTIVE)
                 .build();
 
-        // 3. Validate token business rules
         tokenValiditySpec.check(token);
 
-        // 4. Save
         return tokenRepository.save(token);
     }
 

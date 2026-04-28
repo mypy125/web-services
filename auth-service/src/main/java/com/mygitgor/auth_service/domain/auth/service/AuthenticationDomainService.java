@@ -71,7 +71,6 @@ public class AuthenticationDomainService {
                         return userPort.getUserByEmail(email)
                                 .flatMap(user -> generateToken(email, user.getId(), UserRole.ROLE_CUSTOMER));
                     } else {
-                        // If not in User Service, check Seller Service
                         return sellerPort.existsByEmail(email)
                                 .flatMap(sellerExists -> {
                                     if (sellerExists) {
@@ -85,9 +84,6 @@ public class AuthenticationDomainService {
                 });
     }
 
-    /**
-     * Generate token for user
-     */
     private Mono<Token> generateToken(Email email, UserId userId, UserRole role) {
         return jwtPort.generateToken(email.toString(), userId.toString(), role)
                 .map(jwt -> Token.builder()
@@ -101,7 +97,6 @@ public class AuthenticationDomainService {
                         .build()
                 )
                 .flatMap(token -> {
-                    // Blacklist old token for this user if exists
                     return tokenRepository.findActiveTokenByUserId(userId)
                             .doOnNext(oldToken -> {
                                 if (oldToken != null && oldToken.isValid()) {

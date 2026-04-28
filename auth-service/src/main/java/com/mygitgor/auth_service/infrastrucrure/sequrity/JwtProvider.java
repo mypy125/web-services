@@ -1,57 +1,59 @@
-package com.mygitgor.auth_service.domain.specification;
+package com.mygitgor.auth_service.infrastrucrure.sequrity;
 
-import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
-import com.mygitgor.auth_service.domain.shared.exception.DomainException;
-import org.springframework.stereotype.Component;
+import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
+import com.mygitgor.auth_service.infrastrucrure.client.UserServiceClient;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Service;
 
-@Component
-public class OtpValiditySpecification {
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    public boolean isSatisfiedBy(VerificationCode code) {
-        return code != null && code.isValid();
-    }
-
-    public void check(VerificationCode code) {
-        if (code == null) {
-            throw new DomainException("Verification code not found");
-        }
-        if (code.isUsed()) {
-            throw new DomainException("OTP has already been used");
-        }
-        if (code.getOtp().isExpired()) {
-            throw new DomainException("OTP has expired");
-        }
-    }
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JwtProvider {
     private final JwtProps jwtProps;
-    private final UserClient userClient;
+    private final UserServiceClient userClient;
     private SecretKey key;
 
     @PostConstruct
     private void init() {
         this.key = Keys.hmacShaKeyFor(jwtProps.getSecretKey().getBytes(StandardCharsets.UTF_8));
+        log.info("JwtProvider initialized");
     }
 
-    public String generateToken(String email, USER_ROLE role, String userId) {
-        return generateToken(email, List.of(role.name()),userId);
+    public String generateToken(String email, UserRole role, String userId) {
+        return generateToken(email, List.of(role.name()), userId);
     }
 
-    public String generateToken(String email, List<String> authorities,String userId) {
+    public String generateToken(String email, List<String> authorities, String userId) {
         String roles = String.join(",", authorities);
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProps.getExpirationTime()))
                 .claim("email", email)
                 .claim("authorities", roles)
                 .claim("userId", userId)
-                .signWith(key)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+
+        log.debug("Token generated for email: {}, userId: {}", email, userId);
+        return token;
     }
 
-    public String generateToken(String email, USER_ROLE role) {
+    public String generateToken(String email, UserRole role) {
         return userClient.getAuthInfo(email)
                 .map(userAuthInfo -> generateToken(email, List.of(role.name()), userAuthInfo.getId()))
                 .block();
@@ -66,17 +68,14 @@ public class JwtProvider {
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProps.getExpirationTime()))
                 .claim("email", auth.getName())
                 .claim("authorities", roles)
-                .signWith(key)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String getUserIdFromJwtToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return String.valueOf(claims.get("userId"));
+        Claims claims = getClaims(token);
+        Object userId = claims.get("userId");
+        return userId != null ? String.valueOf(userId) : null;
     }
 
     public boolean validateToken(String token) {
@@ -85,42 +84,45 @@ public class JwtProvider {
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token);
+            log.debug("Token is valid");
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.debug("Token expired: {}", e.getMessage());
+            return false;
+        } catch (MalformedJwtException e) {
+            log.debug("Malformed token: {}", e.getMessage());
+            return false;
+        } catch (SignatureException e) {
+            log.debug("Invalid signature: {}", e.getMessage());
             return false;
         } catch (Exception e) {
-            return true;
+            log.debug("Token validation error: {}", e.getMessage());
+            return false;
         }
     }
 
     public String getEmailFromJwtToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims = getClaims(token);
         return String.valueOf(claims.get("email"));
     }
 
     public List<String> getAuthorities(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
+        Claims claims = getClaims(token);
         String authoritiesStr = String.valueOf(claims.get("authorities"));
         return Arrays.asList(authoritiesStr.split(","));
     }
 
-    public USER_ROLE getRoleFromJwtToken(String token) {
+    public UserRole getRoleFromJwtToken(String token) {
         List<String> authorities = getAuthorities(token);
         if (!authorities.isEmpty()) {
             try {
-                return USER_ROLE.valueOf(authorities.get(0));
+                return UserRole.valueOf(authorities.get(0));
             } catch (IllegalArgumentException e) {
-                return USER_ROLE.ROLE_CUSTOMER;
+                log.warn("Unknown role: {}, defaulting to CUSTOMER", authorities.get(0));
+                return UserRole.ROLE_CUSTOMER;
             }
         }
-        return USER_ROLE.ROLE_CUSTOMER;
+        return UserRole.ROLE_CUSTOMER;
     }
 
     public Date extractExpiration(String token) {
@@ -140,5 +142,4 @@ public class JwtProvider {
                 .parseClaimsJws(token)
                 .getBody();
     }
-}
 }

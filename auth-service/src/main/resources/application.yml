@@ -1,3 +1,34 @@
+spring:
+  security:
+    user:
+      name: admin
+      password: admin123
+
+  datasource:
+    url: ${LOCAL_DB_URL}auth_db
+    username: ${LOCAL_DB_USERNAME}
+    password: ${LOCAL_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+
+  data:
+    redis:
+      host: ${RDS_REMOTE_HOST}
+      port: ${RDS_REMOTE_PORT}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
+
 service:
   timeout:
     connect: 5000
@@ -26,6 +57,12 @@ cart:
     timeout: 5000
     retry:
       attempts: 3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 
 resilience4j:
   circuitbreaker:
@@ -73,3 +110,12 @@ resilience4j:
         timeoutDuration: 5s
       sellerService:
         timeoutDuration: 5s
+
+jwt:
+  secretKey: ${JWT_SECRET_KEY}
+  header: ${JWT_HEADER}
+
+logging:
+  level:
+    com.mygitgor.auth_service.infrastructure.security: DEBUG
+    org.springframework.security: DEBUG
