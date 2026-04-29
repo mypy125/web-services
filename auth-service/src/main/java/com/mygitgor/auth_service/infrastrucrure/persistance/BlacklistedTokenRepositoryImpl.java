@@ -1,9 +1,10 @@
-package com.mygitgor.auth_service.infrastrucrure.persistance.repository;
+package com.mygitgor.auth_service.infrastrucrure.persistance;
 
 import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.infrastrucrure.persistance.entity.BlacklistedTokenEntity;
+import com.mygitgor.auth_service.infrastrucrure.persistance.repository.BlacklistedTokenJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

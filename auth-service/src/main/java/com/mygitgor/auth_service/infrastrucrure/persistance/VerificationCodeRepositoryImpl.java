@@ -1,9 +1,10 @@
-package com.mygitgor.auth_service.infrastrucrure.persistance.repository;
+package com.mygitgor.auth_service.infrastrucrure.persistance;
 
 import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
+import com.mygitgor.auth_service.infrastrucrure.persistance.repository.VerificationCodeJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

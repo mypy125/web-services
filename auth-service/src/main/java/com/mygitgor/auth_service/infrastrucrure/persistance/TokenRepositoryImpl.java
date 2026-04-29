@@ -1,10 +1,11 @@
-package com.mygitgor.auth_service.infrastrucrure.persistance.repository;
+package com.mygitgor.auth_service.infrastrucrure.persistance;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
+import com.mygitgor.auth_service.infrastrucrure.persistance.repository.TokenJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

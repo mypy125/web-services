@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.mygitgor.auth_service.application.mapper.CommandMapper;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
@@ -30,101 +32,166 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthApplicationService authService;
     private final OtpApplicationService otpService;
+    private final CommandMapper commandMapper;
 
     @PostMapping("/otp/request")
     @Operation(summary = "Request OTP", description = "Request OTP for registration, login, or email verification")
-    public ResponseEntity<ApiResponse> requestOtp(@Valid @RequestBody OtpRequestDto request) {
+    public Mono<ResponseEntity<ApiResponse>> requestOtp(@Valid @RequestBody OtpRequestDto request) {
         RequestOtpCommand command = RequestOtpCommand.builder()
                 .email(request.getEmail())
                 .role(request.getRole())
                 .purpose(OtpPurpose.valueOf(request.getPurpose()))
                 .build();
 
-        otpService.requestOtp(command);
-
-        return ResponseEntity.ok(ApiResponse.success("OTP sent successfully"));
+        return otpService.requestOtp(command)
+                .thenReturn(ResponseEntity.ok(ApiResponse.success("OTP sent successfully")))
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()))
+                ));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Login with OTP", description = "Login using email and OTP")
-    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
-        LoginCommand command = LoginCommand.builder()
-                .email(request.getEmail())
-                .otp(request.getOtp())
-                .build();
+    public Mono<ResponseEntity<AuthResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        LoginCommand command = commandMapper.toLoginCommand(request);
 
-        AuthResponseDto response = authService.login(command);
-        return ResponseEntity.ok(response);
+        return authService.login(command)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> {
+                    log.error("Login failed: {}", e.getMessage());
+                    AuthResponseDto errorResponse = AuthResponseDto.builder()
+                            .message("Login failed: " + e.getMessage())
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build();
+                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse));
+                });
     }
 
     @PostMapping("/register/customer")
     @Operation(summary = "Register new customer", description = "Register a new customer account")
-    public ResponseEntity<AuthResponseDto> registerCustomer(@Valid @RequestBody SignupRequestDto request) {
-        RegisterCustomerCommand command = RegisterCustomerCommand.builder()
-                .email(request.getEmail())
-                .fullName(request.getFullName())
-                .otp(request.getOtp())
-                .build();
+    public Mono<ResponseEntity<AuthResponseDto>> registerCustomer(@Valid @RequestBody SignupRequestDto request) {
+        RegisterCustomerCommand command = commandMapper.toRegisterCustomerCommand(request);
 
-        AuthResponseDto response = authService.registerCustomer(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return authService.registerCustomer(command)
+                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response))
+                .onErrorResume(e -> {
+                    log.error("Customer registration failed: {}", e.getMessage());
+                    AuthResponseDto errorResponse = AuthResponseDto.builder()
+                            .message("Registration failed: " + e.getMessage())
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build();
+                    return Mono.just(ResponseEntity.badRequest().body(errorResponse));
+                });
     }
 
     @PostMapping("/register/seller")
     @Operation(summary = "Register new seller", description = "Register a new seller account")
-    public ResponseEntity<AuthResponseDto> registerSeller(@Valid @RequestBody SellerRegistrationRequestDto request) {
-        RegisterSellerCommand command = RegisterSellerCommand.builder()
-                .email(request.getEmail())
-                .sellerName(request.getSellerName())
-                .mobile(request.getMobile())
-                .businessDetails(request.getBusinessDetails())
-                .bankDetails(request.getBankDetails())
-                .build();
+    public Mono<ResponseEntity<AuthResponseDto>> registerSeller(@Valid @RequestBody SellerRegistrationRequestDto request) {
+        RegisterSellerCommand command = commandMapper.toRegisterSellerCommand(request);
 
-        AuthResponseDto response = authService.registerSeller(command);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return authService.registerSeller(command)
+                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response))
+                .onErrorResume(e -> {
+                    log.error("Seller registration failed: {}", e.getMessage());
+                    AuthResponseDto errorResponse = AuthResponseDto.builder()
+                            .message("Seller registration failed: " + e.getMessage())
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build();
+                    return Mono.just(ResponseEntity.badRequest().body(errorResponse));
+                });
     }
 
     @PostMapping("/seller/verify")
     @Operation(summary = "Verify seller email", description = "Verify seller email with OTP and complete registration")
-    public ResponseEntity<AuthResponseDto> verifySeller(
+    public Mono<ResponseEntity<AuthResponseDto>> verifySeller(
             @RequestParam String email,
             @RequestParam String otp
     ) {
-        AuthResponseDto response = authService.verifySellerAndLogin(email, otp);
-        return ResponseEntity.ok(response);
+        return authService.verifySellerAndLogin(email, otp)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> {
+                    log.error("Seller verification failed: {}", e.getMessage());
+                    AuthResponseDto errorResponse = AuthResponseDto.builder()
+                            .message("Seller verification failed: " + e.getMessage())
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build();
+                    return Mono.just(ResponseEntity.badRequest().body(errorResponse));
+                });
     }
 
     @PostMapping("/logout")
     @Operation(summary = "Logout", description = "Logout from current device")
-    public ResponseEntity<ApiResponse> logout(
+    public Mono<ResponseEntity<ApiResponse>> logout(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam String email
     ) {
         String token = extractToken(authHeader);
-        authService.logout(token, email);
-        return ResponseEntity.ok(ApiResponse.success("Logout successful"));
+
+        return authService.logout(token, email)
+                .thenReturn(ResponseEntity.ok(ApiResponse.success("Logout successful")))
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()))
+                ));
     }
 
     @PostMapping("/logout/all")
     @Operation(summary = "Logout from all devices", description = "Logout from all active sessions")
-    public ResponseEntity<ApiResponse> logoutAllDevices(@RequestParam String email) {
-        authService.logoutAllDevices(email);
-        return ResponseEntity.ok(ApiResponse.success("Logged out from all devices"));
+    public Mono<ResponseEntity<ApiResponse>> logoutAllDevices(@RequestParam String email) {
+        return authService.logoutAllDevices(email)
+                .thenReturn(ResponseEntity.ok(ApiResponse.success("Logged out from all devices")))
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()))
+                ));
     }
 
     @GetMapping("/validate")
     @Operation(summary = "Validate token", description = "Check if JWT token is valid")
-    public ResponseEntity<ApiResponse> validateToken(@RequestHeader("Authorization") String authHeader) {
+    public Mono<ResponseEntity<ApiResponse>> validateToken(@RequestHeader("Authorization") String authHeader) {
         String token = extractToken(authHeader);
-        boolean isValid = authService.validateToken(token);
 
-        if (isValid) {
-            return ResponseEntity.ok(ApiResponse.success("Token is valid"));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Invalid token"));
-        }
+        return authService.validateToken(token)
+                .map(isValid -> {
+                    if (isValid) {
+                        return ResponseEntity.ok(ApiResponse.success("Token is valid"));
+                    } else {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(ApiResponse.error("Invalid token"));
+                    }
+                })
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(ApiResponse.error("Token validation failed: " + e.getMessage()))
+                ));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh token", description = "Refresh expired JWT token")
+    public Mono<ResponseEntity<AuthResponseDto>> refreshToken(@RequestHeader("Authorization") String authHeader) {
+        String token = extractToken(authHeader);
+
+        return authService.refreshToken(token)
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> {
+                    log.error("Token refresh failed: {}", e.getMessage());
+                    AuthResponseDto errorResponse = AuthResponseDto.builder()
+                            .message("Token refresh failed: " + e.getMessage())
+                            .timestamp(java.time.LocalDateTime.now())
+                            .build();
+                    return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse));
+                });
+    }
+
+    @GetMapping("/user-info")
+    @Operation(summary = "Get user info from token", description = "Get user information from JWT token")
+    public Mono<ResponseEntity<ApiResponse>> getUserInfo(@RequestHeader("Authorization") String authHeader) {
+        String token = extractToken(authHeader);
+
+        return authService.getUserInfoFromToken(token)
+                .map(userInfo -> ResponseEntity.ok(ApiResponse.success("User info retrieved", userInfo)))
+                .onErrorResume(e -> Mono.just(
+                        ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body(ApiResponse.error(e.getMessage()))
+                ));
     }
 
     private String extractToken(String authHeader) {
