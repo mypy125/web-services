@@ -5,7 +5,9 @@ import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.aggregate.AuthAggregate;
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
+import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
+import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
 import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
@@ -93,7 +95,7 @@ public class AuthenticationDomainService {
                         .role(role)
                         .issuedAt(LocalDateTime.now())
                         .expiresAt(LocalDateTime.now().plusSeconds(jwtPort.getTokenExpirationSeconds()))
-                        .status(com.mygitgor.auth_service.domain.model.enums.TokenStatus.ACTIVE)
+                        .status(TokenStatus.ACTIVE)
                         .build()
                 )
                 .flatMap(token -> {

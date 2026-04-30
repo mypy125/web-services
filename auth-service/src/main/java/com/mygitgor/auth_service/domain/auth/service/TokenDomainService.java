@@ -1,7 +1,9 @@
 package com.mygitgor.auth_service.domain.auth.service;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
+import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
+import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
@@ -12,12 +14,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenDomainService {
     private final JwtPort jwtPort;
     private final TokenValiditySpecification tokenValiditySpec;
+    private final TokenRepository tokenRepository;
 
     public Token generateToken(Email email, UserId userId, UserRole role) {
         String jwtValue = jwtPort.generateToken(email.toString(), userId.toString(), role);
