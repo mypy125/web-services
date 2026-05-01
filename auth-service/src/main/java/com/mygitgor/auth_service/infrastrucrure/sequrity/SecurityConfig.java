@@ -1,6 +1,8 @@
 package com.mygitgor.auth_service.infrastrucrure.sequrity;
 
 import com.mygitgor.auth_service.infrastrucrure.cache.TokenCacheService;
+import com.mygitgor.auth_service.infrastrucrure.sequrity.jwt.JwtProps;
+import com.mygitgor.auth_service.infrastrucrure.sequrity.jwt.JwtProvider;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -15,8 +17,6 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;

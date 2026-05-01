@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.infrastrucrure.sequrity;
+package com.mygitgor.auth_service.infrastrucrure.sequrity.jwt;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,10 +1,11 @@
-package com.mygitgor.auth_service.infrastrucrure.sequrity;
+package com.mygitgor.auth_service.infrastrucrure.sequrity.jwt;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.infrastrucrure.client.UserServiceClient;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Getter
 @Service
 @RequiredArgsConstructor
 public class JwtProvider {

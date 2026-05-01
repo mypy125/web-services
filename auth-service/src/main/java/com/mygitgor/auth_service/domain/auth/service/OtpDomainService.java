@@ -25,7 +25,6 @@ import java.util.UUID;
 public class OtpDomainService {
     private static final int OTP_VALIDITY_MINUTES = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
     private final VerificationCodeRepository verificationCodeRepository;
     private final OtpValiditySpecification otpValiditySpec;
     private final ApplicationEventPublisher eventPublisher;

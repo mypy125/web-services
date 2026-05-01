@@ -32,7 +32,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationDomainService {
-
     private final TokenRepository tokenRepository;
     private final VerificationCodeRepository verificationCodeRepository;
     private final BlacklistedTokenRepository blacklistedTokenRepository;

@@ -6,4 +6,8 @@ import reactor.core.publisher.Mono;
 public interface JwtPort {
     Mono<String> generateToken(String email, String userId, UserRole role);
     long getTokenExpirationSeconds();
+    Mono<Boolean> validateToken(String token);
+    Mono<String> extractEmail(String token);
+    Mono<UserRole> extractRole(String token);
+    Mono<String> extractUserId(String token);
 }
