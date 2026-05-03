@@ -13,6 +13,7 @@ import com.mygitgor.auth_service.domain.specification.TokenValiditySpecification
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
@@ -24,34 +25,34 @@ public class TokenDomainService {
     private final TokenValiditySpecification tokenValiditySpec;
     private final TokenRepository tokenRepository;
 
-    public Token generateToken(Email email, UserId userId, UserRole role) {
-        String jwtValue = jwtPort.generateToken(email.toString(), userId.toString(), role);
+    public Mono<Token> generateToken(Email email, UserId userId, UserRole role) {
+        return jwtPort.generateToken(email.toString(), userId.toString(), role)
+                .map(jwtValue -> {
+                    Token token = Token.builder()
+                            .value(new TokenValue(jwtValue))
+                            .email(email)
+                            .userId(userId)
+                            .role(role)
+                            .issuedAt(LocalDateTime.now())
+                            .expiresAt(LocalDateTime.now().plusSeconds(jwtPort.getTokenExpirationSeconds()))
+                            .status(TokenStatus.ACTIVE)
+                            .build();
 
-        Token token = Token.builder()
-                .value(new TokenValue(jwtValue))
-                .email(email)
-                .userId(userId)
-                .role(role)
-                .issuedAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusSeconds(jwtPort.getTokenExpirationSeconds()))
-                .status(TokenStatus.ACTIVE)
-                .build();
-
-        tokenValiditySpec.check(token);
-
-        return tokenRepository.save(token);
+                    tokenValiditySpec.check(token);
+                    return token;
+                })
+                .flatMap(tokenRepository::save);
     }
 
-    public boolean validateToken(TokenValue tokenValue) {
-        Token token = tokenRepository.findByValue(tokenValue)
-                .orElseThrow(() -> new DomainException("Token not found"));
-
-        return token.isValid();
-    }
-
-    public Token getTokenInfo(TokenValue tokenValue) {
+    public Mono<Boolean> validateToken(TokenValue tokenValue) {
         return tokenRepository.findByValue(tokenValue)
-                .orElseThrow(() -> new DomainException("Token not found"));
+                .switchIfEmpty(Mono.error(new DomainException("Token not found")))
+                .map(Token::isValid);
+    }
+
+    public Mono<Token> getTokenInfo(TokenValue tokenValue) {
+        return tokenRepository.findByValue(tokenValue)
+                .switchIfEmpty(Mono.error(new DomainException("Token not found")));
     }
 
     public void blacklistToken(Token token) {

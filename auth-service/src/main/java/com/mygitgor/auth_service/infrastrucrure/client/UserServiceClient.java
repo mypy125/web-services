@@ -36,7 +36,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class UserServiceClient implements UserPort {
-
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final UserServiceFallback fallback;
@@ -409,7 +408,34 @@ public class UserServiceClient implements UserPort {
                         result.getContent() != null ? result.getContent().size() : 0));
     }
 
-    // Fallback methods
+    @Override
+    @CircuitBreaker(name = "userService", fallbackMethod = "getAuthInfoFallback")
+    @Retry(name = "userService")
+    @TimeLimiter(name = "userService")
+    public Mono<UserAuthInfoDto> getAuthInfo(String email) {
+        log.info("Fetching auth info for user: {}", email);
+
+        return webClient.get()
+                .uri("/{email}/auth-info", email)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                        Mono.error(new UserNotFoundException("User not found with email: " + email)))
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        handleClientErrorResponse(response, "get auth info", email))
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        handleServerErrorResponse(response, "get auth info", email))
+                .bodyToMono(UserAuthInfoDto.class)
+                .timeout(Duration.ofMillis(timeout))
+                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                        .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable));
+    }
+
+    private Mono<UserAuthInfoDto> getAuthInfoFallback(Email email, Throwable t) {
+        log.warn("Fallback: getAuthInfo for {} due to: {}", email, t.getMessage());
+        return fallback.getAuthInfo(email);
+    }
+
     private Mono<Boolean> existsByEmailFallback(Email email, Throwable t) {
         log.warn("Fallback: existsByEmail for {} due to: {}", email, t.getMessage());
         return fallback.existsByEmail(email);

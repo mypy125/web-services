@@ -4,6 +4,7 @@ import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.model.UserStatistics;
+import com.mygitgor.auth_service.infrastrucrure.client.dto.UserAuthInfoDto;
 import org.springframework.data.domain.Page;
 import reactor.core.publisher.Mono;
 
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 public interface UserPort {
     Mono<Boolean> existsByEmail(Email email);
     Mono<User> getUserByEmail(Email email);
+    Mono<UserAuthInfoDto> getAuthInfo(String email);
     Mono<User> getUserById(UserId userId);
     Mono<User> createUser(User user);
     Mono<User> updateUser(User user);

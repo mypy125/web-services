@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -55,10 +56,9 @@ public class JwtProvider {
         return token;
     }
 
-    public String generateToken(String email, UserRole role) {
+    public Mono<String> generateToken(String email, UserRole role) {
         return userClient.getAuthInfo(email)
-                .map(userAuthInfo -> generateToken(email, List.of(role.name()), userAuthInfo.getId()))
-                .block();
+                .map(userAuthInfo -> generateToken(email, List.of(role.name()), userAuthInfo.getId()));
     }
 
     public String generateToken(Authentication auth) {
