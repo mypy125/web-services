@@ -22,6 +22,7 @@ public class Seller extends AbstractAggregateRoot<Seller> {
     private final SellerId sellerId;
     private final Email email;
     private String sellerName;
+    private String userId;
     private String mobile;
     private UserRole role;
     private boolean emailVerified;
@@ -168,7 +169,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         this.rejectionReason = reason;
         this.updatedAt = LocalDateTime.now();
 
-        // Событие для изменения статуса верификации
         registerEvent(SellerVerificationStatusChangedEvent.builder()
                 .source(this)
                 .sellerId(this.sellerId.toString())
@@ -352,10 +352,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
                 .build());
     }
 
-    private String getUserId() {
-        return null;
-    }
-
     public void updateBusinessDetails(BusinessDetails newDetails) {
         BusinessDetails oldDetails = this.businessDetails;
         this.businessDetails = newDetails;
@@ -454,12 +450,13 @@ public class Seller extends AbstractAggregateRoot<Seller> {
 
     public static Seller register(Email email, String sellerName, String mobile,
                                   BusinessDetails businessDetails, BankDetails bankDetails,
-                                  Address pickupAddress) {
+                                  Address pickupAddress, String userId) {
         LocalDateTime now = LocalDateTime.now();
 
         return Seller.builder()
                 .sellerId(new SellerId())
                 .email(email)
+                .userId(userId)
                 .sellerName(sellerName)
                 .mobile(mobile)
                 .role(UserRole.ROLE_SELLER)
@@ -475,12 +472,13 @@ public class Seller extends AbstractAggregateRoot<Seller> {
                 .build();
     }
 
-    public static Seller registerQuick(Email email, String sellerName, String mobile) {
+    public static Seller registerQuick(Email email, String sellerName, String mobile, String userId) {
         LocalDateTime now = LocalDateTime.now();
 
         return Seller.builder()
                 .sellerId(new SellerId())
                 .email(email)
+                .userId(userId)
                 .sellerName(sellerName)
                 .mobile(mobile)
                 .role(UserRole.ROLE_SELLER)

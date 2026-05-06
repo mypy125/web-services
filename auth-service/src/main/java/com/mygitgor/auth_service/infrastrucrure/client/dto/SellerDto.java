@@ -22,6 +22,7 @@ public class SellerDto {
     private UUID id;
     private String sellerName;
     private String email;
+    private String userId;
     private String mobile;
     private UserRole role;
     private boolean emailVerified;

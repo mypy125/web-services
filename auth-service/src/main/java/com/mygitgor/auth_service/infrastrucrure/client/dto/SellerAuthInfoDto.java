@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class SellerAuthInfoDto {
     private String id;
     private String email;
+    private String userId;
     private String sellerName;
     private UserRole role;
     private boolean emailVerified;

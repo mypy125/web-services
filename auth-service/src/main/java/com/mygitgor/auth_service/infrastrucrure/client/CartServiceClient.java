@@ -502,7 +502,6 @@ public class CartServiceClient implements CartPort {
                 .timeout(Duration.ofMillis(timeout));
     }
 
-    // Fallback methods
     public Mono<Cart> createCartFallback(UserId userId, Throwable t) {
         log.warn("Fallback: createCart for user {} due to: {}", userId, t.getMessage());
         return fallback.createCart(userId);

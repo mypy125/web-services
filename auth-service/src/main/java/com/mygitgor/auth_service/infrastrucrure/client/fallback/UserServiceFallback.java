@@ -1,6 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.client.fallback;
 
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.infrastrucrure.client.dto.UserAuthInfoDto;
 import lombok.extern.slf4j.Slf4j;
@@ -36,5 +37,15 @@ public class UserServiceFallback {
     public Mono<UserAuthInfoDto> getAuthInfo(Email email) {
         log.warn("UserService fallback: authInfo for {}", email);
         return Mono.error(new ServiceUnavailableException("Unable to auth info email. Service unavailable"));
+    }
+
+    public Mono<User> getUserById(UserId userId) {
+        log.warn("UserService fallback: getUserById for {}", userId);
+        return Mono.error(new ServiceUnavailableException("Unable to get user by id. Service unavailable"));
+    }
+
+    public Mono<User> updateUser(User user) {
+        log.warn("UserService fallback: update user for {}", user);
+        return Mono.error(new ServiceUnavailableException("Unable to update user. Service unavailable"));
     }
 }

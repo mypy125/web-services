@@ -35,7 +35,6 @@ import java.util.List;
 @EnableWebFluxSecurity
 @AllArgsConstructor
 public class SecurityConfig {
-
     private final TokenCacheService tokenCacheService;
     private final JwtProvider jwtProvider;
     private final JwtProps jwtProps;

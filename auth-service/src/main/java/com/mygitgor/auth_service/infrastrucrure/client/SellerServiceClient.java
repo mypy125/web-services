@@ -43,7 +43,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class SellerServiceClient implements SellerPort {
-
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final SellerServiceFallback fallback;
@@ -469,6 +468,7 @@ public class SellerServiceClient implements SellerPort {
                 .email(new Email(dto.getEmail()))
                 .sellerName(dto.getSellerName())
                 .mobile(dto.getMobile())
+                .userId(dto.getUserId())
                 .role(dto.getRole())
                 .emailVerified(dto.isEmailVerified())
                 .verificationStatus(dto.getVerificationStatus())
@@ -497,6 +497,7 @@ public class SellerServiceClient implements SellerPort {
         return Seller.builder()
                 .sellerId(new SellerId(dto.getId()))
                 .email(new Email(dto.getEmail()))
+                .userId(dto.getUserId())
                 .sellerName(dto.getSellerName())
                 .role(dto.getRole())
                 .emailVerified(dto.isEmailVerified())
