@@ -10,6 +10,7 @@ import com.mygitgor.auth_service.domain.seller.model.valueobject.BusinessDetails
 import com.mygitgor.auth_service.domain.seller.model.valueobject.SellerId;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.domain.AbstractAggregateRoot;
@@ -22,7 +23,8 @@ public class Seller extends AbstractAggregateRoot<Seller> {
     private final SellerId sellerId;
     private final Email email;
     private String sellerName;
-    private String userId;
+    // userId - внешний идентификатор из User сервиса
+    private UserId userId;// Ссылка на пользователя в системе аутентификации
     private String mobile;
     private UserRole role;
     private boolean emailVerified;
@@ -450,7 +452,7 @@ public class Seller extends AbstractAggregateRoot<Seller> {
 
     public static Seller register(Email email, String sellerName, String mobile,
                                   BusinessDetails businessDetails, BankDetails bankDetails,
-                                  Address pickupAddress, String userId) {
+                                  Address pickupAddress, UserId userId) {
         LocalDateTime now = LocalDateTime.now();
 
         return Seller.builder()
@@ -472,7 +474,7 @@ public class Seller extends AbstractAggregateRoot<Seller> {
                 .build();
     }
 
-    public static Seller registerQuick(Email email, String sellerName, String mobile, String userId) {
+    public static Seller registerQuick(Email email, String sellerName, String mobile, UserId userId) {
         LocalDateTime now = LocalDateTime.now();
 
         return Seller.builder()

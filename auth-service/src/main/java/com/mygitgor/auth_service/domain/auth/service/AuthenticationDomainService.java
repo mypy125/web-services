@@ -77,15 +77,10 @@ public class AuthenticationDomainService {
                                     if (sellerExists) {
                                         return sellerPort.getSellerByEmail(email)
                                                 .flatMap(seller -> {
-                                                    String userIdStr = seller.getUserId();
-                                                    if (userIdStr == null || userIdStr.isBlank()) {
-                                                        log.error("Seller userId is null or blank for email: {}", email);
-                                                        return Mono.error(new DomainException(
-                                                                "Seller account not properly linked to user account"));
-                                                    }
-
-                                                    UserId userId = new UserId(userIdStr);
-                                                    return generateToken(email, userId, UserRole.ROLE_SELLER);
+                                                    return Mono.justOrEmpty(seller.getUserId())
+                                                            .switchIfEmpty(Mono.error(new DomainException(
+                                                                    "Seller account exists but user association missing for email: " + email)))
+                                                            .flatMap(userId -> generateToken(email, userId, UserRole.ROLE_SELLER));
                                                 });
                                     } else {
                                         return Mono.error(new DomainException("User not found with email: " + email));

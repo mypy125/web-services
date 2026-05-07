@@ -1,5 +1,6 @@
 package com.mygitgor.auth_service.infrastrucrure.client;
 
+import com.mygitgor.auth_service.infrastrucrure.mapper.SellerMapper;
 import jakarta.annotation.PostConstruct;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatusCode;
@@ -46,6 +47,7 @@ public class SellerServiceClient implements SellerPort {
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final SellerServiceFallback fallback;
+    private final SellerMapper sellerMapper;
 
     @Value("${seller.service.url:http://localhost:8083/api/sellers}")
     private String baseUrl;
@@ -134,7 +136,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get seller by email", email.toString()))
                 .bodyToMono(SellerAuthInfoDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
@@ -160,7 +162,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get seller by id", sellerId.toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(seller -> log.debug("Seller fetched successfully: {}", sellerId))
                 .doOnError(error -> log.error("Failed to fetch seller by ID {}: {}", sellerId, error.getMessage()));
@@ -184,7 +186,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get seller by user id", userId.toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(seller -> log.debug("Seller fetched by user ID: {}", userId));
     }
@@ -200,6 +202,7 @@ public class SellerServiceClient implements SellerPort {
                 .sellerName(seller.getSellerName())
                 .email(seller.getEmail().toString())
                 .mobile(seller.getMobile())
+                .userId(seller.getUserId() != null ? seller.getUserId().toString() : null)
                 .businessDetails(toBusinessDetailsDto(seller.getBusinessDetails()))
                 .bankDetails(toBankDetailsDto(seller.getBankDetails()))
                 .pickupAddress(toAddressDto(seller.getPickupAddress()))
@@ -223,7 +226,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "create seller", seller.getEmail().toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
@@ -264,7 +267,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "update seller", seller.getEmail().toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(updated -> log.info("Seller updated successfully: {}", seller.getEmail()))
                 .doOnError(error -> log.error("Failed to update seller {}: {}", seller.getEmail(), error.getMessage()));
@@ -288,7 +291,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "verify email", email.toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(verified -> log.info("Email verified successfully for seller: {}", email))
                 .doOnError(error -> log.error("Failed to verify email for seller {}: {}", email, error.getMessage()));
@@ -317,7 +320,7 @@ public class SellerServiceClient implements SellerPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "update account status", sellerId.toString()))
                 .bodyToMono(SellerDto.class)
-                .map(this::toDomainSeller)
+                .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(seller -> log.info("Account status updated for seller: {}", sellerId))
                 .doOnError(error -> log.error("Failed to update account status for seller {}: {}", sellerId, error.getMessage()));
@@ -458,93 +461,6 @@ public class SellerServiceClient implements SellerPort {
     private Mono<Seller> updateAccountStatusFallback(SellerId sellerId, String status, String reason, Throwable t) {
         log.warn("Fallback: updateAccountStatus for seller {} due to: {}", sellerId, t.getMessage());
         return fallback.updateAccountStatus(sellerId, status, reason);
-    }
-
-    private Seller toDomainSeller(SellerDto dto) {
-        if (dto == null) return null;
-
-        return Seller.builder()
-                .sellerId(new SellerId(dto.getId()))
-                .email(new Email(dto.getEmail()))
-                .sellerName(dto.getSellerName())
-                .mobile(dto.getMobile())
-                .userId(dto.getUserId())
-                .role(dto.getRole())
-                .emailVerified(dto.isEmailVerified())
-                .verificationStatus(dto.getVerificationStatus())
-                .accountStatus(dto.getAccountStatus())
-                .businessDetails(toDomainBusinessDetails(dto.getBusinessDetails()))
-                .bankDetails(toDomainBankDetails(dto.getBankDetails()))
-                .pickupAddress(toDomainAddress(dto.getPickupAddress()))
-                .gstNumber(dto.getGstNumber())
-                .panNumber(dto.getPanNumber())
-                .commissionRate(dto.getCommissionRate())
-                .storeLogo(dto.getStoreLogo())
-                .storeBanner(dto.getStoreBanner())
-                .storeDescription(dto.getStoreDescription())
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
-                .emailVerifiedAt(dto.getEmailVerifiedAt())
-                .businessVerifiedAt(dto.getBusinessVerifiedAt())
-                .lastActiveAt(dto.getLastActiveAt())
-                .rejectionReason(dto.getRejectionReason())
-                .build();
-    }
-
-    private Seller toDomainSeller(SellerAuthInfoDto dto) {
-        if (dto == null) return null;
-
-        return Seller.builder()
-                .sellerId(new SellerId(dto.getId()))
-                .email(new Email(dto.getEmail()))
-                .userId(dto.getUserId())
-                .sellerName(dto.getSellerName())
-                .role(dto.getRole())
-                .emailVerified(dto.isEmailVerified())
-                .build();
-    }
-
-    private BusinessDetails toDomainBusinessDetails(BusinessDetailsDto dto) {
-        if (dto == null) return null;
-
-        return BusinessDetails.builder()
-                .businessName(dto.getBusinessName())
-                .businessEmail(new Email(dto.getBusinessEmail()))
-                .businessMobile(dto.getBusinessMobile())
-                .businessAddress(dto.getBusinessAddress())
-                .registrationNumber(dto.getRegistrationNumber())
-                .taxId(dto.getTaxId())
-                .website(dto.getWebsite())
-                .description(dto.getDescription())
-                .businessType(dto.getBusinessType())
-                .build();
-    }
-
-    private BankDetails toDomainBankDetails(BankDetailsDto dto) {
-        if (dto == null) return null;
-
-        return BankDetails.builder()
-                .accountNumber(dto.getAccountNumber())
-                .accountHolderName(dto.getAccountHolderName())
-                .bankName(dto.getBankName())
-                .bankCode(dto.getBankCode())
-                .accountType(dto.getAccountType())
-                .upiId(dto.getUpiId())
-                .build();
-    }
-
-    private Address toDomainAddress(AddressDto dto) {
-        if (dto == null) return null;
-
-        return Address.builder()
-                .name(dto.getName())
-                .locality(dto.getLocality())
-                .address(dto.getAddress())
-                .city(dto.getCity())
-                .state(dto.getState())
-                .pinCode(dto.getPinCode())
-                .mobile(dto.getMobile())
-                .build();
     }
 
     private BusinessDetailsDto toBusinessDetailsDto(BusinessDetails domain) {

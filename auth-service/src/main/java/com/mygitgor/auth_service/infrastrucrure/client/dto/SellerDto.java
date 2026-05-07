@@ -6,6 +6,7 @@ import com.mygitgor.auth_service.application.dto.common.BusinessDetailsDto;
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.seller.model.SellerVerificationStatus;
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

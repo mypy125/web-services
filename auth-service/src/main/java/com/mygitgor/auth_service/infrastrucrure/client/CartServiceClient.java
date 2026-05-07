@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class CartServiceClient implements CartPort {
-
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final CartServiceFallback fallback;
@@ -552,7 +551,6 @@ public class CartServiceClient implements CartPort {
         return fallback.removeCoupon(userId);
     }
 
-    // Mappers
     private Cart toDomainCart(CartDto dto) {
         if (dto == null) return null;
 

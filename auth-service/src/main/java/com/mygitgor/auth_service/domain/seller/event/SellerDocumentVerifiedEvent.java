@@ -1,5 +1,6 @@
 package com.mygitgor.auth_service.domain.seller.event;
 
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
@@ -12,7 +13,7 @@ import java.util.UUID;
 public class SellerDocumentVerifiedEvent extends ApplicationEvent {
     private final String eventId;
     private final String sellerId;
-    private final String userId;
+    private final UserId userId;
     private final String email;
     private final String sellerName;
     private final String verifiedBy;
@@ -27,7 +28,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
     @Builder
     public SellerDocumentVerifiedEvent(Object source,
                                        String sellerId,
-                                       String userId,
+                                       UserId userId,
                                        String email,
                                        String sellerName,
                                        String verifiedBy,
@@ -56,7 +57,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
 
     public static SellerDocumentVerifiedEvent success(Object source,
                                                       String sellerId,
-                                                      String userId,
+                                                      UserId userId,
                                                       String email,
                                                       String sellerName,
                                                       String verifiedBy,
@@ -81,7 +82,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
 
     public static SellerDocumentVerifiedEvent failure(Object source,
                                                       String sellerId,
-                                                      String userId,
+                                                      UserId userId,
                                                       String email,
                                                       String sellerName,
                                                       String verifiedBy,
@@ -108,7 +109,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
 
     public static SellerDocumentVerifiedEvent businessVerified(Object source,
                                                                String sellerId,
-                                                               String userId,
+                                                               UserId userId,
                                                                String email,
                                                                String sellerName,
                                                                String verifiedBy,
@@ -130,7 +131,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
 
     public static SellerDocumentVerifiedEvent bankVerified(Object source,
                                                            String sellerId,
-                                                           String userId,
+                                                           UserId userId,
                                                            String email,
                                                            String sellerName,
                                                            String verifiedBy,
@@ -152,7 +153,7 @@ public class SellerDocumentVerifiedEvent extends ApplicationEvent {
 
     public static SellerDocumentVerifiedEvent taxVerified(Object source,
                                                           String sellerId,
-                                                          String userId,
+                                                          UserId userId,
                                                           String email,
                                                           String sellerName,
                                                           String verifiedBy,

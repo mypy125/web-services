@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class SellerCreateRequestDto {
     private String sellerName;
     private String email;
+    private String userId;
     private String mobile;
     private BusinessDetailsDto businessDetails;
     private BankDetailsDto bankDetails;

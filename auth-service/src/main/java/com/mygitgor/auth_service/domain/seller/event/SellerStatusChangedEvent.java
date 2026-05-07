@@ -3,6 +3,7 @@ package com.mygitgor.auth_service.domain.seller.event;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
@@ -14,7 +15,7 @@ import java.util.UUID;
 public class SellerStatusChangedEvent extends ApplicationEvent {
     private final String eventId;
     private final String sellerId;
-    private final String userId;
+    private final UserId userId;
     private final String email;
     private final String sellerName;
     private final UserRole role;
@@ -32,7 +33,7 @@ public class SellerStatusChangedEvent extends ApplicationEvent {
     @Builder
     public SellerStatusChangedEvent(Object source,
                                     String sellerId,
-                                    String userId,
+                                    UserId userId,
                                     String email,
                                     String sellerName,
                                     UserRole role,

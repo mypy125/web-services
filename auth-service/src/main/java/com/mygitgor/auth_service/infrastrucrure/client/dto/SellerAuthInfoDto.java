@@ -1,6 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.client.dto;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
+import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
