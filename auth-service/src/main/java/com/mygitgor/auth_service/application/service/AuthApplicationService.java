@@ -143,7 +143,7 @@ public class AuthApplicationService {
 
                                 BusinessDetails businessDetails = BusinessDetails.builder()
                                         .businessName(command.getBusinessDetails().getBusinessName())
-                                        .businessEmail(command.getBusinessDetails().getBusinessEmail())
+                                        .businessEmail(new Email(command.getBusinessDetails().getBusinessEmail()))
                                         .businessMobile(command.getBusinessDetails().getBusinessMobile())
                                         .businessAddress(command.getBusinessDetails().getBusinessAddress())
                                         .logo(command.getBusinessDetails().getLogo())
@@ -152,7 +152,6 @@ public class AuthApplicationService {
                                         .taxId(command.getBusinessDetails().getTaxId())
                                         .website(command.getBusinessDetails().getWebsite())
                                         .description(command.getBusinessDetails().getDescription())
-                                        .businessType(command.getBusinessDetails().getBusinessType())
                                         .build();
 
                                 Seller newSeller = Seller.register(
