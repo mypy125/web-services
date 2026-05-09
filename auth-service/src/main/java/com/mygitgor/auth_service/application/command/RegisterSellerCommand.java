@@ -1,5 +1,6 @@
 package com.mygitgor.auth_service.application.command;
 
+import com.mygitgor.auth_service.application.dto.common.AddressDto;
 import com.mygitgor.auth_service.application.dto.common.BankDetailsDto;
 import com.mygitgor.auth_service.application.dto.common.BusinessDetailsDto;
 import lombok.Builder;
@@ -13,5 +14,6 @@ public class RegisterSellerCommand {
     String mobile;
     BusinessDetailsDto businessDetails;
     BankDetailsDto bankDetails;
+    AddressDto pickupAddress;
     String ipAddress;
 }

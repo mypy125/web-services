@@ -20,10 +20,11 @@ public class BusinessDetails {
     private final String taxId;
     private final String website;
     private final String description;
+    private final String businessType;
 
     public BusinessDetails(String businessName, Email businessEmail, String businessMobile,
                            String businessAddress, String logo, String banner, String registrationNumber, String taxId,
-                           String website, String description) {
+                           String website, String businessType, String description) {
         if (businessName == null || businessName.isBlank()) {
             throw new DomainException("Business name is required");
         }
@@ -46,6 +47,7 @@ public class BusinessDetails {
         this.registrationNumber = registrationNumber;
         this.taxId = taxId;
         this.website = website;
+        this.businessType = businessType;
         this.description = description;
     }
 }

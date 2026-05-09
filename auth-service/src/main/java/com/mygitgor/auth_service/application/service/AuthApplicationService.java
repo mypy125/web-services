@@ -151,6 +151,7 @@ public class AuthApplicationService {
                                         .registrationNumber(command.getBusinessDetails().getRegistrationNumber())
                                         .taxId(command.getBusinessDetails().getTaxId())
                                         .website(command.getBusinessDetails().getWebsite())
+                                        .businessType(command.getBusinessDetails().getBusinessType())
                                         .description(command.getBusinessDetails().getDescription())
                                         .build();
 

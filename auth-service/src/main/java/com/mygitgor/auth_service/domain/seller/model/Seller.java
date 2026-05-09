@@ -23,8 +23,7 @@ public class Seller extends AbstractAggregateRoot<Seller> {
     private final SellerId sellerId;
     private final Email email;
     private String sellerName;
-    // userId - внешний идентификатор из User сервиса
-    private UserId userId;// Ссылка на пользователя в системе аутентификации
+    private UserId userId;
     private String mobile;
     private UserRole role;
     private boolean emailVerified;
@@ -450,9 +449,9 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         return this.verificationStatus;
     }
 
-    public static Seller register(Email email, String sellerName, String mobile,
+    public static Seller register(Email email, UserId userId, String sellerName, String mobile,
                                   BusinessDetails businessDetails, BankDetails bankDetails,
-                                  Address pickupAddress, UserId userId) {
+                                  Address pickupAddress) {
         LocalDateTime now = LocalDateTime.now();
 
         return Seller.builder()
@@ -468,6 +467,29 @@ public class Seller extends AbstractAggregateRoot<Seller> {
                 .businessDetails(businessDetails)
                 .bankDetails(bankDetails)
                 .pickupAddress(pickupAddress)
+                .commissionRate(5.0)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    public static Seller register(Email email, UserId userId, String sellerName, String mobile,
+                                  BusinessDetails businessDetails) {
+        LocalDateTime now = LocalDateTime.now();
+
+        return Seller.builder()
+                .sellerId(new SellerId())
+                .email(email)
+                .userId(userId)
+                .sellerName(sellerName)
+                .mobile(mobile)
+                .role(UserRole.ROLE_SELLER)
+                .emailVerified(false)
+                .verificationStatus(SellerVerificationStatus.PENDING)
+                .accountStatus(AccountStatus.PENDING_VERIFICATION)
+                .businessDetails(businessDetails)
+                .bankDetails(null)
+                .pickupAddress(null)
                 .commissionRate(5.0)
                 .createdAt(now)
                 .updatedAt(now)

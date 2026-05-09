@@ -52,6 +52,9 @@ public class BusinessDetailsDto {
     @Schema(description = "Website URL", example = "https://www.techstore.com")
     private String website;
 
+    @Schema(description = "Business Type", example = "E-Commerce")
+    private String businessType;
+
     @Schema(description = "Business description", example = "Electronics and gadgets store")
     private String description;
 }
