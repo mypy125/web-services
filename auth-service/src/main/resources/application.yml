@@ -58,6 +58,13 @@ cart:
     retry:
       attempts: 3
 
+notification:
+  service:
+    url: http://localhost:8085/api/notifications
+    timeout: 5000
+    retry:
+      attempts: 3
+
 management:
   endpoints:
     web:

@@ -18,6 +18,7 @@ import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.specification.OtpValiditySpecification;
 import com.mygitgor.auth_service.domain.specification.TokenValiditySpecification;
+import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.port.UserPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -112,6 +113,26 @@ public class AuthenticationDomainService {
                             .then(Mono.just(token));
                 })
                 .flatMap(token -> tokenRepository.save(token).thenReturn(token));
+    }
+
+    @Transactional
+    public Mono<Void> registerNewUser(Email email, UserId userId, UserRole role) {
+        log.info("Registering new user: {} with role: {}", email, role);
+
+        User newUser = User.builder()
+                .id(userId)
+                .email(email)
+                .role(role)
+                .accountStatus(AccountStatus.PENDING_VERIFICATION)
+                .emailVerified(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return userPort.createUser(newUser)
+                .doOnSuccess(user -> log.info("User registered successfully: {}", email))
+                .doOnError(error -> log.error("Failed to register user: {}, error: {}", email, error.getMessage()))
+                .then();
     }
 
     @Transactional
