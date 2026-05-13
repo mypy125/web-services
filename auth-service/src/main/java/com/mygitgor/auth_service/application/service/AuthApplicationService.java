@@ -212,27 +212,28 @@ public class AuthApplicationService {
         log.info("Verifying seller email: {}", email);
 
         return Mono.fromCallable(() -> new Email(email))
-                .flatMap(emailVo ->
-                        otpDomainService.validateOtp(emailVo, otp, OtpPurpose.EMAIL_VERIFICATION)
-                                .flatMap(valid -> {
-                                    if (!valid) {
-                                        return Mono.error(new DomainException("Invalid or expired OTP"));
-                                    }
+                .flatMap(emailVo -> {
+                    boolean isValid = otpDomainService.validateOtp(emailVo, otp, OtpPurpose.EMAIL_VERIFICATION);
+                    if (!isValid) {
+                        return Mono.error(new DomainException("Invalid or expired OTP"));
+                    }
 
-                                    return sellerPort.verifySellerEmail(emailVo);
-                                })
-                                .flatMap(seller -> {
-                                    if (seller.getVerificationStatus() == SellerVerificationStatus.BUSINESS_VERIFIED) {
-                                        return sellerPort.activateSeller(seller.getId())
-                                                .then(sellerPort.getSellerByEmail(emailVo));
-                                    }
-                                    return Mono.just(seller);
-                                })
-                                .flatMap(seller ->
-                                        tokenDomainService.generateToken(emailVo, seller.getUserId(), UserRole.ROLE_SELLER)
-                                )
-                )
-                .map(token -> responseMapper.toAuthResponseDto(token))
+                    return sellerPort.verifySellerEmail(emailVo)
+                            .flatMap(seller -> {
+                                if (seller.getVerificationStatus() == SellerVerificationStatus.BUSINESS_VERIFIED) {
+                                    return sellerPort.activateSeller(seller.getSellerId())
+                                            .then(sellerPort.getSellerByEmail(emailVo));
+                                }
+                                return Mono.just(seller);
+                            })
+                            .flatMap(seller -> {
+                                if (seller.getUserId() == null) {
+                                    return Mono.error(new DomainException("Seller user ID not found"));
+                                }
+                                return tokenDomainService.generateToken(emailVo, seller.getUserId(), UserRole.ROLE_SELLER);
+                            });
+                })
+                .map(responseMapper::toAuthResponseDto)
                 .map(dto -> {
                     dto.setMessage("Email verified and login successful");
                     dto.setTimestamp(LocalDateTime.now());
