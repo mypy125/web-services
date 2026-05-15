@@ -21,7 +21,7 @@ public interface SellerPort {
     Mono<Seller> createSeller(Seller seller);
     Mono<Seller> updateSeller(Seller seller);
     Mono<Seller> verifySellerEmail(Email email);
-    Mono<Seller> verifyBusinessDocuments(SellerId sellerId, String verifiedBy);
+    Mono<Seller> verifySellerDocuments(SellerId sellerId, boolean approve, String verifiedBy, String notes);
     Mono<Seller> updateAccountStatus(SellerId sellerId, String status, String reason);
     Mono<Seller> updatePayoutSettings(SellerId sellerId, BankDetails bankDetails);
     Mono<Seller> updateBusinessDetails(SellerId sellerId, BusinessDetails businessDetails);
@@ -39,4 +39,5 @@ public interface SellerPort {
     Mono<Page<Seller>> getPendingVerifications(int page, int size);
     Mono<Void> updateLastActive(SellerId sellerId, LocalDateTime lastActiveAt);
     Mono<Seller> updateCommissionRate(SellerId sellerId, double commissionRate);
+    Mono<Seller> activateSeller(SellerId sellerId);
 }

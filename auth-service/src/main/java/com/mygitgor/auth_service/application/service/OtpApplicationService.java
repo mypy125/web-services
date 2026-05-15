@@ -2,7 +2,6 @@ package com.mygitgor.auth_service.application.service;
 
 import com.mygitgor.auth_service.application.command.RequestOtpCommand;
 import com.mygitgor.auth_service.application.command.VerifyOtpCommand;
-import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.service.OtpDomainService;

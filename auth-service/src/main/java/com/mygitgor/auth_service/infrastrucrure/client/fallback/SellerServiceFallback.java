@@ -53,4 +53,14 @@ public class SellerServiceFallback {
         log.warn("SellerService fallback: updateAccountStatus for {}", sellerId);
         return Mono.error(new ServiceUnavailableException("Unable to update account status. Service unavailable"));
     }
+
+    public Mono<Seller> activateSeller(SellerId sellerId) {
+        log.warn("Fallback: Cannot activate seller with ID: {}", sellerId);
+        return Mono.error(new ServiceUnavailableException("Seller service unavailable for activation"));
+    }
+
+    public Mono<Seller> verifySellerDocuments(SellerId sellerId, boolean approve, String verifiedBy, String notes) {
+        log.warn("Fallback: Cannot verify seller documents for ID: {}", sellerId);
+        return Mono.error(new ServiceUnavailableException("Seller service unavailable for document verification"));
+    }
 }

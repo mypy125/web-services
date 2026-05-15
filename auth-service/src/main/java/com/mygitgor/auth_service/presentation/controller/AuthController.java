@@ -103,9 +103,8 @@ public class AuthController {
 
     @PostMapping("/seller/verify")
     @Operation(summary = "Verify seller email", description = "Verify seller email with OTP and complete registration")
-    public Mono<ResponseEntity<AuthResponseDto>> verifySeller(
-            @RequestParam String email,
-            @RequestParam String otp
+    public Mono<ResponseEntity<AuthResponseDto>> verifySeller(@RequestParam String email,
+                                                              @RequestParam String otp
     ) {
         return authService.verifySellerAndLogin(email, otp)
                 .map(ResponseEntity::ok)

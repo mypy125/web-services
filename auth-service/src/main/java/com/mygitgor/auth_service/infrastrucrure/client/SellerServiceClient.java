@@ -298,8 +298,38 @@ public class SellerServiceClient implements SellerPort {
     }
 
     @Override
-    public Mono<Seller> verifyBusinessDocuments(SellerId sellerId, String verifiedBy) {
-        return null;
+    @CircuitBreaker(name = "sellerService", fallbackMethod = "verifySellerDocumentsFallback")
+    @Retry(name = "sellerService")
+    @TimeLimiter(name = "sellerService")
+    public Mono<Seller> verifySellerDocuments(SellerId sellerId, boolean approve, String verifiedBy, String notes) {
+        log.info("Verifying seller documents for ID: {}, approve: {}", sellerId, approve);
+
+        VerifyDocumentsRequestDto request = VerifyDocumentsRequestDto.builder()
+                .sellerId(sellerId.toString())
+                .approve(approve)
+                .verifiedBy(verifiedBy)
+                .notes(notes)
+                .build();
+
+        return webClient.post()
+                .uri("/{sellerId}/verify-documents", sellerId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                        Mono.error(new SellerNotFoundException("Seller not found with ID: " + sellerId)))
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        handleClientErrorResponse(response, "verify seller documents", sellerId.toString()))
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        handleServerErrorResponse(response, "verify seller documents", sellerId.toString()))
+                .bodyToMono(SellerDto.class)
+                .map(sellerMapper::toDomain)
+                .timeout(Duration.ofMillis(timeout))
+                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                        .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
+                .doOnSuccess(seller -> log.info("Seller documents verified successfully: {}", sellerId))
+                .doOnError(error -> log.error("Failed to verify seller documents for {}: {}", sellerId, error.getMessage()));
     }
 
     @Override
@@ -421,6 +451,42 @@ public class SellerServiceClient implements SellerPort {
     @Override
     public Mono<Seller> updateCommissionRate(SellerId sellerId, double commissionRate) {
         return null;
+    }
+
+    @Override
+    @CircuitBreaker(name = "sellerService", fallbackMethod = "activateSellerFallback")
+    @Retry(name = "sellerService")
+    @TimeLimiter(name = "sellerService")
+    public Mono<Seller> activateSeller(SellerId sellerId) {
+        log.info("Activating seller with ID: {}", sellerId);
+
+        return webClient.patch()
+                .uri("/{sellerId}/activate", sellerId.toString())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                        Mono.error(new SellerNotFoundException("Seller not found with ID: " + sellerId)))
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        handleClientErrorResponse(response, "activate seller", sellerId.toString()))
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        handleServerErrorResponse(response, "activate seller", sellerId.toString()))
+                .bodyToMono(SellerDto.class)
+                .map(sellerMapper::toDomain)
+                .timeout(Duration.ofMillis(timeout))
+                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                        .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
+                .doOnSuccess(seller -> log.info("Seller activated successfully: {}", sellerId))
+                .doOnError(error -> log.error("Failed to activate seller {}: {}", sellerId, error.getMessage()));
+    }
+
+    private Mono<Seller> verifySellerDocumentsFallback(SellerId sellerId, boolean approve, String verifiedBy, String notes, Throwable t) {
+        log.warn("Fallback: verifySellerDocuments for {} due to: {}", sellerId, t.getMessage());
+        return fallback.verifySellerDocuments(sellerId, approve, verifiedBy, notes);
+    }
+
+    private Mono<Seller> activateSellerFallback(SellerId sellerId, Throwable t) {
+        log.warn("Fallback: activateSeller for {} due to: {}", sellerId, t.getMessage());
+        return fallback.activateSeller(sellerId);
     }
 
     private Mono<Boolean> existsByEmailFallback(Email email, Throwable t) {

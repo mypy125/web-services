@@ -73,7 +73,7 @@ public class AuthApplicationService {
                                                 )
                                 )
                 )
-                .map(token -> responseMapper.toAuthResponseDto(token))
+                .map(responseMapper::toAuthResponseDto)
                 .map(dto -> {
                     dto.setMessage("Login successful");
                     dto.setTimestamp(LocalDateTime.now());
@@ -91,33 +91,28 @@ public class AuthApplicationService {
                 .flatMap(email -> {
                     UserId userId = new UserId();
 
-                    return otpDomainService.validateOtp(email, command.getOtp(), OtpPurpose.REGISTRATION)
-                            .flatMap(valid -> {
-                                if (!valid) {
-                                    return Mono.error(new DomainException("Invalid OTP"));
+                    boolean isValid = otpDomainService.validateOtp(email, command.getOtp(), OtpPurpose.REGISTRATION);
+                    if (!isValid) {
+                        return Mono.error(new DomainException("Invalid OTP"));
+                    }
+
+                    return userPort.existsByEmail(email)
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return Mono.error(new DomainException("User already exists with email: " + email));
                                 }
 
-                                return userPort.existsByEmail(email)
-                                        .flatMap(exists -> {
-                                            if (exists) {
-                                                return Mono.error(new DomainException("User already exists with email: " + email));
-                                            }
+                                User newUser = User.register(email, command.getFullName(), UserRole.ROLE_CUSTOMER);
 
-                                            User newUser = User.register(email, command.getFullName(), UserRole.ROLE_CUSTOMER);
-
-                                            return userPort.createUser(newUser)
-                                                    .flatMap(createdUser -> cartPort.createCart(userId).thenReturn(createdUser))
-                                                    .flatMap(createdUser -> {
-                                                        AuthAggregate aggregate = authDomainService.registerNewUser(
-                                                                email, userId, UserRole.ROLE_CUSTOMER
-                                                        );
-
-                                                        return tokenDomainService.generateToken(email, userId, UserRole.ROLE_CUSTOMER);
-                                                    });
-                                        });
+                                return userPort.createUser(newUser)
+                                        .flatMap(createdUser -> cartPort.createCart(userId).thenReturn(createdUser))
+                                        .flatMap(createdUser ->
+                                                authDomainService.registerNewUser(email, userId, UserRole.ROLE_CUSTOMER)
+                                                        .then(tokenDomainService.generateToken(email, userId, UserRole.ROLE_CUSTOMER))
+                                        );
                             });
                 })
-                .map(token -> responseMapper.toAuthResponseDto(token))
+                .map(responseMapper::toAuthResponseDto)
                 .map(dto -> {
                     dto.setMessage("Registration successful");
                     dto.setTimestamp(LocalDateTime.now());
@@ -248,24 +243,24 @@ public class AuthApplicationService {
         log.info("Completing seller verification for ID: {} - Approved: {}", sellerId, approve);
 
         return Mono.fromCallable(() -> new SellerId(sellerId))
-                .flatMap(id -> sellerPort.getSellerById(id))
+                .flatMap(sellerPort::getSellerById)
                 .flatMap(seller -> {
                     if (approve) {
-                        return sellerPort.verifySellerDocuments(seller.getId(), true, verifiedBy, notes)
-                                .flatMap(verified -> sellerPort.activateSeller(seller.getId()))
+                        return sellerPort.verifySellerDocuments(seller.getSellerId(), true, verifiedBy, notes)
+                                .flatMap(verified -> sellerPort.activateSeller(seller.getSellerId()))
                                 .flatMap(activated ->
                                         tokenDomainService.generateToken(
                                                 seller.getEmail(), seller.getUserId(), UserRole.ROLE_SELLER
                                         )
                                 )
-                                .map(token -> responseMapper.toAuthResponseDto(token))
+                                .map(responseMapper::toAuthResponseDto)
                                 .map(dto -> {
                                     dto.setMessage("Seller verification completed and account activated");
                                     dto.setTimestamp(LocalDateTime.now());
                                     return dto;
                                 });
                     } else {
-                        return sellerPort.updateAccountStatus(seller.getEmail(), "REJECTED")
+                        return sellerPort.updateAccountStatus(seller.getSellerId(), "REJECTED", notes)
                                 .then(Mono.just(AuthResponseDto.builder()
                                         .email(seller.getEmail().toString())
                                         .userId(seller.getUserId().toString())
@@ -317,7 +312,7 @@ public class AuthApplicationService {
         log.debug("Validating token");
 
         return Mono.fromCallable(() -> new TokenValue(tokenValue))
-                .flatMap(token -> tokenDomainService.validateToken(token))
+                .flatMap(tokenDomainService::validateToken)
                 .doOnSuccess(valid -> log.debug("Token validation result: {}", valid))
                 .doOnError(error -> log.error("Token validation failed: {}", error.getMessage()));
     }
@@ -327,7 +322,7 @@ public class AuthApplicationService {
         log.info("Refreshing token");
 
         return Mono.fromCallable(() -> new TokenValue(oldTokenValue))
-                .flatMap(tokenValue -> tokenDomainService.getTokenInfo(tokenValue))
+                .flatMap(tokenDomainService::getTokenInfo)
                 .flatMap(oldToken -> {
                     if (oldToken.isExpired()) {
                         return Mono.error(new DomainException("Token has expired"));
@@ -359,7 +354,7 @@ public class AuthApplicationService {
         log.debug("Getting user info from token");
 
         return Mono.fromCallable(() -> new TokenValue(tokenValue))
-                .flatMap(token -> tokenDomainService.getTokenInfo(token))
+                .flatMap(tokenDomainService::getTokenInfo)
                 .map(token -> responseMapper.toUserInfoResponseDto(
                         token.getEmail(), token.getUserId(), null
                 ));
