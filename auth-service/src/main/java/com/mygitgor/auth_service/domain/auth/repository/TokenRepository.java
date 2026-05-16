@@ -17,4 +17,5 @@ public interface TokenRepository {
     Mono<Void> deleteAllByEmail(Email email);
     Mono<Void> deleteAllByUserId(UserId userId);
     Mono<Boolean> existsByValue(TokenValue value);
+    Mono<Token> update(Token token);
 }

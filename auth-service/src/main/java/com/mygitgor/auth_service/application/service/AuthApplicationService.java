@@ -181,14 +181,10 @@ public class AuthApplicationService {
 
                                 return sellerPort.createSeller(newSeller);
                             })
-                            .flatMap(seller -> {
-                                authDomainService.registerNewUser(email, userId, UserRole.ROLE_SELLER);
-
-                                return otpDomainService.generateAndSendOtp(
-                                                email, UserRole.ROLE_SELLER, OtpPurpose.EMAIL_VERIFICATION
-                                        )
-                                        .thenReturn(seller);
-                            });
+                            .flatMap(seller ->
+                                authDomainService.registerNewUser(email, userId, UserRole.ROLE_SELLER)
+                                        .then(otpDomainService.generateAndSendOtp(email, UserRole.ROLE_SELLER, OtpPurpose.EMAIL_VERIFICATION))
+                                        .thenReturn(seller));
                 })
                 .map(seller -> AuthResponseDto.builder()
                         .email(seller.getEmail().toString())
@@ -261,7 +257,8 @@ public class AuthApplicationService {
                                 });
                     } else {
                         return sellerPort.updateAccountStatus(seller.getSellerId(), "REJECTED", notes)
-                                .then(Mono.just(AuthResponseDto.builder()
+                                .flatMap(updatedSeller ->
+                                        Mono.just(AuthResponseDto.builder()
                                         .email(seller.getEmail().toString())
                                         .userId(seller.getUserId().toString())
                                         .role(UserRole.ROLE_SELLER)
@@ -280,7 +277,6 @@ public class AuthApplicationService {
 
         return Mono.fromCallable(() -> new Email(email))
                 .flatMap(emailVo -> otpDomainService.generateAndSendOtp(emailVo, role, purpose))
-                .then()
                 .doOnSuccess(v -> log.info("Verification OTP resent to: {}", email))
                 .doOnError(error -> log.error("Failed to resend verification OTP to: {}", email, error));
     }
@@ -292,7 +288,12 @@ public class AuthApplicationService {
         return Mono.fromCallable(() -> new Email(email))
                 .flatMap(emailVo ->
                         tokenDomainService.getTokenInfo(new TokenValue(tokenValue))
-                                .flatMap(token -> authDomainService.logout(emailVo, token))
+                                .flatMap(token -> {
+                                    if (!token.getEmail().equals(emailVo)) {
+                                        return Mono.error(new DomainException("Token does not belong to user"));
+                                    }
+                                    return authDomainService.logout(token, "User initiated logout");
+                                })
                 )
                 .doOnSuccess(v -> log.info("Logout successful for email: {}", email))
                 .doOnError(error -> log.error("Logout failed for email: {}", email, error));
@@ -303,7 +304,7 @@ public class AuthApplicationService {
         log.info("Processing logout from all devices for email: {}", email);
 
         return Mono.fromCallable(() -> new Email(email))
-                .flatMap(emailVo -> tokenDomainService.logoutAllDevices(emailVo.toString()))
+                .flatMap(emailVo -> authDomainService.logoutByEmail(emailVo, "Logout from all devices"))
                 .doOnSuccess(v -> log.info("Logged out from all devices for: {}", email))
                 .doOnError(error -> log.error("Logout from all devices failed for: {}", email, error));
     }

@@ -1,50 +1,41 @@
 package com.mygitgor.auth_service.infrastrucrure.persistance.entity;
 
+
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
-@Table(name = "verification_codes")
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
+@Table("verification_codes")
 public class VerificationCodeEntity {
-
     @Id
-    @GeneratedValue
-    @UuidGenerator(style = UuidGenerator.Style.TIME)
     private UUID id;
-
-    @Column(nullable = false, length = 6)
     private String otp;
-
-    @Column(nullable = false)
     private String email;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole userRole;
-
-    @Column(nullable = false)
+    private String userRole;
     private String purpose;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = false)
+    private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
+    private boolean used;
 
-    @Column(nullable = false)
-    private boolean used = false;
-
-    public VerificationCodeEntity() {
-        this.expiresAt = LocalDateTime.now().plusMinutes(10);
+    public VerificationCodeEntity(String otp, String email, String userRole,
+                                  String purpose, LocalDateTime expiresAt) {
+        this.id = UUID.randomUUID();
+        this.otp = otp;
+        this.email = email;
+        this.userRole = userRole;
+        this.purpose = purpose;
+        this.createdAt = LocalDateTime.now();
+        this.expiresAt = expiresAt;
+        this.used = false;
     }
 
     public boolean isExpired() {

@@ -3,21 +3,21 @@ package com.mygitgor.auth_service.domain.auth.repository;
 import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface VerificationCodeRepository {
-    VerificationCode save(VerificationCode code);
-    Optional<VerificationCode> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose);
-    Optional<VerificationCode> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now);
-    List<VerificationCode> findByEmailAndPurpose(Email email, OtpPurpose purpose);
-    List<VerificationCode> findByEmail(Email email);
-    void invalidateAllOtpsForEmailAndPurpose(Email email, OtpPurpose purpose);
-    void deleteExpiredCodes();
-    long countRecentOtps(Email email, OtpPurpose purpose, LocalDateTime since);
-    void delete(VerificationCode code);
-    void deleteAllByEmail(Email email);
+    Mono<VerificationCode> save(VerificationCode code);
+    Mono<Optional<VerificationCode>> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose);
+    Mono<Optional<VerificationCode>> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now);
+    Flux<VerificationCode> findByEmailAndPurpose(Email email, OtpPurpose purpose);
+    Flux<VerificationCode> findByEmail(Email email);
+    Mono<Void> invalidateAllOtpsForEmailAndPurpose(Email email, OtpPurpose purpose);
+    Mono<Integer> deleteExpiredCodes();
+    Mono<Long> countRecentOtps(Email email, OtpPurpose purpose, LocalDateTime since);
+    Mono<Void> delete(VerificationCode code);
+    Mono<Void> deleteAllByEmail(Email email);
 }

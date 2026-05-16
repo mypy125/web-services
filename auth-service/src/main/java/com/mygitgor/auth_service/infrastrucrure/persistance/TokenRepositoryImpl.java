@@ -5,7 +5,9 @@ import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
-import com.mygitgor.auth_service.infrastrucrure.persistance.repository.TokenJpaRepository;
+import com.mygitgor.auth_service.infrastrucrure.mapper.TokenMapper;
+import com.mygitgor.auth_service.infrastrucrure.persistance.entity.TokenEntity;
+import com.mygitgor.auth_service.infrastrucrure.persistance.repository.TokenR2dbcRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -18,84 +20,73 @@ import java.util.UUID;
 @Repository
 @RequiredArgsConstructor
 public class TokenRepositoryImpl implements TokenRepository {
-
-    private final TokenJpaRepository jpaRepository;
-    private final TokenMapper mapper;
+    private final TokenR2dbcRepository r2dbcRepository;
+    private final TokenMapper tokenMapper;
 
     @Override
     public Mono<Token> save(Token token) {
-        return Mono.fromCallable(() -> {
-            TokenEntity entity = mapper.toEntity(token);
-            TokenEntity saved = jpaRepository.save(entity);
-            log.debug("Token saved for user: {}", token.getEmail());
-            return mapper.toDomain(saved);
-        });
+        TokenEntity entity = tokenMapper.toEntity(token);
+        return r2dbcRepository.save(entity)
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Mono<Token> findByValue(TokenValue value) {
-        return Mono.fromCallable(() ->
-                jpaRepository.findByValue(value.toString())
-                        .map(mapper::toDomain)
-                        .orElse(null)
-        );
+        return r2dbcRepository.findByValue(value.toString())
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Mono<Token> findActiveTokenByUserId(UserId userId) {
-        return Mono.fromCallable(() ->
-                jpaRepository.findActiveTokenByUserId(UUID.fromString(userId.toString()))
-                        .map(mapper::toDomain)
-                        .orElse(null)
-        );
+        return r2dbcRepository.findFirstByUserIdAndStatusOrderByIssuedAtDesc(
+                        userId.toString(),
+                        "ACTIVE"
+                )
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Flux<Token> findAllByEmail(Email email) {
-        return Flux.fromIterable(
-                jpaRepository.findAllByEmail(email.toString())
-                        .stream()
-                        .map(mapper::toDomain)
-                        .toList()
-        );
+        return r2dbcRepository.findAllByEmail(email.toString())
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Flux<Token> findAllByUserId(UserId userId) {
-        return Flux.fromIterable(
-                jpaRepository.findAllByUserId(UUID.fromString(userId.toString()))
-                        .stream()
-                        .map(mapper::toDomain)
-                        .toList()
-        );
+        return r2dbcRepository.findAllByUserId(userId.toString())
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Mono<Void> delete(Token token) {
-        return Mono.fromRunnable(() -> {
-            jpaRepository.deleteByValue(token.getValue().toString());
-            log.debug("Token deleted for user: {}", token.getEmail());
-        });
+        return r2dbcRepository.findByValue(token.getValue().toString())
+                .flatMap(r2dbcRepository::delete);
     }
 
     @Override
     public Mono<Void> deleteAllByEmail(Email email) {
-        return Mono.fromRunnable(() -> {
-            jpaRepository.deleteAllByEmail(email.toString());
-            log.debug("All tokens deleted for user: {}", email);
-        });
+        return r2dbcRepository.deleteAllByEmail(email.toString());
+    }
+
+    @Override
+    public Mono<Token> update(Token token) {
+        return r2dbcRepository.findByValue(token.getValue().toString())
+                .flatMap(existingEntity -> {
+                    TokenEntity entity = tokenMapper.toEntity(token);
+                    entity.setId(existingEntity.getId());
+                    return r2dbcRepository.save(entity);
+                })
+                .map(tokenMapper::toDomain);
     }
 
     @Override
     public Mono<Void> deleteAllByUserId(UserId userId) {
-        return Mono.fromRunnable(() -> {
-            jpaRepository.deleteAllByUserId(UUID.fromString(userId.toString()));
-            log.debug("All tokens deleted for user ID: {}", userId);
-        });
+        return r2dbcRepository.deleteAllByUserId(userId.toString())
+                .doOnSuccess(v -> log.debug("All tokens deleted for user ID: {}", userId));
     }
 
     @Override
     public Mono<Boolean> existsByValue(TokenValue value) {
-        return Mono.fromCallable(() -> jpaRepository.existsByValue(value.toString()));
+        return r2dbcRepository.existsByValue(value.toString());
     }
 }

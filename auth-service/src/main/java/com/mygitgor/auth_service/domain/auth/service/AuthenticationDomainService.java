@@ -183,6 +183,21 @@ public class AuthenticationDomainService {
     }
 
     @Transactional
+    public Mono<Void> logoutByEmail(Email email, String reason) {
+        log.info("Logging out all devices for user: {}, reason: {}", email, reason);
+
+        return tokenRepository.findAllByEmail(email)
+                .flatMap(token -> {
+                    if (token.isValid()) {
+                        blacklistToken(token, reason);
+                        return tokenRepository.delete(token);
+                    }
+                    return Mono.empty();
+                })
+                .then();
+    }
+
+    @Transactional
     public Mono<Void> logoutAllDevices(Email email) {
         log.info("Logging out user from all devices: {}", email);
 
