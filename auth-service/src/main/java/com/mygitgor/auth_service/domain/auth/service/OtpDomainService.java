@@ -34,53 +34,16 @@ public class OtpDomainService {
     private final ApplicationEventPublisher eventPublisher;
     private final NotificationPort notificationPort;
 
-    public VerificationCode generateOtp(Email email, UserRole role, OtpPurpose purpose) {
-        invalidateExistingOtps(email, purpose);
-
-        String otpValue = generateSecureOtp();
-        Otp otp = new Otp(otpValue, OTP_VALIDITY_MINUTES);
-
-        VerificationCode verificationCode = VerificationCode.builder()
-                .id(UUID.randomUUID())
-                .otp(otp)
-                .email(email)
-                .userRole(role)
-                .purpose(purpose)
-                .createdAt(LocalDateTime.now())
-                .used(false)
-                .build();
-
-        VerificationCode savedCode = verificationCodeRepository.save(verificationCode);
-
-        eventPublisher.publishEvent(OtpGeneratedEvent.builder()
-                .source(this)
-                .email(email.toString())
-                .otp(otpValue)
-                .purpose(purpose)
-                .expiresAt(otp.getExpiresAt())
-                .occurredAt(LocalDateTime.now())
-                .build());
-
-        notificationPort.sendOtpEmail(email, otpValue, purpose)
-                .subscribe(
-                        success -> log.info("OTP email sent successfully to: {}", email),
-                        error -> log.error("Failed to send OTP email to: {}, error: {}", email, error.getMessage())
-                );
-
-        log.info("OTP generated for email: {}, purpose: {}", email, purpose);
-        return savedCode;
-    }
-
     @Transactional
-    public Mono<Void> generateAndSendOtp(Email email, UserRole role, OtpPurpose purpose) {
-        log.info("Generating and sending OTP for email: {}, purpose: {}", email, purpose);
+    public Mono<VerificationCode> generateOtp(Email email, UserRole role, OtpPurpose purpose) {
+        log.info("Generating OTP for email: {}, purpose: {}", email, purpose);
 
-        return Mono.fromCallable(() -> {
-                    invalidateExistingOtps(email, purpose);
+        return invalidateExistingOtps(email, purpose)
+                .then(Mono.fromCallable(() -> {
                     String otpValue = generateSecureOtp();
                     Otp otp = new Otp(otpValue, OTP_VALIDITY_MINUTES);
 
-                    VerificationCode verificationCode = VerificationCode.builder()
+                    return VerificationCode.builder()
                             .id(UUID.randomUUID())
                             .otp(otp)
                             .email(email)
@@ -89,56 +52,105 @@ public class OtpDomainService {
                             .createdAt(LocalDateTime.now())
                             .used(false)
                             .build();
-
-                    VerificationCode savedCode = verificationCodeRepository.save(verificationCode);
-
+                }))
+                .flatMap(verificationCodeRepository::save)
+                .doOnNext(savedCode -> {
                     eventPublisher.publishEvent(OtpGeneratedEvent.builder()
                             .source(this)
                             .email(email.toString())
-                            .otp(otpValue)
+                            .otp(savedCode.getOtp().getValue())
                             .purpose(purpose)
-                            .expiresAt(otp.getExpiresAt())
+                            .expiresAt(savedCode.getOtp().getExpiresAt())
                             .occurredAt(LocalDateTime.now())
                             .build());
 
-                    return Map.of("code", savedCode, "otpValue", otpValue);
+                    notificationPort.sendOtpEmail(email, savedCode.getOtp().getValue(), purpose)
+                            .subscribe(
+                                    success -> log.info("OTP email sent successfully to: {}", email),
+                                    error -> log.error("Failed to send OTP email to: {}, error: {}", email, error.getMessage())
+                            );
                 })
-                .flatMap(result -> notificationPort.sendOtpEmail(email, (String) result.get("otpValue"), purpose)
-                        .thenReturn(result.get("code")))
-                .doOnSuccess(code -> log.info("OTP generated and sent successfully to: {}", email))
+                .doOnSuccess(savedCode -> log.info("OTP generated for email: {}, purpose: {}", email, purpose))
+                .doOnError(error -> log.error("Failed to generate OTP for email: {}", email, error));
+    }
+
+    @Transactional
+    public Mono<Void> generateAndSendOtp(Email email, UserRole role, OtpPurpose purpose) {
+        log.info("Generating and sending OTP for email: {}, purpose: {}", email, purpose);
+
+        return invalidateExistingOtps(email, purpose)
+                .then(Mono.fromCallable(() -> {
+                    String otpValue = generateSecureOtp();
+                    Otp otp = new Otp(otpValue, OTP_VALIDITY_MINUTES);
+
+                    return VerificationCode.builder()
+                            .id(UUID.randomUUID())
+                            .otp(otp)
+                            .email(email)
+                            .userRole(role)
+                            .purpose(purpose)
+                            .createdAt(LocalDateTime.now())
+                            .used(false)
+                            .build();
+                }))
+                .flatMap(verificationCodeRepository::save)
+                .flatMap(savedCode -> {
+                    eventPublisher.publishEvent(OtpGeneratedEvent.builder()
+                            .source(this)
+                            .email(email.toString())
+                            .otp(savedCode.getOtp().getValue())
+                            .purpose(purpose)
+                            .expiresAt(savedCode.getOtp().getExpiresAt())
+                            .occurredAt(LocalDateTime.now())
+                            .build());
+
+                    return notificationPort.sendOtpEmail(email, savedCode.getOtp().getValue(), purpose)
+                            .thenReturn(savedCode);
+                })
+                .doOnSuccess(savedCode -> log.info("OTP generated and sent successfully to: {}", email))
                 .doOnError(error -> log.error("Failed to generate/send OTP for {}: {}", email, error.getMessage()))
                 .then();
     }
 
-    public boolean validateOtp(Email email, String otpValue, OtpPurpose purpose) {
-        VerificationCode verificationCode = verificationCodeRepository
-                .findByEmailAndOtpValue(email, otpValue)
-                .filter(code -> code.getPurpose() == purpose)
-                .orElseThrow(() -> new DomainException("OTP not found"));
+    public Mono<Boolean> validateOtp(Email email, String otpValue, OtpPurpose purpose) {
+        log.debug("Validating OTP for email: {}, purpose: {}", email, purpose);
 
-        otpValiditySpec.check(verificationCode);
-
-        verificationCode.markAsUsed();
-        verificationCodeRepository.save(verificationCode);
-
-        log.info("OTP validated for email: {}, purpose: {}", email, purpose);
-        return true;
+        return verificationCodeRepository.findByEmailAndOtpAndPurpose(email, otpValue, purpose)
+                .flatMap(verificationCode -> {
+                    try {
+                        otpValiditySpec.check(verificationCode);
+                        verificationCode.markAsUsed();
+                        return verificationCodeRepository.save(verificationCode)
+                                .thenReturn(true);
+                    } catch (DomainException e) {
+                        return Mono.error(e);
+                    }
+                })
+                .doOnSuccess(valid -> {
+                    if (valid) {
+                        log.info("OTP validated for email: {}, purpose: {}", email, purpose);
+                    }
+                })
+                .onErrorResume(e -> {
+                    log.warn("OTP validation failed for email: {}, error: {}", email, e.getMessage());
+                    return Mono.just(false);
+                });
     }
 
     private String generateSecureOtp() {
         return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
     }
 
-    private void invalidateExistingOtps(Email email, OtpPurpose purpose) {
-        List<VerificationCode> existingCodes = verificationCodeRepository
-                .findByEmailAndPurpose(email, purpose);
-
-        existingCodes.forEach(code -> {
-            if (code.isValid()) {
-                code.markAsUsed();
-                verificationCodeRepository.save(code);
-            }
-        });
+    private Mono<Void> invalidateExistingOtps(Email email, OtpPurpose purpose) {
+        return verificationCodeRepository.findByEmailAndPurpose(email, purpose)
+                .flatMap(code -> {
+                    if (code.isValid()) {
+                        code.markAsUsed();
+                        return verificationCodeRepository.save(code);
+                    }
+                    return Mono.empty();
+                })
+                .then();
     }
 }
 

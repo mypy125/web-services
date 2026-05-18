@@ -36,25 +36,26 @@ public class VerificationCodeRepositoryImpl implements VerificationCodeRepositor
     }
 
     @Override
-    public Mono<Optional<VerificationCode>> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose) {
+    public Mono<VerificationCode> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose) {
         return r2dbcRepository.findByEmailAndOtpAndPurpose(email.toString(), otp, purpose.name())
                 .map(mapper::toDomain)
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .doOnSuccess(opt -> log.debug("Found verification code for email: {}, purpose: {} - present: {}",
-                        email, purpose, opt.isPresent()))
+                .doOnSuccess(code -> {
+                    if (code != null) {
+                        log.debug("Found verification code for email: {}, purpose: {}", email, purpose);
+                    } else {
+                        log.debug("No verification code found for email: {}, purpose: {}", email, purpose);
+                    }
+                })
                 .doOnError(error -> log.error("Failed to find verification code for email: {}", email, error));
     }
 
     @Override
-    public Mono<Optional<VerificationCode>> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now) {
+    public Mono<VerificationCode> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now) {
         return r2dbcRepository.findByEmailAndOtpAndPurposeAndUsedFalse(email.toString(), otp, purpose.name())
                 .filter(entity -> entity.getExpiresAt().isAfter(now))
                 .map(mapper::toDomain)
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .doOnSuccess(opt -> {
-                    if (opt.isPresent()) {
+                .doOnSuccess(code -> {
+                    if (code != null) {
                         log.debug("Found valid OTP for email: {}, purpose: {}", email, purpose);
                     } else {
                         log.debug("No valid OTP found for email: {}, purpose: {}", email, purpose);

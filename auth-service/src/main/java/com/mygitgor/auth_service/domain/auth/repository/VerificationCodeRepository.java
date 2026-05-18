@@ -11,8 +11,8 @@ import java.util.Optional;
 
 public interface VerificationCodeRepository {
     Mono<VerificationCode> save(VerificationCode code);
-    Mono<Optional<VerificationCode>> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose);
-    Mono<Optional<VerificationCode>> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now);
+    Mono<VerificationCode> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose);
+    Mono<VerificationCode> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now);
     Flux<VerificationCode> findByEmailAndPurpose(Email email, OtpPurpose purpose);
     Flux<VerificationCode> findByEmail(Email email);
     Mono<Void> invalidateAllOtpsForEmailAndPurpose(Email email, OtpPurpose purpose);
