@@ -36,20 +36,18 @@ public class AuthenticationDomainService {
     private final TokenRepository tokenRepository;
     private final VerificationCodeRepository verificationCodeRepository;
     private final BlacklistedTokenRepository blacklistedTokenRepository;
+    private final OtpValiditySpecification otpValiditySpecification;
+    private final TokenValiditySpecification tokenValiditySpecification;
     private final UserPort userPort;
     private final SellerPort sellerPort;
     private final JwtPort jwtPort;
-    private final OtpValiditySpecification otpValiditySpecification;
-    private final TokenValiditySpecification tokenValiditySpecification;
 
     @Transactional
     public Mono<Token> authenticateWithOtp(Email email, String otpValue, OtpPurpose purpose) {
         log.info("Authenticating user with OTP: {}, purpose: {}", email, purpose);
 
-        return Mono.fromCallable(() ->
-                        verificationCodeRepository.findValidOtp(email, otpValue, purpose, LocalDateTime.now())
-                                .orElseThrow(() -> new DomainException("Invalid or expired OTP"))
-                )
+        return verificationCodeRepository.findValidOtp(email, otpValue, purpose, LocalDateTime.now())
+                .switchIfEmpty(Mono.error(new DomainException("Invalid or expired OTP")))
                 .flatMap(verificationCode -> {
                     try {
                         otpValiditySpecification.check(verificationCode);
@@ -58,9 +56,8 @@ public class AuthenticationDomainService {
                     }
 
                     verificationCode.markAsUsed();
-                    verificationCodeRepository.save(verificationCode);
-
-                    return getUserInfoAndGenerateToken(email);
+                    return verificationCodeRepository.save(verificationCode)
+                            .then(getUserInfoAndGenerateToken(email));
                 })
                 .doOnSuccess(token -> log.info("User authenticated successfully: {}", email))
                 .doOnError(error -> log.error("Authentication failed for {}: {}", email, error.getMessage()));
@@ -139,17 +136,23 @@ public class AuthenticationDomainService {
     public Mono<Boolean> validateOtp(Email email, String otpValue, OtpPurpose purpose) {
         log.debug("Validating OTP for email: {}, purpose: {}", email, purpose);
 
-        return Mono.fromCallable(() ->
-                        verificationCodeRepository.findValidOtp(email, otpValue, purpose, LocalDateTime.now())
-                                .orElseThrow(() -> new DomainException("Invalid or expired OTP"))
-                )
-                .map(verificationCode -> {
-                    otpValiditySpecification.check(verificationCode);
-                    verificationCode.markAsUsed();
-                    verificationCodeRepository.save(verificationCode);
-                    return true;
+        return verificationCodeRepository.findValidOtp(email, otpValue, purpose, LocalDateTime.now())
+                .switchIfEmpty(Mono.error(new DomainException("Invalid or expired OTP")))
+                .flatMap(verificationCode -> {
+                    try {
+                        otpValiditySpecification.check(verificationCode);
+                        verificationCode.markAsUsed();
+                        return verificationCodeRepository.save(verificationCode)
+                            .thenReturn(true);
+                    }catch (DomainException e) {
+                        return Mono.error(e);
+                    }
+
                 })
-                .onErrorReturn(false);
+                .onErrorResume(e -> {
+                    log.warn("OTP validation failed: {}", e.getMessage());
+                    return Mono.just(false);
+                });
     }
 
     @Transactional

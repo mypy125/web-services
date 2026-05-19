@@ -91,25 +91,27 @@ public class AuthApplicationService {
                 .flatMap(email -> {
                     UserId userId = new UserId();
 
-                    boolean isValid = otpDomainService.validateOtp(email, command.getOtp(), OtpPurpose.REGISTRATION);
-                    if (!isValid) {
-                        return Mono.error(new DomainException("Invalid OTP"));
-                    }
-
-                    return userPort.existsByEmail(email)
-                            .flatMap(exists -> {
-                                if (exists) {
-                                    return Mono.error(new DomainException("User already exists with email: " + email));
+                    return otpDomainService.validateOtp(email, command.getOtp(), OtpPurpose.REGISTRATION)
+                            .flatMap(isValid -> {
+                                if (!isValid) {
+                                    return Mono.error(new DomainException("Invalid OTP"));
                                 }
 
-                                User newUser = User.register(email, command.getFullName(), UserRole.ROLE_CUSTOMER);
+                                return userPort.existsByEmail(email)
+                                        .flatMap(exists -> {
+                                            if (exists) {
+                                                return Mono.error(new DomainException("User already exists with email: " + email));
+                                            }
 
-                                return userPort.createUser(newUser)
-                                        .flatMap(createdUser -> cartPort.createCart(userId).thenReturn(createdUser))
-                                        .flatMap(createdUser ->
-                                                authDomainService.registerNewUser(email, userId, UserRole.ROLE_CUSTOMER)
-                                                        .then(tokenDomainService.generateToken(email, userId, UserRole.ROLE_CUSTOMER))
-                                        );
+                                            User newUser = User.register(email, command.getFullName(), UserRole.ROLE_CUSTOMER);
+
+                                            return userPort.createUser(newUser)
+                                                    .flatMap(createdUser -> cartPort.createCart(userId).thenReturn(createdUser))
+                                                    .flatMap(createdUser ->
+                                                            authDomainService.registerNewUser(email, userId, UserRole.ROLE_CUSTOMER)
+                                                                    .then(tokenDomainService.generateToken(email, userId, UserRole.ROLE_CUSTOMER))
+                                                    );
+                                        });
                             });
                 })
                 .map(responseMapper::toAuthResponseDto)
@@ -203,27 +205,29 @@ public class AuthApplicationService {
         log.info("Verifying seller email: {}", email);
 
         return Mono.fromCallable(() -> new Email(email))
-                .flatMap(emailVo -> {
-                    boolean isValid = otpDomainService.validateOtp(emailVo, otp, OtpPurpose.EMAIL_VERIFICATION);
-                    if (!isValid) {
-                        return Mono.error(new DomainException("Invalid or expired OTP"));
-                    }
+                .flatMap(emailVo ->
+                        otpDomainService.validateOtp(emailVo, otp, OtpPurpose.EMAIL_VERIFICATION)
+                                .flatMap(isValid -> {
+                                    if (!isValid) {
+                                        return Mono.error(new DomainException("Invalid or expired OTP"));
+                                    }
 
-                    return sellerPort.verifySellerEmail(emailVo)
-                            .flatMap(seller -> {
-                                if (seller.getVerificationStatus() == SellerVerificationStatus.BUSINESS_VERIFIED) {
-                                    return sellerPort.activateSeller(seller.getSellerId())
-                                            .then(sellerPort.getSellerByEmail(emailVo));
-                                }
-                                return Mono.just(seller);
-                            })
-                            .flatMap(seller -> {
-                                if (seller.getUserId() == null) {
-                                    return Mono.error(new DomainException("Seller user ID not found"));
-                                }
-                                return tokenDomainService.generateToken(emailVo, seller.getUserId(), UserRole.ROLE_SELLER);
-                            });
-                })
+                                    return sellerPort.verifySellerEmail(emailVo)
+                                            .flatMap(seller -> {
+                                                if (seller.getVerificationStatus() == SellerVerificationStatus.BUSINESS_VERIFIED) {
+                                                    return sellerPort.activateSeller(seller.getSellerId())
+                                                            .then(sellerPort.getSellerByEmail(emailVo));
+                                                }
+                                                return Mono.just(seller);
+                                            })
+                                            .flatMap(seller -> {
+                                                if (seller.getUserId() == null) {
+                                                    return Mono.error(new DomainException("Seller user ID not found"));
+                                                }
+                                                return tokenDomainService.generateToken(emailVo, seller.getUserId(), UserRole.ROLE_SELLER);
+                                            });
+                                })
+                )
                 .map(responseMapper::toAuthResponseDto)
                 .map(dto -> {
                     dto.setMessage("Email verified and login successful");
