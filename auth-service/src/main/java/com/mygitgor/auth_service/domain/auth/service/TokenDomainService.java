@@ -41,7 +41,7 @@ public class TokenDomainService {
                     tokenValiditySpec.check(token);
                     return token;
                 })
-                .flatMap(tokenRepository::save);
+                .flatMap(token -> tokenRepository.save(token).thenReturn(token));
     }
 
     public Mono<Boolean> validateToken(TokenValue tokenValue) {
@@ -55,14 +55,14 @@ public class TokenDomainService {
                 .switchIfEmpty(Mono.error(new DomainException("Token not found")));
     }
 
-    public void blacklistToken(Token token) {
+    public Mono<Void> blacklistToken(Token token) {
         if (!token.isValid()) {
             throw new DomainException("Cannot blacklist invalid or expired token");
         }
 
         token.blacklist();
-        tokenRepository.save(token);
-
-        log.info("Token blacklisted for user: {}", token.getEmail());
+        return tokenRepository.save(token)
+                .doOnSuccess(saved -> log.info("Token blacklisted for user: {}", token.getEmail()))
+                .then();
     }
 }

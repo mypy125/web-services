@@ -40,4 +40,5 @@ public interface SellerPort {
     Mono<Void> updateLastActive(SellerId sellerId, LocalDateTime lastActiveAt);
     Mono<Seller> updateCommissionRate(SellerId sellerId, double commissionRate);
     Mono<Seller> activateSeller(SellerId sellerId);
+    Mono<Void> updateLastLogin(Email email, LocalDateTime now);
 }

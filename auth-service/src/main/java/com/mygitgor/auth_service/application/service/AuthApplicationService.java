@@ -110,7 +110,8 @@ public class AuthApplicationService {
                                                     .flatMap(createdUser ->
                                                             authDomainService.registerNewUser(email, userId, UserRole.ROLE_CUSTOMER)
                                                                     .then(tokenDomainService.generateToken(email, userId, UserRole.ROLE_CUSTOMER))
-                                                    );
+                                                    )
+                                                    .flatMap(token -> updateLastLogin(email, UserRole.ROLE_CUSTOMER).thenReturn(token));
                                         });
                             });
                 })
@@ -333,19 +334,14 @@ public class AuthApplicationService {
                         return Mono.error(new DomainException("Token has expired"));
                     }
 
-                    return tokenDomainService.generateToken(
-                            oldToken.getEmail(), oldToken.getUserId(), oldToken.getRole()
-                    );
+                    return tokenDomainService.blacklistToken(oldToken)
+                            .then(tokenDomainService.generateToken(
+                                    oldToken.getEmail(),
+                                    oldToken.getUserId(),
+                                    oldToken.getRole()
+                            ));
                 })
-                .flatMap(newToken ->
-                        tokenDomainService.blacklistToken(
-                                        new TokenValue(oldTokenValue),
-                                        newToken.getUserId().toString(),
-                                        newToken.getExpiresAt()
-                                )
-                                .thenReturn(newToken)
-                )
-                .map(token -> responseMapper.toAuthResponseDto(token))
+                .map(responseMapper::toAuthResponseDto)
                 .map(dto -> {
                     dto.setMessage("Token refreshed successfully");
                     dto.setTimestamp(LocalDateTime.now());
@@ -365,12 +361,15 @@ public class AuthApplicationService {
                 ));
     }
 
-
     private Mono<Void> updateLastLogin(Email email, UserRole role) {
         if (role == UserRole.ROLE_CUSTOMER) {
-            return userPort.updateLastLogin(email, LocalDateTime.now());
+            return userPort.updateLastLogin(email, LocalDateTime.now())
+                    .doOnSuccess(v -> log.debug("Last login updated for customer: {}", email))
+                    .doOnError(error -> log.error("Failed to update last login for customer: {}", email, error));
         } else if (role == UserRole.ROLE_SELLER) {
-            return sellerPort.updateLastLogin(email, LocalDateTime.now());
+            return sellerPort.updateLastLogin(email, LocalDateTime.now())
+                    .doOnSuccess(v -> log.debug("Last login updated for seller: {}", email))
+                    .doOnError(error -> log.error("Failed to update last login for seller: {}", email, error));
         }
         return Mono.empty();
     }

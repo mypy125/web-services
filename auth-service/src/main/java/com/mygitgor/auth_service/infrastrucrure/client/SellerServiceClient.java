@@ -479,6 +479,12 @@ public class SellerServiceClient implements SellerPort {
                 .doOnError(error -> log.error("Failed to activate seller {}: {}", sellerId, error.getMessage()));
     }
 
+    @Override
+    public Mono<Void> updateLastLogin(Email email, LocalDateTime now) {
+        return null;
+        //TODO: client realization and fallback realization
+    }
+
     private Mono<Seller> verifySellerDocumentsFallback(SellerId sellerId, boolean approve, String verifiedBy, String notes, Throwable t) {
         log.warn("Fallback: verifySellerDocuments for {} due to: {}", sellerId, t.getMessage());
         return fallback.verifySellerDocuments(sellerId, approve, verifiedBy, notes);
