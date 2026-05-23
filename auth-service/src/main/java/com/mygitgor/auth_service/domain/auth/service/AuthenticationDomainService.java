@@ -1,8 +1,6 @@
 package com.mygitgor.auth_service.domain.auth.service;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
-import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
-import com.mygitgor.auth_service.domain.auth.model.aggregate.AuthAggregate;
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
@@ -27,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -74,12 +71,10 @@ public class AuthenticationDomainService {
                                 .flatMap(sellerExists -> {
                                     if (sellerExists) {
                                         return sellerPort.getSellerByEmail(email)
-                                                .flatMap(seller -> {
-                                                    return Mono.justOrEmpty(seller.getUserId())
-                                                            .switchIfEmpty(Mono.error(new DomainException(
-                                                                    "Seller account exists but user association missing for email: " + email)))
-                                                            .flatMap(userId -> generateToken(email, userId, UserRole.ROLE_SELLER));
-                                                });
+                                                .flatMap(seller -> Mono.justOrEmpty(seller.getUserId())
+                                                        .switchIfEmpty(Mono.error(new DomainException(
+                                                                "Seller account exists but user association missing for email: " + email)))
+                                                        .flatMap(userId -> generateToken(email, userId, UserRole.ROLE_SELLER)));
                                     } else {
                                         return Mono.error(new DomainException("User not found with email: " + email));
                                     }
@@ -100,15 +95,13 @@ public class AuthenticationDomainService {
                         .status(TokenStatus.ACTIVE)
                         .build()
                 )
-                .flatMap(token -> {
-                    return tokenRepository.findActiveTokenByUserId(userId)
-                            .doOnNext(oldToken -> {
-                                if (oldToken != null && oldToken.isValid()) {
-                                    blacklistToken(oldToken, "New login from different device");
-                                }
-                            })
-                            .then(Mono.just(token));
-                })
+                .flatMap(token -> tokenRepository.findActiveTokenByUserId(userId)
+                        .doOnNext(oldToken -> {
+                            if (oldToken != null && oldToken.isValid()) {
+                                blacklistToken(oldToken, "New login from different device");
+                            }
+                        })
+                        .then(Mono.just(token)))
                 .flatMap(token -> tokenRepository.save(token).thenReturn(token));
     }
 

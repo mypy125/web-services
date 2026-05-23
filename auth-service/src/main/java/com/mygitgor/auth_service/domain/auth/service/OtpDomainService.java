@@ -19,8 +19,6 @@ import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -127,7 +125,7 @@ public class OtpDomainService {
                     }
                 })
                 .doOnSuccess(valid -> {
-                    if (valid) {
+                    if (Boolean.TRUE.equals(valid)) {
                         log.info("OTP validated for email: {}, purpose: {}", email, purpose);
                     }
                 })

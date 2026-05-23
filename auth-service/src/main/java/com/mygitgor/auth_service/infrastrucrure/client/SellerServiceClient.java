@@ -480,9 +480,39 @@ public class SellerServiceClient implements SellerPort {
     }
 
     @Override
+    @CircuitBreaker(name = "sellerService", fallbackMethod = "updateLastLoginFallback")
+    @Retry(name = "sellerService")
+    @TimeLimiter(name = "sellerService")
     public Mono<Void> updateLastLogin(Email email, LocalDateTime now) {
-        return null;
-        //TODO: client realization and fallback realization
+        log.info("Updating last login for seller: {} at {}", email, now);
+
+        UpdateLastLoginRequestDto request = UpdateLastLoginRequestDto.builder()
+                .email(email.toString())
+                .lastLoginAt(now)
+                .build();
+
+        return webClient.patch()
+                .uri("/{email}/last-login", email.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        handleClientErrorResponse(response, "update last login", email.toString()))
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        handleServerErrorResponse(response, "update last login", email.toString()))
+                .toBodilessEntity()
+                .timeout(Duration.ofMillis(timeout))
+                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                        .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
+                .then()
+                .doOnSuccess(v -> log.info("Last login updated successfully for seller: {}", email))
+                .doOnError(error -> log.error("Failed to update last login for seller: {}", email, error.getMessage()));
+    }
+
+    private Mono<Void> updateLastLoginFallback(Email email, LocalDateTime now, Throwable t) {
+        log.warn("Fallback: updateLastLogin for seller {} due to: {}", email, t.getMessage());
+        return fallback.updateLastLogin(email, now);
     }
 
     private Mono<Seller> verifySellerDocumentsFallback(SellerId sellerId, boolean approve, String verifiedBy, String notes, Throwable t) {

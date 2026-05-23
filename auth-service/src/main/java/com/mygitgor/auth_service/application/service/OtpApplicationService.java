@@ -36,13 +36,13 @@ public class OtpApplicationService {
     }
 
     public Mono<Boolean> verifyOtp(VerifyOtpCommand command) {
-        return Mono.fromCallable(() -> {
-                    Email emailVo = new Email(command.getEmail());
+        return Mono.fromCallable(() -> new Email(command.getEmail()))
+                .flatMap(emailVo -> {
                     OtpPurpose purpose = OtpPurpose.valueOf(command.getPurpose());
                     return otpDomainService.validateOtp(emailVo, command.getOtp(), purpose);
                 })
                 .doOnSuccess(isValid -> {
-                    if (isValid) {
+                    if (Boolean.TRUE.equals(isValid)) {
                         log.info("OTP verified successfully for email: {}", command.getEmail());
                     } else {
                         log.warn("Invalid OTP for email: {}", command.getEmail());

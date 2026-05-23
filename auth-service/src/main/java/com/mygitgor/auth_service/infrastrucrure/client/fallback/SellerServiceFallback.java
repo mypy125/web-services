@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.naming.ServiceUnavailableException;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Component
@@ -62,5 +63,10 @@ public class SellerServiceFallback {
     public Mono<Seller> verifySellerDocuments(SellerId sellerId, boolean approve, String verifiedBy, String notes) {
         log.warn("Fallback: Cannot verify seller documents for ID: {}", sellerId);
         return Mono.error(new ServiceUnavailableException("Seller service unavailable for document verification"));
+    }
+
+    public Mono<Void> updateLastLogin(Email email, LocalDateTime now) {
+        log.warn("Fallback: Cannot update last login for seller: {} at {}", email, now);
+        return Mono.empty();
     }
 }
