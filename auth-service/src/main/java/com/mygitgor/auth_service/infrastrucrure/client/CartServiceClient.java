@@ -106,7 +106,7 @@ public class CartServiceClient implements CartPort {
                 .bodyToMono(CartDto.class)
                 .map(this::toDomainCart)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(cart -> log.info("Cart created successfully for user: {}", userId))
                 .doOnError(error -> log.error("Failed to create cart for user {}: {}", userId, error.getMessage()));
@@ -123,15 +123,17 @@ public class CartServiceClient implements CartPort {
                 .uri("/user/{userId}", userId.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode::NOT_FOUND::equals, response -> {
-            log.debug("Cart not found for user: {}, returning empty cart", userId);
-            return Mono.just(Cart.create(userId));
-        })
-                .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "get cart", userId.toString()))
-                .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "get cart", userId.toString()))
+                .onStatus(status -> status.is4xxClientError() && !status.equals(HttpStatus.NOT_FOUND),
+                response -> handleClientErrorResponse(response, "get cart", userId.toString()))
+                .onStatus(HttpStatusCode::is5xxServerError,
+                        response -> handleServerErrorResponse(response, "get cart", userId.toString()))
                 .bodyToMono(CartDto.class)
                 .map(this::toDomainCart)
                 .timeout(Duration.ofMillis(timeout))
+                .onErrorResume(WebClientResponseException.NotFound.class, error -> {
+                    log.debug("Cart not found for user: {}, returning empty cart", userId);
+                    return Mono.just(Cart.create(userId));
+                })
                 .doOnSuccess(cart -> log.debug("Cart fetched successfully for user: {}", userId))
                 .doOnError(error -> log.error("Failed to fetch cart for user {}: {}", userId, error.getMessage()));
     }

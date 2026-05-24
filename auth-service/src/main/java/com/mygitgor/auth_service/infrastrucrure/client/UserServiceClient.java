@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -103,7 +104,7 @@ public class UserServiceClient implements UserPort {
                         handleServerErrorResponse(response, "exists by email", email.toString()))
                 .bodyToMono(Boolean.class)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable ||
                                 throwable instanceof java.net.ConnectException))
                 .onErrorReturn(false)
@@ -122,7 +123,7 @@ public class UserServiceClient implements UserPort {
                 .uri("/{email}/auth-info", email.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found with email: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get user by email", email.toString()))
@@ -131,7 +132,7 @@ public class UserServiceClient implements UserPort {
                 .bodyToMono(UserAuthInfoDto.class)
                 .map(this::toDomainUser)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(user -> log.info("Successfully fetched user: {}", email))
                 .doOnError(error -> log.error("Failed to fetch user by email {}: {}", email, error.getMessage()));
@@ -148,7 +149,7 @@ public class UserServiceClient implements UserPort {
                 .uri("/id/{userId}", userId.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found with ID: " + userId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get user by id", userId.toString()))
@@ -182,7 +183,7 @@ public class UserServiceClient implements UserPort {
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode.CONFLICT::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.CONFLICT), response ->
                         handleClientErrorResponse(response, "create user", user.getEmail().toString()))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "create user", user.getEmail().toString()))
@@ -191,7 +192,7 @@ public class UserServiceClient implements UserPort {
                 .bodyToMono(UserDto.class)
                 .map(this::toDomainUser)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(created -> log.info("User created successfully: {}", user.getEmail()))
                 .doOnError(error -> log.error("Failed to create user {}: {}", user.getEmail(), error.getMessage()));
@@ -216,7 +217,7 @@ public class UserServiceClient implements UserPort {
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found: " + user.getEmail())))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "update user", user.getEmail().toString()))
@@ -240,7 +241,7 @@ public class UserServiceClient implements UserPort {
                 .uri("/{email}/verify", email.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "verify email", email.toString()))
@@ -419,7 +420,7 @@ public class UserServiceClient implements UserPort {
                 .uri("/{email}/auth-info", email)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found with email: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get auth info", email))
@@ -427,7 +428,7 @@ public class UserServiceClient implements UserPort {
                         handleServerErrorResponse(response, "get auth info", email))
                 .bodyToMono(UserAuthInfoDto.class)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable));
     }
 

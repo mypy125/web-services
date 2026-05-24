@@ -3,6 +3,7 @@ package com.mygitgor.auth_service.infrastrucrure.client;
 import com.mygitgor.auth_service.infrastrucrure.mapper.SellerMapper;
 import jakarta.annotation.PostConstruct;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import com.mygitgor.auth_service.application.dto.common.AddressDto;
@@ -111,7 +112,7 @@ public class SellerServiceClient implements SellerPort {
                         handleServerErrorResponse(response, "exists by email", email.toString()))
                 .bodyToMono(Boolean.class)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable ||
                                 throwable instanceof java.net.ConnectException))
                 .onErrorReturn(false)
@@ -129,7 +130,7 @@ public class SellerServiceClient implements SellerPort {
                 .uri("/{email}/auth-info", email.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found with email: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get seller by email", email.toString()))
@@ -138,7 +139,7 @@ public class SellerServiceClient implements SellerPort {
                 .bodyToMono(SellerAuthInfoDto.class)
                 .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(seller -> log.info("Successfully fetched seller: {}", email))
                 .doOnError(error -> log.error("Failed to fetch seller by email {}: {}", email, error.getMessage()));
@@ -155,7 +156,7 @@ public class SellerServiceClient implements SellerPort {
                 .uri("/{sellerId}", sellerId.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found with ID: " + sellerId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get seller by id", sellerId.toString()))
@@ -179,7 +180,7 @@ public class SellerServiceClient implements SellerPort {
                 .uri("/user/{userId}", userId.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found for user: " + userId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "get seller by user id", userId.toString()))
@@ -219,7 +220,7 @@ public class SellerServiceClient implements SellerPort {
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode.CONFLICT::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.CONFLICT), response ->
                         handleClientErrorResponse(response, "create seller", seller.getEmail().toString()))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "create seller", seller.getEmail().toString()))
@@ -228,7 +229,7 @@ public class SellerServiceClient implements SellerPort {
                 .bodyToMono(SellerDto.class)
                 .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(created -> log.info("Seller created successfully: {}", seller.getEmail()))
                 .doOnError(error -> log.error("Failed to create seller {}: {}", seller.getEmail(), error.getMessage()));
@@ -260,7 +261,7 @@ public class SellerServiceClient implements SellerPort {
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found: " + seller.getEmail())))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "update seller", seller.getEmail().toString()))
@@ -284,7 +285,7 @@ public class SellerServiceClient implements SellerPort {
                 .uri("/{email}/verify-email", email.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "verify email", email.toString()))
@@ -317,7 +318,7 @@ public class SellerServiceClient implements SellerPort {
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found with ID: " + sellerId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "verify seller documents", sellerId.toString()))
@@ -326,7 +327,7 @@ public class SellerServiceClient implements SellerPort {
                 .bodyToMono(SellerDto.class)
                 .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(seller -> log.info("Seller documents verified successfully: {}", sellerId))
                 .doOnError(error -> log.error("Failed to verify seller documents for {}: {}", sellerId, error.getMessage()));
@@ -464,7 +465,7 @@ public class SellerServiceClient implements SellerPort {
                 .uri("/{sellerId}/activate", sellerId.toString())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(status -> status.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found with ID: " + sellerId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "activate seller", sellerId.toString()))
@@ -473,7 +474,7 @@ public class SellerServiceClient implements SellerPort {
                 .bodyToMono(SellerDto.class)
                 .map(sellerMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .doOnSuccess(seller -> log.info("Seller activated successfully: {}", sellerId))
                 .doOnError(error -> log.error("Failed to activate seller {}: {}", sellerId, error.getMessage()));
@@ -503,7 +504,7 @@ public class SellerServiceClient implements SellerPort {
                         handleServerErrorResponse(response, "update last login", email.toString()))
                 .toBodilessEntity()
                 .timeout(Duration.ofMillis(timeout))
-                .retryWhen(Retry.backoff(retryAttempts, Duration.ofSeconds(1))
+                .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
                 .then()
                 .doOnSuccess(v -> log.info("Last login updated successfully for seller: {}", email))
