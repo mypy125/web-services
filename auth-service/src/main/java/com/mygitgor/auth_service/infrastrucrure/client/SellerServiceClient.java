@@ -344,7 +344,7 @@ public class SellerServiceClient implements SellerPort {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(Map.of("status", status, "reason", reason))
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(httpStatus -> httpStatus.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new SellerNotFoundException("Seller not found: " + sellerId)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "update account status", sellerId.toString()))

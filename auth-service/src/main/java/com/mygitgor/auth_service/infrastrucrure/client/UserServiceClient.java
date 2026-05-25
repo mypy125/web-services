@@ -12,6 +12,7 @@ import com.mygitgor.auth_service.infrastrucrure.client.exception.UserAlreadyExis
 import com.mygitgor.auth_service.infrastrucrure.client.exception.UserNotFoundException;
 import com.mygitgor.auth_service.infrastrucrure.client.fallback.UserServiceFallback;
 import com.mygitgor.auth_service.infrastrucrure.client.interceptor.ServiceClientInterceptor;
+import com.mygitgor.auth_service.infrastrucrure.mapper.UserMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
@@ -40,6 +41,7 @@ public class UserServiceClient implements UserPort {
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final UserServiceFallback fallback;
+    private final UserMapper userMapper;
 
     @Value("${user.service.url:http://localhost:8082/api/users}")
     private String baseUrl;
@@ -130,7 +132,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get user by email", email.toString()))
                 .bodyToMono(UserAuthInfoDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
@@ -156,7 +158,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get user by id", userId.toString()))
                 .bodyToMono(UserDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(user -> log.debug("User fetched successfully: {}", userId))
                 .doOnError(error -> log.error("Failed to fetch user by ID {}: {}", userId, error.getMessage()));
@@ -190,7 +192,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "create user", user.getEmail().toString()))
                 .bodyToMono(UserDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
@@ -224,7 +226,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "update user", user.getEmail().toString()))
                 .bodyToMono(UserDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(updated -> log.info("User updated successfully: {}", user.getEmail()))
                 .doOnError(error -> log.error("Failed to update user {}: {}", user.getEmail(), error.getMessage()));
@@ -248,7 +250,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "verify email", email.toString()))
                 .bodyToMono(UserDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(verified -> log.info("Email verified successfully for user: {}", email))
                 .doOnError(error -> log.error("Failed to verify email for user {}: {}", email, error.getMessage()));
@@ -307,14 +309,14 @@ public class UserServiceClient implements UserPort {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(Map.of("status", status))
                 .retrieve()
-                .onStatus(HttpStatusCode.NOT_FOUND::equals, response ->
+                .onStatus(httpStatus -> httpStatus.equals(HttpStatus.NOT_FOUND), response ->
                         Mono.error(new UserNotFoundException("User not found: " + email)))
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         handleClientErrorResponse(response, "update account status", email.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "update account status", email.toString()))
                 .bodyToMono(UserDto.class)
-                .map(this::toDomainUser)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(user -> log.info("Account status updated for user: {} to {}", email, status))
                 .doOnError(error -> log.error("Failed to update account status for user {}: {}", email, error.getMessage()));
@@ -377,7 +379,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         handleServerErrorResponse(response, "get user statistics", userId.toString()))
                 .bodyToMono(UserStatisticsDto.class)
-                .map(this::toDomainStatistics)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(stats -> log.debug("Statistics fetched for user: {}", userId))
                 .doOnError(error -> log.warn("Failed to fetch statistics for user {}: {}", userId, error.getMessage()));
@@ -403,10 +405,14 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ServiceUnavailableException("User service unavailable")))
                 .bodyToMono(UserPageDto.class)
-                .map(this::toDomainPage)
+                .map(userMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
-                .doOnSuccess(result -> log.debug("Search completed, found {} users",
-                        result.getContent() != null ? result.getContent().size() : 0));
+                .doOnSuccess(result -> {
+                    assert result != null;
+                    result.getContent();
+                    log.debug("Search completed, found {} users",
+                            result.getContent().size());
+                });
     }
 
     @Override
@@ -465,67 +471,5 @@ public class UserServiceClient implements UserPort {
     private Mono<User> verifyEmailFallback(Email email, Throwable t) {
         log.warn("Fallback: verifyEmail for {} due to: {}", email, t.getMessage());
         return fallback.verifyEmail(email);
-    }
-
-    private User toDomainUser(UserDto dto) {
-        if (dto == null) return null;
-
-        return User.builder()
-                .id(new UserId(dto.getId()))
-                .email(new Email(dto.getEmail()))
-                .fullName(dto.getFullName())
-                .role(dto.getRole())
-                .emailVerified(dto.isEmailVerified())
-                .profileImage(dto.getProfileImage())
-                .phoneNumber(dto.getPhoneNumber())
-                .accountStatus(dto.getAccountStatus())
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
-                .lastLoginAt(dto.getLastLoginAt())
-                .emailVerifiedAt(dto.getEmailVerifiedAt())
-                .build();
-    }
-
-    private User toDomainUser(UserAuthInfoDto dto) {
-        if (dto == null) return null;
-
-        return User.builder()
-                .id(new UserId(dto.getId()))
-                .email(new Email(dto.getEmail()))
-                .fullName(dto.getFullName())
-                .role(dto.getRole())
-                .emailVerified(dto.isEmailVerified())
-                .build();
-    }
-
-    private UserStatistics toDomainStatistics(UserStatisticsDto dto) {
-        if (dto == null) return null;
-
-        return UserStatistics.builder()
-                .userId(dto.getUserId())
-                .totalOrders(dto.getTotalOrders())
-                .totalSpent(dto.getTotalSpent())
-                .averageOrderValue(dto.getAverageOrderValue())
-                .totalReviews(dto.getTotalReviews())
-                .averageRating(dto.getAverageRating())
-                .lastOrderDate(dto.getLastOrderDate())
-                .preferredCategory(dto.getPreferredCategory())
-                .build();
-    }
-
-    private Page<User> toDomainPage(UserPageDto dto) {
-        if (dto == null) return Page.empty();
-
-        return Page.<User>builder()
-                .content(dto.getContent().stream().map(this::toDomainUser).toList())
-                .pageNumber(dto.getPageNumber())
-                .pageSize(dto.getPageSize())
-                .totalElements(dto.getTotalElements())
-                .totalPages(dto.getTotalPages())
-                .last(dto.isLast())
-                .first(dto.isFirst())
-                .numberOfElements(dto.getNumberOfElements())
-                .empty(dto.isEmpty())
-                .build();
     }
 }

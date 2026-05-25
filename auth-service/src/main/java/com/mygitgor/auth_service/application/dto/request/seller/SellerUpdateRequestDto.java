@@ -41,4 +41,18 @@ public class SellerUpdateRequestDto {
 
     @Schema(description = "GST/VAT number", example = "22AAAAA0000A1Z")
     private String gstNumber;
+
+    @Pattern(regexp = "[A-Z]{5}[0-9]{4}[A-Z]{1}", message = "Invalid PAN format")
+    @Schema(description = "PAN card number", example = "ABCDE1234F")
+    private String panNumber;
+
+    @Schema(description = "URL of the store logo")
+    private String storeLogo;
+
+    @Schema(description = "URL of the store banner image")
+    private String storeBanner;
+
+    @Size(max = 1000, message = "Store description must not exceed 1000 characters")
+    @Schema(description = "Short description of the store/business", example = "The best electronics shop in town.")
+    private String storeDescription;
 }
