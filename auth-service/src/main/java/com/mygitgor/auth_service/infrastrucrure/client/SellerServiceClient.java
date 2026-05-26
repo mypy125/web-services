@@ -6,9 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.ClientResponse;
-import com.mygitgor.auth_service.application.dto.common.AddressDto;
-import com.mygitgor.auth_service.application.dto.common.BankDetailsDto;
-import com.mygitgor.auth_service.application.dto.common.BusinessDetailsDto;
 import com.mygitgor.auth_service.application.dto.request.seller.SellerUpdateRequestDto;
 import com.mygitgor.auth_service.domain.seller.model.*;
 import com.mygitgor.auth_service.domain.seller.model.valueobject.Address;
@@ -204,9 +201,9 @@ public class SellerServiceClient implements SellerPort {
                 .email(seller.getEmail().toString())
                 .mobile(seller.getMobile())
                 .userId(seller.getUserId() != null ? seller.getUserId().toString() : null)
-                .businessDetails(toBusinessDetailsDto(seller.getBusinessDetails()))
-                .bankDetails(toBankDetailsDto(seller.getBankDetails()))
-                .pickupAddress(toAddressDto(seller.getPickupAddress()))
+                .businessDetails(sellerMapper.toBusinessDetailsDto(seller.getBusinessDetails()))
+                .bankDetails(sellerMapper.toBankDetailsDto(seller.getBankDetails()))
+                .pickupAddress(sellerMapper.toAddressDto(seller.getPickupAddress()))
                 .gstNumber(seller.getGstNumber())
                 .panNumber(seller.getPanNumber())
                 .storeLogo(seller.getStoreLogo())
@@ -245,9 +242,9 @@ public class SellerServiceClient implements SellerPort {
         SellerUpdateRequestDto request = SellerUpdateRequestDto.builder()
                 .sellerName(seller.getSellerName())
                 .mobile(seller.getMobile())
-                .businessDetails(toBusinessDetailsDto(seller.getBusinessDetails()))
-                .bankDetails(toBankDetailsDto(seller.getBankDetails()))
-                .pickupAddress(toAddressDto(seller.getPickupAddress()))
+                .businessDetails(sellerMapper.toBusinessDetailsDto(seller.getBusinessDetails()))
+                .bankDetails(sellerMapper.toBankDetailsDto(seller.getBankDetails()))
+                .pickupAddress(sellerMapper.toAddressDto(seller.getPickupAddress()))
                 .gstNumber(seller.getGstNumber())
                 .panNumber(seller.getPanNumber())
                 .storeLogo(seller.getStoreLogo())
@@ -566,46 +563,4 @@ public class SellerServiceClient implements SellerPort {
         return fallback.updateAccountStatus(sellerId, status, reason);
     }
 
-    private BusinessDetailsDto toBusinessDetailsDto(BusinessDetails domain) {
-        if (domain == null) return null;
-
-        return BusinessDetailsDto.builder()
-                .businessName(domain.getBusinessName())
-                .businessEmail(domain.getBusinessEmail() != null ? domain.getBusinessEmail().toString() : null)
-                .businessMobile(domain.getBusinessMobile())
-                .businessAddress(domain.getBusinessAddress())
-                .registrationNumber(domain.getRegistrationNumber())
-                .taxId(domain.getTaxId())
-                .website(domain.getWebsite())
-                .description(domain.getDescription())
-                .businessType(domain.getBusinessType())
-                .build();
-    }
-
-    private BankDetailsDto toBankDetailsDto(BankDetails domain) {
-        if (domain == null) return null;
-
-        return BankDetailsDto.builder()
-                .accountNumber(domain.getAccountNumber())
-                .accountHolderName(domain.getAccountHolderName())
-                .bankName(domain.getBankName())
-                .bankCode(domain.getBankCode())
-                .accountType(domain.getAccountType())
-                .upiId(domain.getUpiId())
-                .build();
-    }
-
-    private AddressDto toAddressDto(Address domain) {
-        if (domain == null) return null;
-
-        return AddressDto.builder()
-                .name(domain.getName())
-                .locality(domain.getLocality())
-                .address(domain.getAddress())
-                .city(domain.getCity())
-                .state(domain.getState())
-                .pinCode(domain.getPinCode())
-                .mobile(domain.getMobile())
-                .build();
-    }
 }

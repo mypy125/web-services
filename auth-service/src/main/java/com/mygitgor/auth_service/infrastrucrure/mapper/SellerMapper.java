@@ -46,6 +46,26 @@ public interface SellerMapper {
 
     Address toAddress(AddressDto dto);
 
+    @Mapping(target = "id", source = "sellerId", qualifiedByName = "fromSellerId")
+    @Mapping(target = "email", source = "email", qualifiedByName = "fromEmail")
+    @Mapping(target = "userId", source = "userId", qualifiedByName = "fromUserId")
+    @Mapping(target = "businessDetails", source = "businessDetails")
+    @Mapping(target = "bankDetails", source = "bankDetails")
+    @Mapping(target = "pickupAddress", source = "pickupAddress")
+    SellerDto toDto(Seller domain);
+
+    @Mapping(target = "id", source = "sellerId", qualifiedByName = "fromSellerId")
+    @Mapping(target = "email", source = "email", qualifiedByName = "fromEmail")
+    @Mapping(target = "userId", source = "userId", qualifiedByName = "fromUserId")
+    SellerAuthInfoDto toAuthInfoDto(Seller domain);
+
+    @Mapping(target = "businessEmail", source = "businessEmail", qualifiedByName = "fromEmail")
+    BusinessDetailsDto toBusinessDetailsDto(BusinessDetails domain);
+
+    BankDetailsDto toBankDetailsDto(BankDetails domain);
+
+    AddressDto toAddressDto(Address domain);
+
     @Named("toSellerId")
     default SellerId toSellerId(UUID uuid) {
         if (uuid == null) return null;
