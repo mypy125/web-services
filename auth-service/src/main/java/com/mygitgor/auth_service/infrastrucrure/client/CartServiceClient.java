@@ -8,6 +8,7 @@ import com.mygitgor.auth_service.domain.cart.model.CartValidationResult;
 import com.mygitgor.auth_service.domain.cart.port.CartPort;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.infrastrucrure.client.dto.*;
+import com.mygitgor.auth_service.infrastrucrure.mapper.CartMapper;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import com.mygitgor.auth_service.infrastrucrure.client.exception.CartNotFoundException;
 import com.mygitgor.auth_service.infrastrucrure.client.exception.ServiceClientException;
@@ -31,7 +32,6 @@ import reactor.core.publisher.Mono;
 
 import javax.naming.ServiceUnavailableException;
 import java.time.Duration;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -41,6 +41,7 @@ public class CartServiceClient implements CartPort {
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final CartServiceFallback fallback;
+    private final CartMapper cartMapper;
 
     @Value("${cart.service.url:http://localhost:8084/api/carts}")
     private String baseUrl;
@@ -104,7 +105,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "create cart", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "create cart", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .retryWhen(reactor.util.retry.Retry.backoff(retryAttempts, Duration.ofSeconds(1))
                         .filter(throwable -> throwable instanceof WebClientResponseException.ServiceUnavailable))
@@ -128,7 +129,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is5xxServerError,
                         response -> handleServerErrorResponse(response, "get cart", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .onErrorResume(WebClientResponseException.NotFound.class, error -> {
                     log.debug("Cart not found for user: {}, returning empty cart", userId);
@@ -152,7 +153,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "get cart by id", cartId))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "get cart by id", cartId))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout));
     }
 
@@ -180,7 +181,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "add item to cart", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "add item to cart", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Item added to cart for user: {}", userId))
                 .doOnError(error -> log.error("Failed to add item to cart for user {}: {}", userId, error.getMessage()));
@@ -207,7 +208,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "update item quantity", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "update item quantity", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Item quantity updated for user: {}", userId))
                 .doOnError(error -> log.error("Failed to update item quantity for user {}: {}", userId, error.getMessage()));
@@ -226,7 +227,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "remove item from cart", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "remove item from cart", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Item removed from cart for user: {}", userId))
                 .doOnError(error -> log.error("Failed to remove item from cart for user {}: {}", userId, error.getMessage()));
@@ -265,7 +266,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "get cart summary", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "get cart summary", userId.toString()))
                 .bodyToMono(CartSummaryDto.class)
-                .map(this::toDomainCartSummary)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnError(error -> log.warn("Failed to get cart summary for user {}: {}", userId, error.getMessage()));
     }
@@ -290,7 +291,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "apply coupon", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "apply coupon", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Coupon applied to cart for user: {}", userId))
                 .doOnError(error -> log.error("Failed to apply coupon for user {}: {}", userId, error.getMessage()));
@@ -309,7 +310,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "remove coupon", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "remove coupon", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Coupon removed from cart for user: {}", userId));
     }
@@ -368,7 +369,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "merge carts", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "merge carts", userId.toString()))
                 .bodyToMono(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(cart -> log.info("Carts merged successfully for user: {}", userId));
     }
@@ -386,7 +387,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is4xxClientError, response -> handleClientErrorResponse(response, "validate cart", userId.toString()))
                 .onStatus(HttpStatusCode::is5xxServerError, response -> handleServerErrorResponse(response, "validate cart", userId.toString()))
                 .bodyToMono(CartValidationResultDto.class)
-                .map(this::toDomainValidationResult)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout));
     }
 
@@ -459,7 +460,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ServiceUnavailableException("Cart service unavailable")))
                 .bodyToFlux(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout));
     }
 
@@ -480,7 +481,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ServiceUnavailableException("Cart service unavailable")))
                 .bodyToFlux(CartDto.class)
-                .map(this::toDomainCart)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout));
     }
 
@@ -499,7 +500,7 @@ public class CartServiceClient implements CartPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ServiceUnavailableException("Cart service unavailable")))
                 .bodyToMono(CartAnalyticsDto.class)
-                .map(this::toDomainAnalytics)
+                .map(cartMapper::toDomain)
                 .timeout(Duration.ofMillis(timeout));
     }
 
@@ -551,114 +552,5 @@ public class CartServiceClient implements CartPort {
     public Mono<Cart> removeCouponFallback(UserId userId, Throwable t) {
         log.warn("Fallback: removeCoupon for user {} due to: {}", userId, t.getMessage());
         return fallback.removeCoupon(userId);
-    }
-
-    private Cart toDomainCart(CartDto dto) {
-        if (dto == null) return null;
-
-        return Cart.builder()
-                .id(dto.getId())
-                .userId(new UserId(dto.getUserId()))
-                .items(dto.getItems() != null ? dto.getItems().stream()
-                        .map(this::toDomainCartItem)
-                        .collect(Collectors.toList()) : null)
-                .subtotal(dto.getSubtotal())
-                .discount(dto.getDiscount())
-                .shippingCost(dto.getShippingCost())
-                .tax(dto.getTax())
-                .total(dto.getTotal())
-                .couponCode(dto.getCouponCode())
-                .couponDiscount(dto.getCouponDiscount())
-                .totalItems(dto.getTotalItems())
-                .itemsReserved(dto.isItemsReserved())
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
-                .lastActivityAt(dto.getLastActivityAt())
-                .build();
-    }
-
-    private CartItem toDomainCartItem(CartItemDto dto) {
-        if (dto == null) return null;
-
-        return CartItem.builder()
-                .productId(dto.getProductId())
-                .productName(dto.getProductName())
-                .productImage(dto.getProductImage())
-                .sellerId(dto.getSellerId())
-                .sellerName(dto.getSellerName())
-                .price(dto.getPrice())
-                .quantity(dto.getQuantity())
-                .totalPrice(dto.getTotalPrice())
-                .variantId(dto.getVariantId())
-                .variantName(dto.getVariantName())
-                .maxQuantity(dto.getMaxQuantity())
-                .inStock(dto.isInStock())
-                .build();
-    }
-
-    private CartSummary toDomainCartSummary(CartSummaryDto dto) {
-        if (dto == null) return null;
-
-        return CartSummary.builder()
-                .cartId(dto.getCartId())
-                .totalItems(dto.getTotalItems())
-                .uniqueProducts(dto.getUniqueProducts())
-                .subtotal(dto.getSubtotal())
-                .discount(dto.getDiscount())
-                .shippingCost(dto.getShippingCost())
-                .tax(dto.getTax())
-                .total(dto.getTotal())
-                .couponCode(dto.getCouponCode())
-                .itemSummaries(dto.getItemSummaries() != null ?
-                        dto.getItemSummaries().stream()
-                                .map(this::toDomainItemSummary)
-                                .collect(Collectors.toList()) : null)
-                .build();
-    }
-
-    private CartSummary.CartItemSummary toDomainItemSummary(CartItemSummaryDto dto) {
-        return CartSummary.CartItemSummary.builder()
-                .productId(dto.getProductId())
-                .productName(dto.getProductName())
-                .quantity(dto.getQuantity())
-                .price(dto.getPrice())
-                .totalPrice(dto.getTotalPrice())
-                .inStock(dto.isInStock())
-                .build();
-    }
-
-    private CartValidationResult toDomainValidationResult(CartValidationResultDto dto) {
-        if (dto == null) return null;
-
-        return CartValidationResult.builder()
-                .valid(dto.isValid())
-                .errors(dto.getErrors())
-                .itemErrors(dto.getItemErrors())
-                .unavailableItems(dto.getUnavailableItems() != null ?
-                        dto.getUnavailableItems().stream()
-                                .map(this::toDomainCartItem)
-                                .collect(Collectors.toList()) : null)
-                .priceChangedItems(dto.getPriceChangedItems() != null ?
-                        dto.getPriceChangedItems().stream()
-                                .map(this::toDomainCartItem)
-                                .collect(Collectors.toList()) : null)
-                .originalTotal(dto.getOriginalTotal())
-                .updatedTotal(dto.getUpdatedTotal())
-                .build();
-    }
-
-    private CartAnalytics toDomainAnalytics(CartAnalyticsDto dto) {
-        if (dto == null) return null;
-
-        return CartAnalytics.builder()
-                .totalActiveCarts(dto.getTotalActiveCarts())
-                .totalAbandonedCarts(dto.getTotalAbandonedCarts())
-                .averageCartValue(dto.getAverageCartValue())
-                .conversionRate(dto.getConversionRate())
-                .topProductsInCarts(dto.getTopProductsInCarts())
-                .cartsByHour(dto.getCartsByHour())
-                .averageItemsPerCart(dto.getAverageItemsPerCart())
-                .cartsWithCoupons(dto.getCartsWithCoupons())
-                .build();
     }
 }
