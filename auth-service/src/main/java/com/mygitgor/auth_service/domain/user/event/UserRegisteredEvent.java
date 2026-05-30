@@ -11,17 +11,19 @@ import java.time.LocalDateTime;
 public class UserRegisteredEvent extends ApplicationEvent {
     private final String email;
     private final String userId;
+    private final String name;
     private final UserRole role;
     private final String deviceId;
     private final String ipAddress;
     private final LocalDateTime occurredAt;
 
     @Builder
-    public UserRegisteredEvent(Object source, String email, String userId, UserRole role,
+    public UserRegisteredEvent(Object source, String email, String userId,String name, UserRole role,
                                String deviceId, String ipAddress, LocalDateTime occurredAt) {
         super(source);
         this.email = email;
         this.userId = userId;
+        this.name = name;
         this.role = role;
         this.deviceId = deviceId;
         this.ipAddress = ipAddress;

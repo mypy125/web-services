@@ -4,7 +4,7 @@ import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.model.event.OtpGeneratedEvent;
-import com.mygitgor.auth_service.domain.auth.model.port.NotificationPort;
+import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
@@ -30,7 +30,7 @@ public class OtpDomainService {
     private final VerificationCodeRepository verificationCodeRepository;
     private final OtpValiditySpecification otpValiditySpec;
     private final ApplicationEventPublisher eventPublisher;
-    private final NotificationPort notificationPort;
+    private final NotificationPublisher notificationPort;
 
     @Transactional
     public Mono<VerificationCode> generateOtp(Email email, UserRole role, OtpPurpose purpose) {

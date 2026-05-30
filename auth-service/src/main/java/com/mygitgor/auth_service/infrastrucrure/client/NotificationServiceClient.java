@@ -1,7 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.client;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
-import com.mygitgor.auth_service.domain.auth.model.port.NotificationPort;
+import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.infrastrucrure.client.dto.EmailNotificationRequestDto;
 import com.mygitgor.auth_service.infrastrucrure.client.exception.NotificationNotFoundException;
@@ -31,7 +31,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificationServiceClient implements NotificationPort {
+public class NotificationServiceClient implements NotificationPublisher {
     private final WebClient.Builder webClientBuilder;
     private final ServiceClientInterceptor clientInterceptor;
     private final NotificationServiceFallback fallback;

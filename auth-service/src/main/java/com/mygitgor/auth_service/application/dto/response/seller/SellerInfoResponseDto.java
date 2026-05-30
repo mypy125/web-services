@@ -3,6 +3,7 @@ package com.mygitgor.auth_service.application.dto.response.seller;
 import com.mygitgor.auth_service.application.dto.common.AddressDto;
 import com.mygitgor.auth_service.application.dto.common.BankDetailsDto;
 import com.mygitgor.auth_service.application.dto.common.BusinessDetailsDto;
+import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

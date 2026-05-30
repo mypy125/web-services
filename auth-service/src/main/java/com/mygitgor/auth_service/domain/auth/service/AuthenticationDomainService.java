@@ -6,6 +6,7 @@ import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
+import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
@@ -16,10 +17,12 @@ import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.specification.OtpValiditySpecification;
 import com.mygitgor.auth_service.domain.specification.TokenValiditySpecification;
+import com.mygitgor.auth_service.domain.user.event.UserLoggedInEvent;
 import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.port.UserPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -35,6 +38,7 @@ public class AuthenticationDomainService {
     private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final OtpValiditySpecification otpValiditySpecification;
     private final TokenValiditySpecification tokenValiditySpecification;
+    private final ApplicationEventPublisher eventPublisher;
     private final UserPort userPort;
     private final SellerPort sellerPort;
     private final JwtPort jwtPort;
@@ -55,6 +59,20 @@ public class AuthenticationDomainService {
                     verificationCode.markAsUsed();
                     return verificationCodeRepository.save(verificationCode)
                             .then(getUserInfoAndGenerateToken(email));
+                })
+                .flatMap(token -> {
+                    eventPublisher.publishEvent(UserLoggedInEvent.builder()
+                            .source(this)
+                            .email(email.toString())
+                            .userId(token.getUserId().toString())
+                            .token(token.getValue().toString())
+                            .deviceId(null)
+                            .ipAddress(null)
+                            .userAgent(null)
+                            .occurredAt(LocalDateTime.now())
+                            .build());
+
+                    return updateLastLogin(email, token.getRole()).thenReturn(token);
                 })
                 .doOnSuccess(token -> log.info("User authenticated successfully: {}", email))
                 .doOnError(error -> log.error("Authentication failed for {}: {}", email, error.getMessage()));
@@ -208,6 +226,19 @@ public class AuthenticationDomainService {
                 })
                 .flatMap(tokens -> tokenRepository.deleteAllByEmail(email))
                 .doOnSuccess(v -> log.info("User logged out from all devices: {}", email));
+    }
+
+    private Mono<Void> updateLastLogin(Email email, UserRole role) {
+        if (role == UserRole.ROLE_CUSTOMER) {
+            return userPort.updateLastLogin(email, LocalDateTime.now())
+                    .doOnSuccess(v -> log.debug("Last login updated for customer: {}", email))
+                    .doOnError(error -> log.error("Failed to update last login for customer: {}", email, error));
+        } else if (role == UserRole.ROLE_SELLER) {
+            return sellerPort.updateLastLogin(email, LocalDateTime.now())
+                    .doOnSuccess(v -> log.debug("Last login updated for seller: {}", email))
+                    .doOnError(error -> log.error("Failed to update last login for seller: {}", email, error));
+        }
+        return Mono.empty();
     }
 
     public Mono<Boolean> validateToken(Token token) {
