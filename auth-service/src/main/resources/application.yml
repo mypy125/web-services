@@ -15,9 +15,9 @@ spring:
           max-wait: 5000ms
 
   r2dbc:
-    url: r2dbc:postgresql://${LOCAL_DB_HOST:localhost}:${LOCAL_DB_PORT:5432}/${LOCAL_DB_NAME:auth_db}
-    username: ${LOCAL_DB_USERNAME}
-    password: ${LOCAL_DB_PASSWORD}
+    url: {R2_DBC_URL}auth_db
+    username: ${LOCAL_DBC_USERNAME}
+    password: ${LOCAL_DBC_PASSWORD}
     pool:
       initial-size: 10
       max-size: 20
@@ -28,9 +28,9 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
     table: flyway_schema_history_auth
-    url: ${LOCAL_DB_URL}auth_db
-    user: ${LOCAL_DB_USERNAME}
-    password: ${LOCAL_DB_PASSWORD}
+    url: ${LOCAL_DBC_URL}auth_db
+    user: ${LOCAL_DBC_USERNAME}
+    password: ${LOCAL_DBC_PASSWORD}
 
 service:
   timeout:
@@ -42,28 +42,28 @@ service:
 
 user:
   service:
-    url: http://localhost:8082/api/users
+    url: ${USER_SERVICE_BASE_URL}
     timeout: 5000
     retry:
       attempts: 3
 
 seller:
   service:
-    url: http://localhost:8083/api/sellers
+    url: ${SELLER_SERVICE_BASE_URL}
     timeout: 5000
     retry:
       attempts: 3
 
 cart:
   service:
-    url: http://localhost:8084/api/carts
+    url: ${CART_SERVICE_BASE_URL}
     timeout: 5000
     retry:
       attempts: 3
 
 notification:
   service:
-    url: http://localhost:8085/api/notifications
+    url: ${NOTIFICATION_SERVICE_BASE_URL}
     timeout: 5000
     retry:
       attempts: 3
