@@ -17,5 +17,5 @@ public interface TokenR2dbcRepository extends ReactiveCrudRepository<TokenEntity
     Mono<TokenEntity> findFirstByUserIdAndStatusOrderByIssuedAtDesc(String userId, String status);
     Flux<TokenEntity> findAllByUserIdAndStatus(String userId, String status);
     Mono<Boolean> existsByValue(String value);
-    Mono<Boolean> existsByTokenAndStatus(String value, String status);
+    Mono<Boolean> existsByValueAndStatus(String value, String status);
 }

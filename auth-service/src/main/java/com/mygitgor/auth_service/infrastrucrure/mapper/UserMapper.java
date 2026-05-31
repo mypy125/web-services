@@ -11,6 +11,7 @@ import com.mygitgor.auth_service.infrastrucrure.client.dto.UserStatisticsDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
+
+    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
     @Mapping(target = "id", source = "id", qualifiedByName = "toUserId")
     @Mapping(target = "email", source = "email", qualifiedByName = "toEmail")

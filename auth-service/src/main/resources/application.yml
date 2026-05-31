@@ -1,8 +1,18 @@
+server:
+  port: 8081
+
 spring:
-  security:
-    user:
-      name: admin
-      password: admin123
+  data:
+    redis:
+      host: ${RDS_REMOTE_HOST}
+      port: ${RDS_REMOTE_PORT}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
 
   r2dbc:
     url: r2dbc:postgresql://${LOCAL_DB_HOST:localhost}:${LOCAL_DB_PORT:5432}/${LOCAL_DB_NAME:auth_db}
@@ -18,21 +28,9 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
     table: flyway_schema_history_auth
-    url: jdbc:postgresql://${LOCAL_DB_HOST:localhost}:${LOCAL_DB_PORT:5432}/${LOCAL_DB_NAME:auth_db}
+    url: ${LOCAL_DB_URL}auth_db
     user: ${LOCAL_DB_USERNAME}
     password: ${LOCAL_DB_PASSWORD}
-
-  data:
-    redis:
-      host: ${RDS_REMOTE_HOST}
-      port: ${RDS_REMOTE_PORT}
-      timeout: 5000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 2
-          max-wait: 5000ms
 
 service:
   timeout:
