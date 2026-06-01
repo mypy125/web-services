@@ -6,7 +6,6 @@ import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
-import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
@@ -26,9 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -40,6 +42,7 @@ public class AuthenticationDomainService {
     private final OtpValiditySpecification otpValiditySpecification;
     private final TokenValiditySpecification tokenValiditySpecification;
     private final ApplicationEventPublisher eventPublisher;
+    private final TokenCacheService tokenCacheService;
     private final UserPort userPort;
     private final SellerPort sellerPort;
     private final JwtPort jwtPort;
@@ -73,7 +76,15 @@ public class AuthenticationDomainService {
                             .occurredAt(LocalDateTime.now())
                             .build());
 
-                    return updateLastLogin(email, token.getRole()).thenReturn(token);
+                    Map<String, Object> tokenInfo = new HashMap<>();
+                    tokenInfo.put("token", token.getValue().toString());
+                    tokenInfo.put("userId", token.getUserId().toString());
+                    tokenInfo.put("role", token.getRole().name());
+                    long ttlSeconds = jwtPort.getTokenExpirationSeconds();
+
+                    return tokenCacheService.cacheActiveToken(email.toString(), tokenInfo, ttlSeconds)
+                            .then(updateLastLogin(email, token.getRole()))
+                            .thenReturn(token);
                 })
                 .doOnSuccess(token -> log.info("User authenticated successfully: {}", email))
                 .doOnError(error -> log.error("Authentication failed for {}: {}", email, error.getMessage()));
@@ -171,18 +182,28 @@ public class AuthenticationDomainService {
     public Mono<Token> refreshToken(Token oldToken) {
         log.info("Refreshing token for user: {}", oldToken.getEmail());
 
-        return Mono.fromCallable(() -> {
-                    tokenValiditySpecification.check(oldToken);
-                    return oldToken;
-                })
-                .flatMap(token -> generateToken(
-                        token.getEmail(),
-                        token.getUserId(),
-                        token.getRole()
-                ))
+        return tokenValiditySpecification.check(oldToken)
+                .then(Mono.defer(() -> generateToken(
+                        oldToken.getEmail(),
+                        oldToken.getUserId(),
+                        oldToken.getRole()
+                )))
                 .flatMap(newToken -> {
-                    blacklistToken(oldToken, "Token refreshed");
-                    return tokenRepository.save(newToken).thenReturn(newToken);
+                    return tokenCacheService.blacklistToken(oldToken.getValue().toString(), oldToken.getExpiresAt())
+                            .then(tokenCacheService.removeActiveToken(oldToken.getEmail().toString()))
+                            .then(blacklistTokenInDb(oldToken, "Token refreshed"))
+                            .then(tokenRepository.save(newToken))
+                            .thenReturn(newToken);
+                })
+                .flatMap(newToken -> {
+                    Map<String, Object> tokenInfo = new HashMap<>();
+                    tokenInfo.put("token", newToken.getValue().toString());
+                    tokenInfo.put("userId", newToken.getUserId().toString());
+                    tokenInfo.put("role", newToken.getRole().name());
+                    long ttlSeconds = jwtPort.getTokenExpirationSeconds();
+
+                    return tokenCacheService.cacheActiveToken(newToken.getEmail().toString(), tokenInfo, ttlSeconds)
+                            .thenReturn(newToken);
                 })
                 .doOnSuccess(token -> log.info("Token refreshed successfully for user: {}", token.getEmail()))
                 .doOnError(error -> log.error("Token refresh failed: {}", error.getMessage()));
@@ -192,7 +213,9 @@ public class AuthenticationDomainService {
     public Mono<Void> logout(Token token, String reason) {
         log.info("Logging out user: {}, reason: {}", token.getEmail(), reason);
 
-        return Mono.fromRunnable(() -> blacklistToken(token, reason))
+        return tokenCacheService.blacklistToken(token.getValue().toString(), token.getExpiresAt())
+                .then(tokenCacheService.removeActiveToken(token.getEmail().toString()))
+                .then(blacklistTokenInDb(token, reason))
                 .then(tokenRepository.delete(token))
                 .doOnSuccess(v -> log.info("User logged out successfully: {}", token.getEmail()));
     }
@@ -204,12 +227,14 @@ public class AuthenticationDomainService {
         return tokenRepository.findAllByEmail(email)
                 .flatMap(token -> {
                     if (token.isValid()) {
-                        blacklistToken(token, reason);
-                        return tokenRepository.delete(token);
+                        return tokenCacheService.blacklistToken(token.getValue().toString(), token.getExpiresAt())
+                                .then(blacklistTokenInDb(token, reason))
+                                .then(tokenRepository.delete(token));
                     }
                     return Mono.empty();
                 })
-                .then();
+                .then(tokenCacheService.removeActiveToken(email.toString()).then())
+                .doOnSuccess(v -> log.info("All tokens blacklisted for user: {}", email));
     }
 
     @Transactional
@@ -218,14 +243,17 @@ public class AuthenticationDomainService {
 
         return tokenRepository.findAllByEmail(email)
                 .collectList()
-                .doOnNext(tokens -> {
-                    for (Token token : tokens) {
-                        if (token.isValid()) {
-                            blacklistToken(token, "Logout from all devices");
-                        }
+                .flatMapMany(Flux::fromIterable)
+                .flatMap(token -> {
+                    if (token.isValid()) {
+                        return tokenCacheService.blacklistToken(token.getValue().toString(), token.getExpiresAt())
+                                .then(blacklistTokenInDb(token, "Logout from all devices"))
+                                .then(tokenRepository.delete(token));
                     }
+                    return Mono.empty();
                 })
-                .flatMap(tokens -> tokenRepository.deleteAllByEmail(email))
+                .then(tokenCacheService.removeActiveToken(email.toString()))
+                .then(tokenRepository.deleteAllByEmail(email))
                 .doOnSuccess(v -> log.info("User logged out from all devices: {}", email));
     }
 
@@ -245,15 +273,21 @@ public class AuthenticationDomainService {
     public Mono<Boolean> validateToken(Token token) {
         log.debug("Validating token for user: {}", token.getEmail());
 
-        return Mono.fromCallable(() -> {
-            try {
-                tokenValiditySpecification.check(token);
-                return true;
-            } catch (DomainException e) {
-                log.debug("Token validation failed: {}", e.getMessage());
-                return false;
-            }
-        });
+        return tokenCacheService.isTokenBlacklisted(token.getValue().toString())
+                .flatMap(isBlacklisted -> {
+                    if (isBlacklisted) {
+                        log.debug("Token is blacklisted in Redis: {}", token.getValue());
+                        return Mono.just(false);
+                    }
+
+                    try {
+                        tokenValiditySpecification.check(token);
+                        return Mono.just(true);
+                    } catch (DomainException e) {
+                        log.debug("Token validation failed: {}", e.getMessage());
+                        return Mono.just(false);
+                    }
+                });
     }
 
 
@@ -308,5 +342,24 @@ public class AuthenticationDomainService {
     public Mono<Void> recordFailedLoginAttempt(Email email) {
         log.warn("Recording failed login attempt for user: {}", email);
         return Mono.empty();
+    }
+
+    private Mono<Void> blacklistTokenInDb(Token token, String reason) {
+        if (!token.isValid()) {
+            log.debug("Token already invalid, skipping blacklist: {}", token.getEmail());
+            return Mono.empty();
+        }
+
+        token.blacklist();
+
+        return tokenRepository.save(token)
+                .flatMap(savedToken ->
+                        blacklistedTokenRepository.save(
+                                token.getValue().toString(),
+                                token.getUserId(),
+                                token.getExpiresAt()
+                        )
+                )
+                .doOnSuccess(v -> log.debug("Token blacklisted in DB for user: {}, reason: {}", token.getEmail(), reason));
     }
 }
