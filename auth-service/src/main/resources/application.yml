@@ -1,6 +1,5 @@
 server:
   port: 8081
-
 spring:
   data:
     redis:
@@ -15,9 +14,9 @@ spring:
           max-wait: 5000ms
 
   r2dbc:
-    url: {R2_DBC_URL}auth_db
-    username: ${LOCAL_DBC_USERNAME}
-    password: ${LOCAL_DBC_PASSWORD}
+    url: ${R2_DBC_URL}auth_db
+    username: ${R2_DBC_USERNAME}
+    password: ${R2_DBC_PASSWORD}
     pool:
       initial-size: 10
       max-size: 20

@@ -13,6 +13,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,16 +35,24 @@ public interface UserMapper {
     @Mapping(target = "userId", source = "userId")
     UserStatistics toDomain(UserStatisticsDto dto);
 
-    @Mapping(target = "content", source = "content", qualifiedByName = "mapContent")
-    @Mapping(target = "pageNumber", source = "pageNumber")
-    @Mapping(target = "pageSize", source = "pageSize")
-    @Mapping(target = "totalElements", source = "totalElements")
-    @Mapping(target = "totalPages", source = "totalPages")
-    @Mapping(target = "last", source = "last")
-    @Mapping(target = "first", source = "first")
-    @Mapping(target = "numberOfElements", source = "numberOfElements")
-    @Mapping(target = "empty", source = "empty")
-    Page<User> toDomain(UserPageDto dto);
+    @Named("toDomainPage")
+    default Page<User> toDomainPage(UserPageDto dto) {
+        if (dto == null) {
+            return Page.empty();
+        }
+
+        List<User> content = dto.getContent() != null ?
+                dto.getContent().stream()
+                        .map(this::toDomain)
+                        .collect(Collectors.toList()) :
+                List.of();
+
+        return new PageImpl<>(
+                content,
+                PageRequest.of(dto.getPageNumber(), dto.getPageSize()),
+                dto.getTotalElements()
+        );
+    }
 
     @Named("toUserId")
     default UserId toUserId(String id) {

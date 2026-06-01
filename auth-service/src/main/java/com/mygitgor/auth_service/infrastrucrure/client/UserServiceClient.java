@@ -405,7 +405,7 @@ public class UserServiceClient implements UserPort {
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ServiceUnavailableException("User service unavailable")))
                 .bodyToMono(UserPageDto.class)
-                .map(userMapper::toDomain)
+                .map(userMapper::toDomainPage)
                 .timeout(Duration.ofMillis(timeout))
                 .doOnSuccess(result -> {
                     assert result != null;

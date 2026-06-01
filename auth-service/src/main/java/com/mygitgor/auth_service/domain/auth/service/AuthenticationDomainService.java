@@ -20,6 +20,7 @@ import com.mygitgor.auth_service.domain.specification.TokenValiditySpecification
 import com.mygitgor.auth_service.domain.user.event.UserLoggedInEvent;
 import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.port.UserPort;
+import com.mygitgor.auth_service.infrastrucrure.cache.TokenCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
