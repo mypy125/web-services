@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -56,6 +57,7 @@ public class SecurityConfig {
                         .pathMatchers("/auth/register/**").permitAll()
                         .pathMatchers("/auth/seller/register").permitAll()
                         .pathMatchers("/auth/seller/verify").permitAll()
+                        .pathMatchers("/auth/refresh").permitAll()
                         .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers("/actuator/health").permitAll()
                         .pathMatchers("/swagger-ui/**").permitAll()
@@ -67,7 +69,8 @@ public class SecurityConfig {
                             log.error("Authentication error: {}", ex.getMessage());
                             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                             exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                            byte[] response = "{\"error\":\"Unauthorized\"}".getBytes();
+                            String jsonResponse = String.format("{\"error\":\"Unauthorized\", \"message\":\"%s\"}", ex.getMessage());
+                            byte[] response = jsonResponse.getBytes();
                             return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(response)));
                         })
                         .accessDeniedHandler((exchange, ex) -> {
@@ -85,12 +88,52 @@ public class SecurityConfig {
     @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
         return authentication -> {
-            if (authentication.isAuthenticated()) {
-                log.debug("Authentication successful for: {}", authentication.getName());
-                return Mono.just(authentication);
-            }
-            log.warn("Authentication failed");
-            return Mono.error(new RuntimeException("Authentication failed"));
+            String token = (String) authentication.getCredentials();
+            log.debug("Validating token in Manager: {}...", token.substring(0, Math.min(token.length(), 20)));
+
+            return tokenCacheService.isTokenBlacklisted(token)
+                    .flatMap(isBlacklisted -> {
+                        if (isBlacklisted) {
+                            log.warn("Token is blacklisted");
+                            return Mono.error(new BadCredentialsException("Token is blacklisted"));
+                        }
+
+                        return Mono.fromCallable(() -> jwtProvider.getAllClaimsFromToken(token))
+                                .flatMap(claims -> {
+                                    try {
+                                        String email = claims.getSubject();
+                                        String userId = claims.get("userId", String.class);
+                                        String role = claims.get("role", String.class);
+
+                                        if (email == null || userId == null || role == null) {
+                                            log.warn("Missing required claims in token");
+                                            return Mono.error(new BadCredentialsException("Invalid token claims"));
+                                        }
+
+                                        log.debug("Authenticated user: {}, role: {}", email, role);
+
+                                        AuthUser authUser = new AuthUser(email, userId, role);
+                                        List<SimpleGrantedAuthority> grantedAuthorities = List.of(new SimpleGrantedAuthority(role));
+
+                                        return Mono.just((Authentication) new UsernamePasswordAuthenticationToken(
+                                                authUser,
+                                                token,
+                                                grantedAuthorities
+                                        ));
+                                    } catch (Exception e) {
+                                        log.error("Error processing claims: {}", e.getMessage());
+                                        return Mono.error(new BadCredentialsException("Failed to process token claims"));
+                                    }
+                                })
+                                .onErrorMap(io.jsonwebtoken.ExpiredJwtException.class,
+                                        e -> new BadCredentialsException("Token expired"))
+                                .onErrorMap(io.jsonwebtoken.MalformedJwtException.class,
+                                        e -> new BadCredentialsException("Invalid token format"))
+                                .onErrorMap(io.jsonwebtoken.security.SignatureException.class,
+                                        e -> new BadCredentialsException("Invalid token signature"))
+                                .onErrorMap(Exception.class,
+                                        e -> new BadCredentialsException("Authentication failed: " + e.getMessage()));
+                    });
         };
     }
 
@@ -102,56 +145,12 @@ public class SecurityConfig {
                 log.debug("No valid Authorization header found");
                 return Mono.empty();
             }
-
             String token = authHeader.substring(7);
-            log.debug("Validating token: {}", token.substring(0, Math.min(token.length(), 20)) + "...");
-
-            return tokenCacheService.isTokenBlacklisted(token)
-                    .flatMap(isBlacklisted -> {
-                        if (isBlacklisted) {
-                            log.warn("Token is blacklisted");
-                            return Mono.error(new RuntimeException("Token is blacklisted"));
-                        }
-
-                        return Mono.fromCallable(() -> jwtProvider.validateToken(token))
-                                .flatMap(isValid -> {
-                                    if (!isValid) {
-                                        log.warn("Invalid token");
-                                        return Mono.error(new RuntimeException("Invalid token"));
-                                    }
-
-                                    try {
-                                        String email = jwtProvider.getEmailFromJwtToken(token);
-                                        String userId = jwtProvider.getUserIdFromJwtToken(token);
-                                        String role = jwtProvider.getRoleFromJwtToken(token).name();
-                                        List<String> authorities = jwtProvider.getAuthorities(token);
-
-                                        log.debug("Authenticated user: {}, role: {}", email, role);
-
-                                        AuthUser authUser = new AuthUser(email, userId, role);
-
-                                        List<SimpleGrantedAuthority> grantedAuthorities = List.of(new SimpleGrantedAuthority(role));
-
-                                        Authentication auth = new UsernamePasswordAuthenticationToken(
-                                                authUser,
-                                                token,
-                                                grantedAuthorities
-                                        );
-
-                                        return Mono.just(auth);
-
-                                    } catch (io.jsonwebtoken.ExpiredJwtException e) {
-                                        log.warn("Token expired: {}", e.getMessage());
-                                        return Mono.error(new RuntimeException("Token expired"));
-                                    } catch (io.jsonwebtoken.MalformedJwtException e) {
-                                        log.warn("Malformed token: {}", e.getMessage());
-                                        return Mono.error(new RuntimeException("Invalid token format"));
-                                    } catch (Exception e) {
-                                        log.error("Authentication error: {}", e.getMessage());
-                                        return Mono.error(new RuntimeException("Authentication failed: " + e.getMessage()));
-                                    }
-                                });
-                    });
+            if (token.isEmpty()) {
+                return Mono.empty();
+            }
+            log.debug("Token extracted successfully");
+            return Mono.just(new UsernamePasswordAuthenticationToken(null, token));
         };
     }
 
@@ -165,27 +164,14 @@ public class SecurityConfig {
                 "https://ecommerce-multivendor-frontend-ijkm.onrender.com"
         ));
         configuration.setAllowedMethods(List.of(
-                HttpMethod.GET.name(),
-                HttpMethod.POST.name(),
-                HttpMethod.PUT.name(),
-                HttpMethod.PATCH.name(),
-                HttpMethod.DELETE.name(),
-                HttpMethod.OPTIONS.name()
+                HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(),
+                HttpMethod.PATCH.name(), HttpMethod.DELETE.name(), HttpMethod.OPTIONS.name()
         ));
         configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers",
-                "X-Correlation-Id"
+                "Authorization", "Content-Type", "X-Requested-With", "Accept",
+                "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "X-Correlation-Id"
         ));
-        configuration.setExposedHeaders(List.of(
-                "Authorization",
-                "X-Correlation-Id"
-        ));
+        configuration.setExposedHeaders(List.of("Authorization", "X-Correlation-Id"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

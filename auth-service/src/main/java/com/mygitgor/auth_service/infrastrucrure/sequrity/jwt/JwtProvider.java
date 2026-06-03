@@ -127,6 +127,10 @@ public class JwtProvider {
         return UserRole.ROLE_CUSTOMER;
     }
 
+    public Claims getAllClaimsFromToken(String token) {
+        return getClaims(token);
+    }
+
     public Date extractExpiration(String token) {
         return getClaims(token).getExpiration();
     }
