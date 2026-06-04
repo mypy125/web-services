@@ -31,6 +31,21 @@ spring:
     user: ${LOCAL_DBC_USERNAME}
     password: ${LOCAL_DBC_PASSWORD}
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: event:com.mygitgor.auth_service.infrastructure.kafka.event
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: event:com.mygitgor.auth_service.infrastructure.kafka.event
+      group-id: auth-service-group
+
 service:
   timeout:
     connect: 5000

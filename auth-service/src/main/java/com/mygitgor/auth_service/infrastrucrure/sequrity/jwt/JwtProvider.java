@@ -118,9 +118,9 @@ public class JwtProvider {
         List<String> authorities = getAuthorities(token);
         if (!authorities.isEmpty()) {
             try {
-                return UserRole.valueOf(authorities.get(0));
+                return UserRole.valueOf(authorities.getFirst());
             } catch (IllegalArgumentException e) {
-                log.warn("Unknown role: {}, defaulting to CUSTOMER", authorities.get(0));
+                log.warn("Unknown role: {}, defaulting to CUSTOMER", authorities.getFirst());
                 return UserRole.ROLE_CUSTOMER;
             }
         }
