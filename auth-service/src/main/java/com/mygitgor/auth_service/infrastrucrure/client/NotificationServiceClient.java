@@ -1,7 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.client;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
-import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
+import com.mygitgor.auth_service.domain.auth.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.infrastrucrure.client.dto.EmailNotificationRequestDto;
 import com.mygitgor.auth_service.infrastrucrure.client.exception.NotificationNotFoundException;

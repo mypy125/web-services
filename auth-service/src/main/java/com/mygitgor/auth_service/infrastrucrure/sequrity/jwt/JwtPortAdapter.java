@@ -1,7 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.sequrity.jwt;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
+import com.mygitgor.auth_service.domain.auth.port.JwtPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

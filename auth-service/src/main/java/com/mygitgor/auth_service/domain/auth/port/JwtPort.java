@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.domain.auth.model.port;
+package com.mygitgor.auth_service.domain.auth.port;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import reactor.core.publisher.Mono;

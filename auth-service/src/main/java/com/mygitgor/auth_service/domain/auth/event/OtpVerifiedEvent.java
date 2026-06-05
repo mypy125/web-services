@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.domain.auth.model.event;
+package com.mygitgor.auth_service.domain.auth.event;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;

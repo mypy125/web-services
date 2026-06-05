@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.domain.auth.model.port;
+package com.mygitgor.auth_service.domain.auth.port;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;

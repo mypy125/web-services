@@ -5,7 +5,7 @@ import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
+import com.mygitgor.auth_service.domain.auth.port.JwtPort;
 import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;

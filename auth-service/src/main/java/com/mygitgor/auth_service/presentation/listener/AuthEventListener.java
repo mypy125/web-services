@@ -2,8 +2,8 @@ package com.mygitgor.auth_service.presentation.listener;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.model.event.OtpGeneratedEvent;
-import com.mygitgor.auth_service.domain.auth.model.port.NotificationPublisher;
+import com.mygitgor.auth_service.domain.auth.event.OtpGeneratedEvent;
+import com.mygitgor.auth_service.domain.auth.port.NotificationPublisher;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.user.event.UserLoggedInEvent;

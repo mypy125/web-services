@@ -3,7 +3,7 @@ package com.mygitgor.auth_service.domain.auth.service;
 import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.model.port.JwtPort;
+import com.mygitgor.auth_service.domain.auth.port.JwtPort;
 import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;

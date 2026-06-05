@@ -1,11 +1,11 @@
 package com.mygitgor.auth_service.domain.auth.model.aggregate;
 
+import com.mygitgor.auth_service.domain.auth.event.*;
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
-import com.mygitgor.auth_service.domain.auth.model.event.*;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
