@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationEvent;
 import java.time.LocalDateTime;
 
 @Getter
-public class AccountLockedEvent extends ApplicationEvent {
+public class AccountLockedEvent {
     private final String email;
     private final String reason;
     private final LocalDateTime lockedUntil;
@@ -15,7 +15,6 @@ public class AccountLockedEvent extends ApplicationEvent {
 
     @Builder
     public AccountLockedEvent(Object source, String email, String reason, LocalDateTime lockedUntil, LocalDateTime occurredAt) {
-        super(source);
         this.email = email;
         this.reason = reason;
         this.lockedUntil = lockedUntil;

@@ -17,9 +17,13 @@ import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.domain.specification.OtpValiditySpecification;
 import com.mygitgor.auth_service.domain.specification.TokenValiditySpecification;
 import com.mygitgor.auth_service.domain.user.event.UserLoggedInEvent;
+import com.mygitgor.auth_service.domain.user.event.UserRegisteredEvent;
 import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.port.UserPort;
 import com.mygitgor.auth_service.infrastrucrure.cache.TokenCacheService;
+import com.mygitgor.auth_service.infrastrucrure.config.KafkaConfig;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.UserLoggedOutEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.producer.KafkaEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,7 +45,7 @@ public class AuthenticationDomainService {
     private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final OtpValiditySpecification otpValiditySpecification;
     private final TokenValiditySpecification tokenValiditySpecification;
-    private final ApplicationEventPublisher eventPublisher;
+    private final KafkaEventProducer kafkaEventProducer;
     private final TokenCacheService tokenCacheService;
     private final UserPort userPort;
     private final SellerPort sellerPort;
@@ -65,16 +69,7 @@ public class AuthenticationDomainService {
                             .then(getUserInfoAndGenerateToken(email));
                 })
                 .flatMap(token -> {
-                    eventPublisher.publishEvent(UserLoggedInEvent.builder()
-                            .source(this)
-                            .email(email.toString())
-                            .userId(token.getUserId().toString())
-                            .token(token.getValue().toString())
-                            .deviceId(null)
-                            .ipAddress(null)
-                            .userAgent(null)
-                            .occurredAt(LocalDateTime.now())
-                            .build());
+                    sendKafkaUserLoggedInEvent(email, token).subscribe();
 
                     Map<String, Object> tokenInfo = new HashMap<>();
                     tokenInfo.put("token", token.getValue().toString());
@@ -150,7 +145,10 @@ public class AuthenticationDomainService {
                 .build();
 
         return userPort.createUser(newUser)
-                .doOnSuccess(user -> log.info("User registered successfully: {}", email))
+                .doOnSuccess(user -> {
+                    log.info("User registered successfully: {}", email);
+                    sendKafkaUserRegisteredEvent(email, userId, role, name, deviceId, ipAddress).subscribe();
+                })
                 .doOnError(error -> log.error("Failed to register user: {}, error: {}", email, error.getMessage()))
                 .then();
     }
@@ -217,7 +215,10 @@ public class AuthenticationDomainService {
                 .then(tokenCacheService.removeActiveToken(token.getEmail().toString()))
                 .then(blacklistTokenInDb(token, reason))
                 .then(tokenRepository.delete(token))
-                .doOnSuccess(v -> log.info("User logged out successfully: {}", token.getEmail()));
+                .doOnSuccess(v -> {
+                    log.info("User logged out successfully: {}", token.getEmail());
+                    sendKafkaUserLoggedOutEvent(token, reason).subscribe();
+                });
     }
 
     @Transactional
@@ -361,5 +362,42 @@ public class AuthenticationDomainService {
                         )
                 )
                 .doOnSuccess(v -> log.debug("Token blacklisted in DB for user: {}, reason: {}", token.getEmail(), reason));
+    }
+
+    private Mono<Void> sendKafkaUserLoggedInEvent(Email email, Token token) {
+        UserLoggedInEvent kafkaEvent = UserLoggedInEvent.builder()
+                        .email(email.toString())
+                        .userId(token.getUserId().toString())
+                        .token(token.getValue().toString())
+                        .role(token.getRole().name())
+                        .occurredAt(LocalDateTime.now())
+                        .build();
+
+        return kafkaEventProducer.sendEvent(KafkaConfig.USER_LOGGED_IN_TOPIC, kafkaEvent);
+    }
+
+    private Mono<Void> sendKafkaUserRegisteredEvent(Email email, UserId userId, UserRole role, String name, String deviceId, String ipAddress) {
+        UserRegisteredEvent kafkaEvent = UserRegisteredEvent.builder()
+                        .email(email.toString())
+                        .userId(userId.toString())
+                        .name(name)
+                        .role(role)
+                        .deviceId(deviceId)
+                        .ipAddress(ipAddress)
+                        .occurredAt(LocalDateTime.now())
+                        .build();
+
+        return kafkaEventProducer.sendEvent(KafkaConfig.USER_REGISTERED_TOPIC, kafkaEvent);
+    }
+
+    private Mono<Void> sendKafkaUserLoggedOutEvent(Token token, String reason) {
+        UserLoggedOutEvent kafkaEvent = UserLoggedOutEvent.builder()
+                        .email(token.getEmail().toString())
+                        .userId(token.getUserId().toString())
+                        .reason(reason)
+                        .occurredAt(LocalDateTime.now())
+                        .build();
+
+        return kafkaEventProducer.sendEvent(KafkaConfig.USER_LOGGED_OUT_TOPIC, kafkaEvent);
     }
 }
