@@ -26,7 +26,6 @@ import com.mygitgor.auth_service.infrastrucrure.kafka.event.UserLoggedOutEvent;
 import com.mygitgor.auth_service.infrastrucrure.kafka.producer.KafkaEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -71,10 +70,7 @@ public class AuthenticationDomainService {
                 .flatMap(token -> {
                     sendKafkaUserLoggedInEvent(email, token).subscribe();
 
-                    Map<String, Object> tokenInfo = new HashMap<>();
-                    tokenInfo.put("token", token.getValue().toString());
-                    tokenInfo.put("userId", token.getUserId().toString());
-                    tokenInfo.put("role", token.getRole().name());
+                    Map<String, Object> tokenInfo = createTokenInfo(token);
                     long ttlSeconds = jwtPort.getTokenExpirationSeconds();
 
                     return tokenCacheService.cacheActiveToken(email.toString(), tokenInfo, ttlSeconds)
@@ -147,7 +143,7 @@ public class AuthenticationDomainService {
         return userPort.createUser(newUser)
                 .doOnSuccess(user -> {
                     log.info("User registered successfully: {}", email);
-                    sendKafkaUserRegisteredEvent(email, userId, role, name, deviceId, ipAddress).subscribe();
+                    sendKafkaUserRegisteredEvent(email, userId, role, null, null, null).subscribe();
                 })
                 .doOnError(error -> log.error("Failed to register user: {}, error: {}", email, error.getMessage()))
                 .then();
@@ -194,10 +190,7 @@ public class AuthenticationDomainService {
                             .thenReturn(newToken);
                 })
                 .flatMap(newToken -> {
-                    Map<String, Object> tokenInfo = new HashMap<>();
-                    tokenInfo.put("token", newToken.getValue().toString());
-                    tokenInfo.put("userId", newToken.getUserId().toString());
-                    tokenInfo.put("role", newToken.getRole().name());
+                    Map<String, Object> tokenInfo = createTokenInfo(newToken);
                     long ttlSeconds = jwtPort.getTokenExpirationSeconds();
 
                     return tokenCacheService.cacheActiveToken(newToken.getEmail().toString(), tokenInfo, ttlSeconds)
@@ -362,6 +355,14 @@ public class AuthenticationDomainService {
                         )
                 )
                 .doOnSuccess(v -> log.debug("Token blacklisted in DB for user: {}, reason: {}", token.getEmail(), reason));
+    }
+
+    private Map<String, Object> createTokenInfo(Token token) {
+        Map<String, Object> tokenInfo = new HashMap<>();
+        tokenInfo.put("token", token.getValue().toString());
+        tokenInfo.put("userId", token.getUserId().toString());
+        tokenInfo.put("role", token.getRole().name());
+        return tokenInfo;
     }
 
     private Mono<Void> sendKafkaUserLoggedInEvent(Email email, Token token) {
