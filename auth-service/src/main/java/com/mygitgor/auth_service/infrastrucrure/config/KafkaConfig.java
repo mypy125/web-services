@@ -15,6 +15,9 @@ public class KafkaConfig {
     public static final String TOKEN_REFRESHED_TOPIC = "token.refreshed";
     public static final String OTP_GENERATED_TOPIC = "otp.generated";
 
+    public static final String OTP_VERIFIED_SUCCESS_TOPIC = "otp.verified.success";
+    public static final String OTP_VERIFIED_FAILURE_TOPIC = "otp.verified.failure";
+
     @Bean
     public NewTopic userRegisteredTopic() {
         return TopicBuilder.name(USER_REGISTERED_TOPIC)
@@ -52,5 +55,29 @@ public class KafkaConfig {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         return mapper;
+    }
+
+    @Bean
+    public NewTopic otpGeneratedTopic() {
+        return TopicBuilder.name(OTP_GENERATED_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic otpVerifiedSuccessTopic() {
+        return TopicBuilder.name(OTP_VERIFIED_SUCCESS_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic otpVerifiedFailureTopic() {
+        return TopicBuilder.name(OTP_VERIFIED_FAILURE_TOPIC)
+                .partitions(3)
+                .replicas(1)
+                .build();
     }
 }

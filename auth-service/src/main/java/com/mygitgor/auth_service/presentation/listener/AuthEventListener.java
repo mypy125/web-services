@@ -2,46 +2,46 @@ package com.mygitgor.auth_service.presentation.listener;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.event.OtpGeneratedEvent;
-import com.mygitgor.auth_service.domain.auth.port.NotificationPublisher;
+import com.mygitgor.auth_service.domain.auth.port.NotificationPort;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
-import com.mygitgor.auth_service.domain.user.event.UserLoggedInEvent;
-import com.mygitgor.auth_service.domain.user.event.UserRegisteredEvent;
 import com.mygitgor.auth_service.infrastrucrure.client.CartServiceClient;
 import com.mygitgor.auth_service.infrastrucrure.client.UserServiceClient;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.OtpGeneratedEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.UserLoggedInEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.UserRegisteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthEventListener {
-    private final NotificationPublisher notificationPublisher;
+    private final NotificationPort notificationPort;
     private final UserServiceClient userServiceClient;
     private final CartServiceClient cartServiceClient;
 
-    @EventListener
+    @KafkaListener(topics = "otp.generated", groupId = "auth-service-group")
     public void handleOtpGenerated(OtpGeneratedEvent event) {
         log.debug("Handling OTP generated event for: {}", event.getEmail());
 
-        notificationPublisher.sendOtpEmail(
+        notificationPort.sendOtpEmail(
                 new Email(event.getEmail()),
                 event.getOtp(),
-                event.getPurpose()
+                OtpPurpose.valueOf(event.getPurpose())
         ).subscribe(
                 success -> log.debug("OTP email sent to: {}", event.getEmail()),
                 error -> log.error("Failed to send OTP email to: {}", event.getEmail(), error)
         );
     }
 
-    @EventListener
+    @KafkaListener(topics = "user.registered", groupId = "auth-service-group")
     public void handleUserRegistered(UserRegisteredEvent event) {
         log.info("Handling user registration event for: {}", event.getEmail());
 
-        if (event.getRole() == UserRole.ROLE_CUSTOMER) {
+        if (UserRole.ROLE_CUSTOMER.name().equals(event.getRole())) {
             cartServiceClient.createCart(new UserId(event.getUserId()))
                     .subscribe(
                             success -> log.debug("Cart created for user: {}", event.getUserId()),
@@ -49,7 +49,7 @@ public class AuthEventListener {
                     );
         }
 
-        notificationPublisher.sendWelcomeEmail(
+        notificationPort.sendWelcomeEmail(
                 new Email(event.getEmail()),
                 event.getEmail()
         ).subscribe(
@@ -58,7 +58,7 @@ public class AuthEventListener {
         );
     }
 
-    @EventListener
+    @KafkaListener(topics = "user.logged.in", groupId = "auth-service-group")
     public void handleUserLoggedIn(UserLoggedInEvent event) {
         log.info("User logged in: {}", event.getEmail());
 

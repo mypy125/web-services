@@ -1,28 +1,21 @@
 package com.mygitgor.auth_service.domain.auth.event;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class OtpGeneratedEvent extends ApplicationEvent {
-    private final String email;
-    private final String otp;
-    private final OtpPurpose purpose;
-    private final LocalDateTime expiresAt;
-    private final LocalDateTime occurredAt;
-
-    @Builder
-    public OtpGeneratedEvent(Object source, String email, String otp, OtpPurpose purpose,
-                             LocalDateTime expiresAt, LocalDateTime occurredAt) {
-        super(source);
-        this.email = email;
-        this.otp = otp;
-        this.purpose = purpose;
-        this.expiresAt = expiresAt;
-        this.occurredAt = occurredAt;
-    }
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class OtpGeneratedEvent  {
+    private String email;
+    private String otp;
+    private OtpPurpose purpose;
+    private LocalDateTime expiresAt;
+    private LocalDateTime occurredAt;
 }

@@ -3,16 +3,18 @@ package com.mygitgor.auth_service.domain.auth.service;
 import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.auth.event.OtpGeneratedEvent;
-import com.mygitgor.auth_service.domain.auth.port.NotificationPublisher;
+import com.mygitgor.auth_service.domain.auth.port.NotificationPort;
 import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.Otp;
 import com.mygitgor.auth_service.domain.specification.OtpValiditySpecification;
+import com.mygitgor.auth_service.infrastrucrure.config.KafkaConfig;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.OtpGeneratedEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.OtpVerifiedEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.producer.KafkaEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -29,8 +31,8 @@ public class OtpDomainService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private final VerificationCodeRepository verificationCodeRepository;
     private final OtpValiditySpecification otpValiditySpec;
-    private final ApplicationEventPublisher eventPublisher;
-    private final NotificationPublisher notificationPort;
+    private final NotificationPort notificationPort;
+    private final KafkaEventProducer kafkaEventProducer;
 
     @Transactional
     public Mono<VerificationCode> generateOtp(Email email, UserRole role, OtpPurpose purpose) {
@@ -53,14 +55,7 @@ public class OtpDomainService {
                 }))
                 .flatMap(verificationCodeRepository::save)
                 .doOnNext(savedCode -> {
-                    eventPublisher.publishEvent(OtpGeneratedEvent.builder()
-                            .source(this)
-                            .email(email.toString())
-                            .otp(savedCode.getOtp().getValue())
-                            .purpose(purpose)
-                            .expiresAt(savedCode.getOtp().getExpiresAt())
-                            .occurredAt(LocalDateTime.now())
-                            .build());
+                    sendKafkaOtpGeneratedEvent(email, savedCode, purpose).subscribe();
 
                     notificationPort.sendOtpEmail(email, savedCode.getOtp().getValue(), purpose)
                             .subscribe(
@@ -93,16 +88,8 @@ public class OtpDomainService {
                 }))
                 .flatMap(verificationCodeRepository::save)
                 .flatMap(savedCode -> {
-                    eventPublisher.publishEvent(OtpGeneratedEvent.builder()
-                            .source(this)
-                            .email(email.toString())
-                            .otp(savedCode.getOtp().getValue())
-                            .purpose(purpose)
-                            .expiresAt(savedCode.getOtp().getExpiresAt())
-                            .occurredAt(LocalDateTime.now())
-                            .build());
-
-                    return notificationPort.sendOtpEmail(email, savedCode.getOtp().getValue(), purpose)
+                    return sendKafkaOtpGeneratedEvent(email, savedCode, purpose)
+                            .then(notificationPort.sendOtpEmail(email, savedCode.getOtp().getValue(), purpose))
                             .thenReturn(savedCode);
                 })
                 .doOnSuccess(savedCode -> log.info("OTP generated and sent successfully to: {}", email))
@@ -119,8 +106,12 @@ public class OtpDomainService {
                         otpValiditySpec.check(verificationCode);
                         verificationCode.markAsUsed();
                         return verificationCodeRepository.save(verificationCode)
-                                .thenReturn(true);
+                                .flatMap(saved -> {
+                                    sendKafkaOtpVerifiedEvent(email, purpose, true).subscribe();
+                                    return Mono.just(true);
+                                });
                     } catch (DomainException e) {
+                        sendKafkaOtpVerifiedEvent(email, purpose, false).subscribe();
                         return Mono.error(e);
                     }
                 })
@@ -149,6 +140,30 @@ public class OtpDomainService {
                     return Mono.empty();
                 })
                 .then();
+    }
+
+    private Mono<Void> sendKafkaOtpGeneratedEvent(Email email, VerificationCode code, OtpPurpose purpose) {
+        OtpGeneratedEvent event = OtpGeneratedEvent.builder()
+                .email(email.toString())
+                .otp(code.getOtp().getValue())
+                .purpose(purpose.name())
+                .expiresAt(code.getOtp().getExpiresAt())
+                .occurredAt(LocalDateTime.now())
+                .build();
+
+        return kafkaEventProducer.sendEvent(KafkaConfig.OTP_GENERATED_TOPIC, event);
+    }
+
+    private Mono<Void> sendKafkaOtpVerifiedEvent(Email email, OtpPurpose purpose, boolean success) {
+        OtpVerifiedEvent event = OtpVerifiedEvent.builder()
+                .email(email.toString())
+                .purpose(purpose.name())
+                .success(success)
+                .occurredAt(LocalDateTime.now())
+                .build();
+
+        String topic = success ? KafkaConfig.OTP_VERIFIED_SUCCESS_TOPIC : KafkaConfig.OTP_VERIFIED_FAILURE_TOPIC;
+        return kafkaEventProducer.sendEvent(topic, event);
     }
 }
 

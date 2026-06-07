@@ -1,24 +1,19 @@
 package com.mygitgor.auth_service.domain.auth.event;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class EmailVerifiedEvent extends ApplicationEvent {
-    private final String email;
-    private final String userId;
-    private final LocalDateTime verifiedAt;
-    private final LocalDateTime occurredAt;
-
-    @Builder
-    public EmailVerifiedEvent(Object source, String email, String userId, LocalDateTime verifiedAt, LocalDateTime occurredAt) {
-        super(source);
-        this.email = email;
-        this.userId = userId;
-        this.verifiedAt = verifiedAt;
-        this.occurredAt = occurredAt;
-    }
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EmailVerifiedEvent {
+    private String email;
+    private String userId;
+    private LocalDateTime verifiedAt;
+    private LocalDateTime occurredAt;
 }

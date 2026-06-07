@@ -1,31 +1,22 @@
 package com.mygitgor.auth_service.domain.auth.event;
 
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
-public class AccountStatusChangedEvent extends ApplicationEvent {
-    private final String email;
-    private final String userId;
-    private final AccountStatus oldStatus;
-    private final AccountStatus newStatus;
-    private final String reason;
-    private final LocalDateTime occurredAt;
-
-    @Builder
-    public AccountStatusChangedEvent(Object source, String email, String userId,
-                                     AccountStatus oldStatus, AccountStatus newStatus,
-                                     String reason, LocalDateTime occurredAt) {
-        super(source);
-        this.email = email;
-        this.userId = userId;
-        this.oldStatus = oldStatus;
-        this.newStatus = newStatus;
-        this.reason = reason;
-        this.occurredAt = occurredAt;
-    }
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class AccountStatusChangedEvent {
+    private String email;
+    private String userId;
+    private AccountStatus oldStatus;
+    private AccountStatus newStatus;
+    private String reason;
+    private LocalDateTime occurredAt;
 }
