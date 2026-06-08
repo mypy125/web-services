@@ -1,9 +1,7 @@
 package com.mygitgor.auth_service.domain.seller.model;
 
-
 import com.mygitgor.auth_service.domain.auth.model.enums.AccountStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
-import com.mygitgor.auth_service.domain.seller.event.*;
 import com.mygitgor.auth_service.domain.seller.model.valueobject.Address;
 import com.mygitgor.auth_service.domain.seller.model.valueobject.BankDetails;
 import com.mygitgor.auth_service.domain.seller.model.valueobject.BusinessDetails;
@@ -13,13 +11,12 @@ import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
-import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class Seller extends AbstractAggregateRoot<Seller> {
+public class Seller {
     private final SellerId sellerId;
     private final Email email;
     private String sellerName;
@@ -64,40 +61,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
             this.verificationStatus = SellerVerificationStatus.EMAIL_VERIFIED;
             this.accountStatus = AccountStatus.PENDING_VERIFICATION;
         }
-
-        registerEvent(SellerEmailVerifiedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .email(this.email.toString())
-                .verifiedAt(this.emailVerifiedAt)
-                .build());
-
-        registerEvent(SellerVerificationStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .oldStatus(oldVerificationStatus)
-                .newStatus(this.verificationStatus)
-                .reason("Email verified")
-                .changedBy("SYSTEM")
-                .notes("Email verification completed")
-                .build());
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldAccountStatus)
-                .newStatus(this.accountStatus)
-                .reason("Email verification completed")
-                .changedBy("SYSTEM")
-                .requiresNotification(false)
-                .build());
     }
 
     public void verifyBusiness(String verifiedBy, String verifiedByRole, String notes) {
@@ -118,47 +81,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
             this.verificationStatus = SellerVerificationStatus.BUSINESS_VERIFIED;
             this.accountStatus = AccountStatus.PENDING_VERIFICATION;
         }
-
-        registerEvent(SellerDocumentVerifiedEvent.businessVerified(
-                this,
-                this.sellerId.toString(),
-                this.getUserId(),
-                this.email.toString(),
-                this.sellerName,
-                verifiedBy,
-                verifiedByRole,
-                notes
-        ));
-
-        registerEvent(SellerVerificationStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .oldStatus(oldVerificationStatus)
-                .newStatus(this.verificationStatus)
-                .reason("Business documents verified")
-                .changedBy(verifiedBy)
-                .changedByRole(verifiedByRole)
-                .notes(notes)
-                .build());
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldAccountStatus)
-                .newStatus(this.accountStatus)
-                .reason("Business documents verified")
-                .changedBy(verifiedBy)
-                .changedByRole(verifiedByRole)
-                .notes(notes)
-                .requiresNotification(true)
-                .build());
     }
 
     public void rejectVerification(String reason, String rejectedBy) {
@@ -169,34 +91,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         this.accountStatus = AccountStatus.SUSPENDED;
         this.rejectionReason = reason;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerVerificationStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .oldStatus(oldVerificationStatus)
-                .newStatus(SellerVerificationStatus.REJECTED)
-                .reason(reason)
-                .changedBy(rejectedBy)
-                .notes("Verification rejected: " + reason)
-                .build());
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldAccountStatus)
-                .newStatus(AccountStatus.SUSPENDED)
-                .reason(reason)
-                .changedBy(rejectedBy)
-                .notes("Account suspended due to verification rejection")
-                .requiresNotification(true)
-                .build());
     }
 
     public void updateProfile(String sellerName, String mobile, String storeDescription,
@@ -226,20 +120,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         }
 
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerProfileUpdatedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .oldSellerName(oldSellerName)
-                .newSellerName(this.sellerName)
-                .oldMobile(oldMobile)
-                .newMobile(this.mobile)
-                .oldStoreDescription(oldStoreDescription)
-                .newStoreDescription(this.storeDescription)
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public void updateBusinessDetails(BusinessDetails newDetails, String updatedBy) {
@@ -252,27 +132,7 @@ public class Seller extends AbstractAggregateRoot<Seller> {
             SellerVerificationStatus oldStatus = this.verificationStatus;
             this.verificationStatus = SellerVerificationStatus.EMAIL_VERIFIED;
             this.accountStatus = AccountStatus.PENDING_VERIFICATION;
-
-            registerEvent(SellerVerificationStatusChangedEvent.builder()
-                    .source(this)
-                    .sellerId(this.sellerId.toString())
-                    .userId(this.getUserId())
-                    .email(this.email.toString())
-                    .sellerName(this.sellerName)
-                    .oldStatus(oldStatus)
-                    .newStatus(this.verificationStatus)
-                    .reason("Business details updated - verification reset")
-                    .changedBy(updatedBy)
-                    .build());
         }
-
-        registerEvent(SellerBusinessUpdatedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .oldBusinessName(oldDetails != null ? oldDetails.getBusinessName() : null)
-                .newBusinessName(newDetails.getBusinessName())
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public void suspend(String reason, String suspendedBy) {
@@ -286,21 +146,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         AccountStatus oldStatus = this.accountStatus;
         this.accountStatus = AccountStatus.SUSPENDED;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldStatus)
-                .newStatus(AccountStatus.SUSPENDED)
-                .reason(reason)
-                .changedBy(suspendedBy)
-                .notes("Seller account suspended")
-                .requiresNotification(true)
-                .build());
     }
 
     public void activate(String activatedBy) {
@@ -311,21 +156,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         AccountStatus oldStatus = this.accountStatus;
         this.accountStatus = AccountStatus.ACTIVE;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldStatus)
-                .newStatus(AccountStatus.ACTIVE)
-                .reason("Seller activated")
-                .changedBy(activatedBy)
-                .notes("Account activated")
-                .requiresNotification(true)
-                .build());
     }
 
     public void ban(String reason, String bannedBy) {
@@ -336,21 +166,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         AccountStatus oldStatus = this.accountStatus;
         this.accountStatus = AccountStatus.BANNED;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerStatusChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .userId(this.getUserId())
-                .email(this.email.toString())
-                .sellerName(this.sellerName)
-                .role(this.role)
-                .oldStatus(oldStatus)
-                .newStatus(AccountStatus.BANNED)
-                .reason(reason)
-                .changedBy(bannedBy)
-                .notes("Seller account banned")
-                .requiresNotification(true)
-                .build());
     }
 
     public void updateBusinessDetails(BusinessDetails newDetails) {
@@ -363,25 +178,11 @@ public class Seller extends AbstractAggregateRoot<Seller> {
             this.verificationStatus = SellerVerificationStatus.EMAIL_VERIFIED;
             this.accountStatus = AccountStatus.PENDING_VERIFICATION;
         }
-
-        registerEvent(SellerBusinessUpdatedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .oldBusinessName(oldDetails != null ? oldDetails.getBusinessName() : null)
-                .newBusinessName(newDetails.getBusinessName())
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public void updateBankDetails(BankDetails newBankDetails) {
         this.bankDetails = newBankDetails;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerBankDetailsUpdatedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public void updatePickupAddress(Address newAddress) {
@@ -407,15 +208,6 @@ public class Seller extends AbstractAggregateRoot<Seller> {
         double oldRate = this.commissionRate;
         this.commissionRate = newRate;
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(SellerCommissionRateChangedEvent.builder()
-                .source(this)
-                .sellerId(this.sellerId.toString())
-                .oldRate(oldRate)
-                .newRate(newRate)
-                .updatedBy(updatedBy)
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public boolean canSell() {

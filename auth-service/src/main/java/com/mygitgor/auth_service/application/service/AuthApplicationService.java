@@ -355,7 +355,7 @@ public class AuthApplicationService {
         return Mono.fromCallable(() -> new TokenValue(tokenValue))
                 .flatMap(tokenDomainService::getTokenInfo)
                 .map(token -> responseMapper.toUserInfoResponseDto(
-                        token.getEmail(), token.getUserId(), null
+                        token.getEmail(), token.getUserId()
                 ));
     }
 

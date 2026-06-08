@@ -5,22 +5,10 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@Getter
 @Builder
-@EqualsAndHashCode
-public class Address {
-    private final String name;
-    private final String locality;
-    private final String address;
-    private final String city;
-    private final String state;
-    private final String pinCode;
-    private final String mobile;
-    private final String addressType;
-    private final boolean isDefault;
-
-    public Address(String name, String locality, String address, String city,
-                   String state, String pinCode, String mobile, String addressType, boolean isDefault) {
+public record Address(String name, String locality, String address, String city, String state, String pinCode,
+                      String mobile, String addressType, boolean isDefault) {
+    public Address {
         if (name == null || name.isBlank()) {
             throw new DomainException("Address name is required");
         }
@@ -37,14 +25,5 @@ public class Address {
             throw new DomainException("Pin code is required");
         }
 
-        this.name = name;
-        this.locality = locality;
-        this.address = address;
-        this.city = city;
-        this.state = state;
-        this.pinCode = pinCode;
-        this.mobile = mobile;
-        this.addressType = addressType;
-        this.isDefault = isDefault;
     }
 }

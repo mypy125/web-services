@@ -4,7 +4,6 @@ import com.mygitgor.auth_service.application.command.LoginCommand;
 import com.mygitgor.auth_service.application.command.RegisterCustomerCommand;
 import com.mygitgor.auth_service.application.command.RegisterSellerCommand;
 import com.mygitgor.auth_service.application.dto.request.LoginRequestDto;
-import com.mygitgor.auth_service.application.dto.request.OtpRequestDto;
 import com.mygitgor.auth_service.application.dto.request.SignupRequestDto;
 import com.mygitgor.auth_service.application.dto.request.seller.SellerRegistrationRequestDto;
 import org.mapstruct.Mapper;

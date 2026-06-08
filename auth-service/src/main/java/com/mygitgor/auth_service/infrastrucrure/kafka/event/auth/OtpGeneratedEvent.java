@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.infrastrucrure.kafka.event;
+package com.mygitgor.auth_service.infrastrucrure.kafka.event.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserLoggedOutEvent {
+public class OtpGeneratedEvent {
     private String email;
-    private String userId;
-    private String reason;
+    private String otp;
+    private String purpose;
+    private LocalDateTime expiresAt;
     private LocalDateTime occurredAt;
 }

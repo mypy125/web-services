@@ -22,7 +22,7 @@ import com.mygitgor.auth_service.domain.user.model.User;
 import com.mygitgor.auth_service.domain.user.port.UserPort;
 import com.mygitgor.auth_service.infrastrucrure.cache.TokenCacheService;
 import com.mygitgor.auth_service.infrastrucrure.config.KafkaConfig;
-import com.mygitgor.auth_service.infrastrucrure.kafka.event.UserLoggedOutEvent;
+import com.mygitgor.auth_service.infrastrucrure.kafka.event.auth.UserLoggedOutEvent;
 import com.mygitgor.auth_service.infrastrucrure.kafka.producer.KafkaEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

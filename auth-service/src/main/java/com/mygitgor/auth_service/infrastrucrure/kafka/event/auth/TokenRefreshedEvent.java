@@ -1,18 +1,20 @@
-package com.mygitgor.auth_service.domain.auth.event;
+package com.mygitgor.auth_service.infrastrucrure.kafka.event.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AllDevicesLoggedOutEvent {
+public class TokenRefreshedEvent {
     private String email;
     private String userId;
+    private String oldToken;
+    private String newToken;
     private LocalDateTime occurredAt;
 }

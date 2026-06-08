@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class User extends AbstractAggregateRoot<User> {
+public class User {
     private final UserId id;
     private final Email email;
     private String fullName;
@@ -36,12 +36,6 @@ public class User extends AbstractAggregateRoot<User> {
 
         this.emailVerified = true;
         this.emailVerifiedAt = LocalDateTime.now();
-
-        registerEvent(UserEmailVerifiedEvent.builder()
-                .userId(this.id.toString())
-                .email(this.email.toString())
-                .verifiedAt(this.emailVerifiedAt)
-                .build());
     }
 
     public void updateProfile(String fullName, String profileImage, String phoneNumber) {
@@ -61,15 +55,6 @@ public class User extends AbstractAggregateRoot<User> {
         }
 
         this.updatedAt = LocalDateTime.now();
-
-        registerEvent(UserProfileUpdatedEvent.builder()
-                .userId(this.id.toString())
-                .oldFullName(oldFullName)
-                .newFullName(this.fullName)
-                .oldPhoneNumber(oldPhoneNumber)
-                .newPhoneNumber(this.phoneNumber)
-                .updatedAt(this.updatedAt)
-                .build());
     }
 
     public void updateLastLogin() {

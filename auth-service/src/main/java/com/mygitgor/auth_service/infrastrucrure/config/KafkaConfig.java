@@ -14,7 +14,6 @@ public class KafkaConfig {
     public static final String USER_LOGGED_OUT_TOPIC = "user.logged.out";
     public static final String TOKEN_REFRESHED_TOPIC = "token.refreshed";
     public static final String OTP_GENERATED_TOPIC = "otp.generated";
-
     public static final String OTP_VERIFIED_SUCCESS_TOPIC = "otp.verified.success";
     public static final String OTP_VERIFIED_FAILURE_TOPIC = "otp.verified.failure";
 

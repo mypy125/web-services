@@ -5,19 +5,10 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@Getter
 @Builder
-@EqualsAndHashCode
-public class BankDetails {
-    private final String accountNumber;
-    private final String accountHolderName;
-    private final String bankName;
-    private final String bankCode;
-    private final String accountType;
-    private final String upiId;
-
-    public BankDetails(String accountNumber, String accountHolderName, String bankName,
-                       String bankCode, String accountType, String upiId) {
+public record BankDetails(String accountNumber, String accountHolderName, String bankName, String bankCode,
+                          String accountType, String upiId) {
+    public BankDetails {
         if (accountNumber == null || accountNumber.isBlank()) {
             throw new DomainException("Account number is required");
         }
@@ -31,11 +22,5 @@ public class BankDetails {
             throw new DomainException("Bank code is required");
         }
 
-        this.accountNumber = accountNumber;
-        this.accountHolderName = accountHolderName;
-        this.bankName = bankName;
-        this.bankCode = bankCode;
-        this.accountType = accountType;
-        this.upiId = upiId;
     }
 }
