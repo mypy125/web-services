@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.infrastrucrure.kafka.event.auth;
+package com.mygitgor.auth_service.infrastrucrure.kafka.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

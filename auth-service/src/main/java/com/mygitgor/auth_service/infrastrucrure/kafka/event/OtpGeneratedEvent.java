@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.infrastrucrure.kafka.event.auth;
+package com.mygitgor.auth_service.infrastrucrure.kafka.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenRefreshedEvent {
+public class OtpGeneratedEvent {
     private String email;
-    private String userId;
-    private String oldToken;
-    private String newToken;
+    private String otp;
+    private String purpose;
+    private LocalDateTime expiresAt;
     private LocalDateTime occurredAt;
 }

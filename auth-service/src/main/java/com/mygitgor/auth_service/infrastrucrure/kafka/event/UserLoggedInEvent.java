@@ -1,4 +1,4 @@
-package com.mygitgor.auth_service.infrastrucrure.kafka.event.auth;
+package com.mygitgor.auth_service.infrastrucrure.kafka.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,12 +11,13 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRegisteredEvent {
+public class UserLoggedInEvent {
     private String email;
     private String userId;
-    private String name;
+    private String token;
     private String role;
     private String deviceId;
     private String ipAddress;
+    private String userAgent;
     private LocalDateTime occurredAt;
 }
