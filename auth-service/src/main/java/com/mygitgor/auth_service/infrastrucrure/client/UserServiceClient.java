@@ -43,7 +43,7 @@ public class UserServiceClient implements UserPort {
     private final UserServiceFallback fallback;
     private final UserMapper userMapper;
 
-    @Value("${user.service.url:http://localhost:8082/api/users}")
+    @Value("${user.service.url:http://localhost:8082/internal/users}")
     private String baseUrl;
 
     @Value("${user.service.timeout:5000}")

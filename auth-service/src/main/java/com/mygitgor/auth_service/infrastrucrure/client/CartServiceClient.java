@@ -43,7 +43,7 @@ public class CartServiceClient implements CartPort {
     private final CartServiceFallback fallback;
     private final CartMapper cartMapper;
 
-    @Value("${cart.service.url:http://localhost:8084/api/carts}")
+    @Value("${cart.service.url:http://localhost:8084/internal/carts}")
     private String baseUrl;
 
     @Value("${cart.service.timeout:5000}")

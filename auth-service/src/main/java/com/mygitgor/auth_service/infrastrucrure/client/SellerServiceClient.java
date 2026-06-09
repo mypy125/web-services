@@ -47,7 +47,7 @@ public class SellerServiceClient implements SellerPort {
     private final SellerServiceFallback fallback;
     private final SellerMapper sellerMapper;
 
-    @Value("${seller.service.url:http://localhost:8083/api/sellers}")
+    @Value("${seller.service.url:http://localhost:8083/internal/sellers}")
     private String baseUrl;
 
     @Value("${seller.service.timeout:5000}")

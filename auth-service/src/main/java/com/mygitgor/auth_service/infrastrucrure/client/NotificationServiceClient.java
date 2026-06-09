@@ -36,7 +36,7 @@ public class NotificationServiceClient implements NotificationPort {
     private final ServiceClientInterceptor clientInterceptor;
     private final NotificationServiceFallback fallback;
 
-    @Value("${notification.service.url:http://localhost:8085/api/notifications}")
+    @Value("${notification.service.url:http://localhost:8085/internal/notifications}")
     private String baseUrl;
 
     @Value("${notification.service.timeout:5000}")
