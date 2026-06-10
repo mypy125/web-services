@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.domain.repository;
 
+import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserId;
-import jakarta.validation.constraints.Email;
-import org.springframework.security.core.userdetails.User;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

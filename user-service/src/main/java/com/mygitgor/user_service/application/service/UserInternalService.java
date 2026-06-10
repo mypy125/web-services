@@ -1,7 +1,9 @@
 package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.application.mapper.UserMapper;
+import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserId;
+import com.mygitgor.user_service.domain.model.UserRole;
 import com.mygitgor.user_service.domain.repository.UserRepository;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.dto.request.UserAuthInfoDto;

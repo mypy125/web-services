@@ -1,4 +1,4 @@
-package com.mygitgor.user_service.presentation.controller;
+package com.mygitgor.user_service.presentation.internal;
 
 import com.mygitgor.user_service.application.service.UserInternalService;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;

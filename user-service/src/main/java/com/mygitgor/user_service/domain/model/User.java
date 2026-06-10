@@ -44,4 +44,56 @@ public class User {
         }
         this.updatedAt = LocalDateTime.now();
     }
+
+    public static User register(Email email, String fullName, UserRole role) {
+        if (email == null) {
+            throw new DomainException("Email is required for registration");
+        }
+        if (fullName == null || fullName.isBlank()) {
+            throw new DomainException("Full name is required for registration");
+        }
+
+        return User.builder()
+                .id(new UserId())
+                .email(email)
+                .fullName(fullName.trim())
+                .role(role != null ? role : UserRole.ROLE_CUSTOMER)
+                .accountStatus(AccountStatus.PENDING)
+                .emailVerified(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public void ban() {
+        if (this.accountStatus == AccountStatus.BANNED) {
+            throw new DomainException("User is already banned");
+        }
+
+        this.accountStatus = AccountStatus.BANNED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void suspend() {
+        if (this.accountStatus != AccountStatus.ACTIVE) {
+            throw new DomainException("Only active users can be suspended");
+        }
+
+        this.accountStatus = AccountStatus.SUSPENDED;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void activate() {
+        if (this.accountStatus == AccountStatus.ACTIVE) {
+            throw new DomainException("User is already active");
+        }
+
+        if (!this.emailVerified) {
+            this.emailVerified = true;
+            this.emailVerifiedAt = LocalDateTime.now();
+        }
+
+        this.accountStatus = AccountStatus.ACTIVE;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

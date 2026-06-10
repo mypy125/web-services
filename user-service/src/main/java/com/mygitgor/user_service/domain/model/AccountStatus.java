@@ -1,4 +1,5 @@
 package com.mygitgor.user_service.domain.model;
 
-public class AccountStatus {
+public enum AccountStatus {
+    PENDING, BANNED, SUSPENDED, ACTIVE
 }

@@ -1,4 +1,4 @@
-package com.mygitgor.user_service.presentation.controller;
+package com.mygitgor.user_service.presentation.halt;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
