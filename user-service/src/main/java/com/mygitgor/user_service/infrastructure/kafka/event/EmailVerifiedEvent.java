@@ -11,12 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class EmailVerifiedEvent {
     private String userId;
     private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private LocalDateTime verifiedAt;
     private LocalDateTime occurredAt;
 }

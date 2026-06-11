@@ -11,12 +11,13 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class ProductStatsUpdatedEvent {
     private String userId;
-    private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private Integer totalProductsPurchased;
+    private String mostPurchasedCategory;
+    private String favoriteProductId;
+    private String favoriteProductName;
+    private String lastPurchasedProductId;
+    private String lastPurchasedCategory;
     private LocalDateTime occurredAt;
 }

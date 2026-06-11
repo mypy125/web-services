@@ -2,6 +2,7 @@ package com.mygitgor.user_service.domain.model;
 
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,6 +23,12 @@ public class User {
     private LocalDateTime updatedAt;
     private LocalDateTime lastLoginAt;
     private LocalDateTime emailVerifiedAt;
+
+    private String defaultAddressId;
+    private String defaultPaymentMethodId;
+
+    private Integer totalOrdersCount;
+    private Double totalSpentAmount;
 
     public void verifyEmail() {
         if (this.emailVerified) {
@@ -45,7 +52,12 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static User register(Email email, String fullName, UserRole role) {
+    public void updateLastLogin() {
+        this.lastLoginAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public static User register(Email email, String fullName, String phoneNumber, UserRole role) {
         if (email == null) {
             throw new DomainException("Email is required for registration");
         }
@@ -57,6 +69,7 @@ public class User {
                 .id(new UserId())
                 .email(email)
                 .fullName(fullName.trim())
+                .phoneNumber(phoneNumber)
                 .role(role != null ? role : UserRole.ROLE_CUSTOMER)
                 .accountStatus(AccountStatus.PENDING)
                 .emailVerified(false)
@@ -75,10 +88,12 @@ public class User {
     }
 
     public void suspend() {
-        if (this.accountStatus != AccountStatus.ACTIVE) {
+        if (this.accountStatus == AccountStatus.SUSPENDED) {
             throw new DomainException("Only active users can be suspended");
         }
-
+        if (this.accountStatus == AccountStatus.BANNED) {
+            throw new DomainException("Cannot suspend banned user");
+        }
         this.accountStatus = AccountStatus.SUSPENDED;
         this.updatedAt = LocalDateTime.now();
     }
@@ -95,5 +110,13 @@ public class User {
 
         this.accountStatus = AccountStatus.ACTIVE;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isActive() {
+        return this.accountStatus == AccountStatus.ACTIVE;
+    }
+
+    public boolean canLogin() {
+        return isActive() && (emailVerified || role == UserRole.ROLE_ADMIN);
     }
 }

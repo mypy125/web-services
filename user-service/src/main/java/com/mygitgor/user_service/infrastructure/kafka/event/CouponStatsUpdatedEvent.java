@@ -11,12 +11,11 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class CouponStatsUpdatedEvent {
     private String userId;
-    private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private Integer couponsUsed;
+    private Double totalDiscountReceived;
+    private String lastUsedCouponCode;
+    private Double lastUsedDiscountAmount;
     private LocalDateTime occurredAt;
 }

@@ -11,12 +11,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class WishlistStatsUpdatedEvent {
     private String userId;
-    private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private Integer wishlistItemsCount;
     private LocalDateTime occurredAt;
 }

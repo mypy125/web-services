@@ -1,7 +1,6 @@
 package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.domain.model.User;
-import com.mygitgor.user_service.domain.model.UserId;
 import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
 import com.mygitgor.user_service.infrastructure.dto.request.UserAuthInfoDto;
 import com.mygitgor.user_service.infrastructure.dto.request.UserDto;

@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.domain.repository;
 
 import com.mygitgor.user_service.domain.model.User;
-import com.mygitgor.user_service.domain.model.UserId;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -11,12 +11,11 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class LoyaltyUpdatedEvent {
     private String userId;
-    private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private String oldTier;
+    private String newTier;
+    private Integer loyaltyPoints;
+    private Integer pointsChange;
     private LocalDateTime occurredAt;
 }

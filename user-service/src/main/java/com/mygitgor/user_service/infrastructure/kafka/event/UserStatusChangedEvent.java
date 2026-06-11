@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserCreatedEvent {
+public class UserStatusChangedEvent {
     private String userId;
     private String email;
-    private String fullName;
-    private String role;
-    private String phoneNumber;
-    private String profileImage;
+    private String oldStatus;
+    private String newStatus;
+    private String reason;
+    private String changedBy;
     private LocalDateTime occurredAt;
 }

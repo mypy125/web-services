@@ -1,5 +1,6 @@
 package com.mygitgor.user_service.infrastructure.dto.request;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,13 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateUserRequest {
+public class UpdateProfileRequest {
     @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
     private String fullName;
-    @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 digits")
+
+    @Pattern(regexp = "^\\+?[1-9][0-9]{7,14}$", message = "Invalid phone number format")
     private String phoneNumber;
 
     private String profileImage;
-    private String defaultAddressId;
-    private String defaultPaymentMethodId;
 }

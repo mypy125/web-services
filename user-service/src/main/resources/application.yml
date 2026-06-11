@@ -1,2 +1,262 @@
 server:
   port: 8082
+spring:
+  data:
+    redis:
+      host: ${RDS_REMOTE_HOST}
+      port: ${RDS_REMOTE_PORT}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: 5000ms
+
+  r2dbc:
+    url: ${R2_DBC_URL}user_db
+    username: ${R2_DBC_USERNAME}
+    password: ${R2_DBC_PASSWORD}
+    pool:
+      initial-size: 10
+      max-size: 20
+      max-idle-time: 30m
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    table: flyway_schema_history_auth
+    url: ${LOCAL_DBC_URL}user_db
+    user: ${LOCAL_DBC_USERNAME}
+    password: ${LOCAL_DBC_PASSWORD}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    topics:
+      user-order-stats: user.order.stats.updated
+      user-review-stats: user.review.stats.updated
+      user-loyalty: user.loyalty.updated
+      user-activity: user.activity.updated
+      user-coupon-stats: user.coupon.stats.updated
+      user-product-stats: user.product.stats.updated
+      user-wishlist-stats: user.wishlist.stats.updated
+      user-cart-stats: user.cart.stats.updated
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.mygitgor.user_service.infrastrucrure.kafka.event"
+      group-id: user-service-group
+
+service:
+  timeout:
+    connect: 5000
+    read: 30000
+    write: 30000
+  max:
+    connections: 100
+
+address:
+  service:
+    url: ${ADDRESS_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+    attempts: 3
+
+order:
+  service:
+    url: ${ORDER_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
+coupon:
+  service:
+    url: ${COUPON_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
+payment:
+  service:
+    url: ${PAYMENT_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
+notification:
+  service:
+    url: ${NOTIFICATION_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
+        record-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      addressService:
+        base-config: default
+      orderService:
+        base-config: default
+      couponService:
+        base-config: default
+      notificationService:
+        base-config: default
+        wait-duration-in-open-state: 10s
+      paymentService:
+        base-config: default
+      productService:
+        base-config: default
+
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException
+    instances:
+      addressService:
+        base-config: default
+      orderService:
+        base-config: default
+      couponService:
+        base-config: default
+      notificationService:
+        base-config: default
+        max-attempts: 5
+        wait-duration: 2s
+      paymentService:
+        base-config: default
+      productService:
+        base-config: default
+
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: true
+    instances:
+      addressService:
+        base-config: default
+      orderService:
+        base-config: default
+      couponService:
+        base-config: default
+      notificationService:
+        base-config: default
+        timeout-duration: 10s
+      paymentService:
+        base-config: default
+      productService:
+        base-config: default
+
+  bulkhead:
+    configs:
+      default:
+        max-concurrent-calls: 20
+        max-wait-duration: 10ms
+    instances:
+      addressService:
+        base-config: default
+      orderService:
+        base-config: default
+      couponService:
+        base-config: default
+      notificationService:
+        base-config: default
+      paymentService:
+        base-config: default
+      productService:
+        base-config: default
+
+  thread-pool-bulkhead:
+    configs:
+      default:
+        core-thread-pool-size: 10
+        max-thread-pool-size: 20
+        queue-capacity: 10
+        keep-alive-duration: 1m
+    instances:
+      addressService:
+        base-config: default
+      orderService:
+        base-config: default
+      couponService:
+        base-config: default
+      notificationService:
+        base-config: default
+      paymentService:
+        base-config: default
+      productService:
+        base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus, circuitbreakers, retries, timelimiters
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: user-service
+
+
+logging:
+  level:
+    com.mygitgor.user_service: DEBUG
+    com.mygitgor.user_service.infrastructure.security: DEBUG
+    com.mygitgor.user_service.infrastructure.client: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql.QUERY: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    io.github.resilience4j: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/user-service.log
+    max-size: 10MB
+    max-history: 30
