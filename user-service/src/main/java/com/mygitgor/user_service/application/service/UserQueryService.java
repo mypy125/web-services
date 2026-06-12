@@ -2,10 +2,12 @@ package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
-import com.mygitgor.user_service.infrastructure.dto.request.UserAuthInfoDto;
-import com.mygitgor.user_service.infrastructure.dto.request.UserDto;
-import com.mygitgor.user_service.infrastructure.mapper.UserDtoMapper;
+import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
+import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
+import com.mygitgor.user_service.infrastructure.mapper.PageMapper;
+import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -17,18 +19,19 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class UserQueryService {
     private final UserRepositoryPort userRepository;
-    private final UserDtoMapper mapper;
+    private final UserMapper userMapper;
+    private final PageMapper pageMapper;
 
-    public Mono<UserDto> getUserById(UserId userId) {
+    public Mono<UserResponse> getUserById(UserId userId) {
         log.debug("Query: Getting user by ID: {}", userId);
         return userRepository.findById(userId)
-                .map(mapper::toDto);
+                .map(userMapper::toResponse);
     }
 
-    public Mono<UserAuthInfoDto> getAuthInfo(Email email) {
+    public Mono<UserAuthInfoResponse> getAuthInfo(Email email) {
         log.debug("Query: Getting auth info for email: {}", email);
         return userRepository.findByEmail(email)
-                .map(mapper::toAuthInfoDto);
+                .map(userMapper::toAuthInfoResponse);
     }
 
     public Mono<Boolean> existsByEmail(Email email) {
@@ -43,15 +46,9 @@ public class UserQueryService {
                 .defaultIfEmpty(false);
     }
 
-    public Mono<Page<UserDto>> searchUsers(String searchTerm, int page, int size) {
+    public Mono<Page<UserResponse>> searchUsers(String searchTerm, int page, int size) {
         log.debug("Query: Searching users with term: {}", searchTerm);
         return userRepository.search(searchTerm, page, size)
-                .map(mapper::toDtoPage);
-    }
-
-    public Mono<UserStatisticsDto> getUserStatistics(UserId userId) {
-        log.debug("Query: Getting statistics for user: {}", userId);
-        return userRepository.getStatistics(userId)
-                .map(mapper::toStatisticsDto);
+                .map(userPage -> pageMapper.map(userPage, userMapper::toResponse));
     }
 }

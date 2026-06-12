@@ -8,13 +8,16 @@ import com.mygitgor.user_service.domain.port.outgoing.KafkaEventPort;
 import com.mygitgor.user_service.domain.port.outgoing.NotificationPort;
 import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
 import com.mygitgor.user_service.domain.service.UserDomainService;
-import com.mygitgor.user_service.infrastructure.mapper.UserDtoMapper;
+import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
+import com.mygitgor.user_service.infrastructure.mapper.PageMapper;
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.exception.UserNotFoundException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -26,7 +29,6 @@ public class UserApplicationService implements UserUseCase {
     private final UserDomainService userDomainService;
     private final NotificationPort notificationPort;
     private final KafkaEventPort kafkaEventPort;
-    private final UserDtoMapper userMapper;
 
     @Override
     public Mono<User> createUser(Email email, String fullName, String phoneNumber, UserRole role) {

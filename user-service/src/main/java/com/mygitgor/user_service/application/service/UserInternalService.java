@@ -9,7 +9,8 @@ import com.mygitgor.user_service.infrastructure.dto.request.*;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
-import com.mygitgor.user_service.infrastructure.mapper.UserDtoMapper;
+import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
+import com.mygitgor.user_service.infrastructure.mapper.UserStatisticsMapper;
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.exception.UserNotFoundException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
@@ -30,7 +31,8 @@ import java.util.stream.Collectors;
 public class UserInternalService {
     private final UserRepositoryPort userRepositoryPort;
     private final UserDomainService userDomainService;
-    private final UserDtoMapper userMapper;
+    private final UserStatisticsMapper userStatisticsMapper;
+    private final UserMapper userMapper;
 
     public Mono<Boolean> existsByEmail(Email email) {
         return userRepositoryPort.existsByEmail(email);
@@ -65,7 +67,7 @@ public class UserInternalService {
     public Mono<UserStatisticsResponse> getUserStatistics(UserId userId) {
         log.debug("Getting statistics for user: {}", userId);
         return userRepositoryPort.getStatistics(userId)
-                .map(userMapper::toStatisticsResponse);
+                .map(userStatisticsMapper::toResponse);
     }
 
     public Mono<Page<UserResponse>> searchUsers(String searchTerm, int page, int size) {
@@ -77,9 +79,8 @@ public class UserInternalService {
     public Mono<List<UserResponse>> getUsersByIds(List<UserId> userIds) {
         log.debug("Getting users by IDs: {}", userIds);
         return userRepositoryPort.findByIds(userIds)
-                .map(users -> users.stream()
-                        .map(userMapper::toResponse)
-                        .collect(Collectors.toList()));
+                .map(userMapper::toResponse)
+                .collectList();
     }
 
     public Mono<UserResponse> createUser(CreateUserRequest request) {
@@ -104,17 +105,7 @@ public class UserInternalService {
         return userRepositoryPort.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .map(user -> {
-                    user.updateProfile(
-                            request.getFullName(),
-                            request.getProfileImage(),
-                            request.getPhoneNumber()
-                    );
-                    if (request.getDefaultAddressId() != null) {
-
-                    }
-                    if (request.getDefaultPaymentMethodId() != null) {
-
-                    }
+                    userMapper.updateDomain(user, request);
                     return user;
                 })
                 .flatMap(userRepositoryPort::save)

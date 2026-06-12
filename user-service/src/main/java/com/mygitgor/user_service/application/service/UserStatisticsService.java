@@ -6,6 +6,7 @@ import com.mygitgor.user_service.infrastructure.dto.request.UpdateOrderStatsRequ
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateReviewStatsRequest;
 import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.infrastructure.kafka.producer.UserStatisticsEventProducer;
 import com.mygitgor.user_service.infrastructure.mapper.UserStatisticsMapper;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;

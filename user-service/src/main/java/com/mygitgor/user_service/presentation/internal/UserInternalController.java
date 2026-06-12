@@ -5,7 +5,7 @@ import com.mygitgor.user_service.infrastructure.dto.request.*;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
-import com.mygitgor.user_service.infrastructure.mapper.UserDtoMapper;
+import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import jakarta.validation.Valid;
@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserInternalController {
     private final UserInternalService userInternalService;
-    private final UserDtoMapper userDtoMapper;
 
     @GetMapping("/exists/{email}")
     public Mono<Boolean> existsByEmail(@PathVariable String email) {
@@ -36,22 +35,19 @@ public class UserInternalController {
     @GetMapping("/{email}/auth-info")
     public Mono<UserAuthInfoResponse> getAuthInfo(@PathVariable String email) {
         log.debug("Internal API: Getting auth info for email: {}", email);
-        return userInternalService.getAuthInfo(new Email(email))
-                .map(userDtoMapper::toAuthInfoResponse);
+        return userInternalService.getAuthInfo(new Email(email));
     }
 
     @GetMapping("/id/{userId}")
     public Mono<UserResponse> getUserById(@PathVariable String userId) {
         log.debug("Internal API: Getting user by ID: {}", userId);
-        return userInternalService.getUserById(new UserId(userId))
-                .map(userDtoMapper::toResponse);
+        return userInternalService.getUserById(new UserId(userId));
     }
 
     @GetMapping("/{email}")
     public Mono<UserResponse> getUserByEmail(@PathVariable String email) {
         log.debug("Internal API: Getting user by email: {}", email);
-        return userInternalService.getUserByEmail(new Email(email))
-                .map(userDtoMapper::toResponse);
+        return userInternalService.getUserByEmail(new Email(email));
     }
 
     @GetMapping("/{email}/email-verified")
@@ -63,40 +59,36 @@ public class UserInternalController {
     @GetMapping("/{userId}/statistics")
     public Mono<UserStatisticsResponse> getUserStatistics(@PathVariable String userId) {
         log.debug("Internal API: Getting statistics for user: {}", userId);
-        return userInternalService.getUserStatistics(new UserId(userId))
-                .map(userDtoMapper::toStatisticsResponse);
+        return userInternalService.getUserStatistics(new UserId(userId));
     }
 
     @GetMapping("/search")
     public Mono<Page<UserResponse>> searchUsers(@RequestParam String term,
                                                 @RequestParam(defaultValue = "0") int page,
-                                                @RequestParam(defaultValue = "20") int size) {
+                                                @RequestParam(defaultValue = "20") int size
+    ) {
         log.debug("Internal API: Searching users with term: {}", term);
-        return userInternalService.searchUsers(term, page, size)
-                .map(page -> page.map(userDtoMapper::toResponse));
+        return userInternalService.searchUsers(term, page, size);
     }
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         log.info("Internal API: Creating user with email: {}", request.getEmail());
-        return userInternalService.createUser(request)
-                .map(userDtoMapper::toResponse);
+        return userInternalService.createUser(request);
     }
 
     @PutMapping("/{userId}")
     public Mono<UserResponse> updateUser(@PathVariable String userId,
                                          @Valid @RequestBody UpdateUserRequest request) {
         log.info("Internal API: Updating user: {}", userId);
-        return userInternalService.updateUser(new UserId(userId), request)
-                .map(userDtoMapper::toResponse);
+        return userInternalService.updateUser(new UserId(userId), request);
     }
 
     @PatchMapping("/{email}/verify")
     public Mono<UserResponse> verifyEmail(@PathVariable String email) {
         log.info("Internal API: Verifying email for user: {}", email);
-        return userInternalService.verifyEmail(new Email(email))
-                .map(userDtoMapper::toResponse);
+        return userInternalService.verifyEmail(new Email(email));
     }
 
     @PatchMapping("/{email}/last-login")
@@ -132,11 +124,9 @@ public class UserInternalController {
     @GetMapping("/batch")
     public Mono<List<UserResponse>> getUsersByIds(@RequestParam List<String> userIds) {
         log.debug("Internal API: Getting users by IDs: {}", userIds);
-        return userInternalService.getUsersByIds(userIds.stream()
-                        .map(UserId::new)
-                        .collect(Collectors.toList()))
-                .map(users -> users.stream()
-                        .map(userDtoMapper::toResponse)
-                        .collect(Collectors.toList()));
+        List<UserId> domainIds = userIds.stream()
+                .map(UserId::new)
+                .collect(Collectors.toList());
+        return userInternalService.getUsersByIds(domainIds);
     }
 }
