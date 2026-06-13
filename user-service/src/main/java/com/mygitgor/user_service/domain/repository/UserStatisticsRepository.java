@@ -1,4 +1,4 @@
-package com.mygitgor.user_service.domain.port.outgoing;
+package com.mygitgor.user_service.domain.repository;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-public interface UserStatisticsRepositoryPort {
+public interface UserStatisticsRepository {
     Mono<UserStatistics> findByUserId(UserId userId);
     Mono<UserStatistics> save(UserStatistics statistics);
     Mono<UserStatistics> updateOrderStats(UserId userId, Double orderAmount, LocalDateTime orderDate);

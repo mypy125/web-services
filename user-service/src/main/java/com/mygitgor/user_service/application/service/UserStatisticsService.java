@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
-import com.mygitgor.user_service.domain.port.outgoing.UserStatisticsRepositoryPort;
+import com.mygitgor.user_service.domain.repository.UserStatisticsRepository;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateOrderStatsRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateReviewStatsRequest;
 import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class UserStatisticsService {
-    private final UserStatisticsRepositoryPort statisticsRepository;
+    private final UserStatisticsRepository statisticsRepository;
     private final UserStatisticsMapper statisticsMapper;
     private final UserStatisticsEventProducer eventProducer;
 

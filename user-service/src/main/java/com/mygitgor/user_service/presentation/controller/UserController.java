@@ -6,6 +6,7 @@ import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
+import com.mygitgor.user_service.infrastructure.security.AuthUser;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

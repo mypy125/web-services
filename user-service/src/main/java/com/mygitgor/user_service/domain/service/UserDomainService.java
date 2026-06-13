@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.domain.service;
 
-import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
+import com.mygitgor.user_service.domain.repository.UserRepository;
 import com.mygitgor.user_service.domain.specification.UserEmailUniquenessSpec;
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class UserDomainService {
-    private final UserRepositoryPort userRepository;
+    private final UserRepository userRepository;
     private final UserEmailUniquenessSpec emailUniquenessSpec;
 
     public Mono<Void> validateEmailUniqueness(Email email) {

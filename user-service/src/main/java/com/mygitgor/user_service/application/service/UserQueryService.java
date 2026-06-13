@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.domain.model.User;
-import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
+import com.mygitgor.user_service.domain.repository.UserRepository;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.PageMapper;
@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class UserQueryService {
-    private final UserRepositoryPort userRepository;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
 

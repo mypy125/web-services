@@ -3,7 +3,7 @@ package com.mygitgor.user_service.application.service;
 import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
-import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
+import com.mygitgor.user_service.domain.repository.UserRepository;
 import com.mygitgor.user_service.domain.service.UserDomainService;
 import com.mygitgor.user_service.infrastructure.dto.request.*;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
@@ -23,62 +23,61 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserInternalService {
-    private final UserRepositoryPort userRepositoryPort;
+    private final UserRepository userRepository;
     private final UserDomainService userDomainService;
     private final UserStatisticsMapper userStatisticsMapper;
     private final UserMapper userMapper;
 
     public Mono<Boolean> existsByEmail(Email email) {
-        return userRepositoryPort.existsByEmail(email);
+        return userRepository.existsByEmail(email);
     }
 
     public Mono<UserAuthInfoResponse> getAuthInfo(Email email) {
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(userMapper::toAuthInfoResponse);
     }
 
     public Mono<UserResponse> getUserById(UserId userId) {
-        return userRepositoryPort.findById(userId)
+        return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .map(userMapper::toResponse);
     }
 
     public Mono<UserResponse> getUserByEmail(Email email) {
         log.debug("Getting user by email: {}", email);
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(userMapper::toResponse);
     }
 
     public Mono<Boolean> isEmailVerified(Email email) {
         log.debug("Checking if email is verified: {}", email);
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .map(User::isEmailVerified)
                 .defaultIfEmpty(false);
     }
 
     public Mono<UserStatisticsResponse> getUserStatistics(UserId userId) {
         log.debug("Getting statistics for user: {}", userId);
-        return userRepositoryPort.getStatistics(userId)
+        return userRepository.getStatistics(userId)
                 .map(userStatisticsMapper::toResponse);
     }
 
     public Mono<Page<UserResponse>> searchUsers(String searchTerm, int page, int size) {
         log.debug("Searching users with term: {}", searchTerm);
-        return userRepositoryPort.search(searchTerm, page, size)
+        return userRepository.search(searchTerm, page, size)
                 .map(userPage -> userPage.map(userMapper::toResponse));
     }
 
     public Mono<List<UserResponse>> getUsersByIds(List<UserId> userIds) {
         log.debug("Getting users by IDs: {}", userIds);
-        return userRepositoryPort.findByIds(userIds)
+        return userRepository.findByIds(userIds)
                 .map(userMapper::toResponse)
                 .collectList();
     }
@@ -93,7 +92,7 @@ public class UserInternalService {
                         request.getPhoneNumber(),
                         request.getRole() != null ? UserRole.valueOf(request.getRole()) : UserRole.ROLE_CUSTOMER
                 )))
-                .flatMap(userRepositoryPort::save)
+                .flatMap(userRepository::save)
                 .map(userMapper::toResponse)
                 .doOnSuccess(user -> log.info("User created successfully: {}", request.getEmail()))
                 .doOnError(error -> log.error("Failed to create user: {}", request.getEmail(), error));
@@ -102,46 +101,46 @@ public class UserInternalService {
     public Mono<UserResponse> updateUser(UserId userId, UpdateUserRequest request) {
         log.info("Updating user: {}", userId);
 
-        return userRepositoryPort.findById(userId)
+        return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .map(user -> {
                     userMapper.updateDomain(user, request);
                     return user;
                 })
-                .flatMap(userRepositoryPort::save)
+                .flatMap(userRepository::save)
                 .map(userMapper::toResponse);
     }
 
     public Mono<UserResponse> verifyEmail(Email email) {
         log.info("Verifying email for user: {}", email);
 
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(user -> {
                     user.verifyEmail();
                     return user;
                 })
-                .flatMap(userRepositoryPort::save)
+                .flatMap(userRepository::save)
                 .map(userMapper::toResponse);
     }
 
     public Mono<Void> updateLastLogin(Email email, LocalDateTime lastLoginAt) {
         log.debug("Updating last login for user: {} at {}", email, lastLoginAt);
 
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(user -> {
                     user.updateLastLogin();
                     return user;
                 })
-                .flatMap(userRepositoryPort::save)
+                .flatMap(userRepository::save)
                 .then();
     }
 
     public Mono<UserResponse> updateAccountStatus(Email email, UpdateAccountStatusRequest request) {
         log.info("Updating account status for user: {} to {}", email, request.getStatus());
 
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(user -> {
                     AccountStatus status = AccountStatus.valueOf(request.getStatus());
@@ -153,7 +152,7 @@ public class UserInternalService {
                     }
                     return user;
                 })
-                .flatMap(userRepositoryPort::save)
+                .flatMap(userRepository::save)
                 .map(userMapper::toResponse);
     }
 
@@ -165,9 +164,9 @@ public class UserInternalService {
     public Mono<Void> deleteUser(Email email) {
         log.info("Deleting user: {}", email);
 
-        return userRepositoryPort.findByEmail(email)
+        return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
-                .flatMap(user -> userRepositoryPort.deleteByEmail(email));
+                .flatMap(user -> userRepository.deleteByEmail(email));
     }
 
 }

@@ -4,17 +4,17 @@ import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
 import com.mygitgor.user_service.domain.port.incoming.UserUseCase;
+import com.mygitgor.user_service.domain.port.outgoing.FileStoragePort;
 import com.mygitgor.user_service.domain.port.outgoing.KafkaEventPort;
 import com.mygitgor.user_service.domain.port.outgoing.NotificationPort;
-import com.mygitgor.user_service.domain.port.outgoing.UserRepositoryPort;
+import com.mygitgor.user_service.domain.repository.UserRepository;
 import com.mygitgor.user_service.domain.service.UserDomainService;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
-import com.mygitgor.user_service.infrastructure.mapper.PageMapper;
+import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.exception.UserNotFoundException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.codec.multipart.FilePart;
@@ -25,10 +25,11 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class UserApplicationService implements UserUseCase {
-    private final UserRepositoryPort userRepository;
+    private final UserRepository userRepository;
     private final UserDomainService userDomainService;
     private final NotificationPort notificationPort;
     private final KafkaEventPort kafkaEventPort;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public Mono<User> createUser(Email email, String fullName, String phoneNumber, UserRole role) {
@@ -52,13 +53,13 @@ public class UserApplicationService implements UserUseCase {
     }
 
     @Override
-    public Mono<User> updateUser(UserId userId, String fullName, String phoneNumber, String profileImage) {
+    public Mono<User> updateUser(UserId userId, UpdateUserRequest req) {
         log.info("Updating user: {}", userId);
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .map(user -> {
-                    user.updateProfile(fullName, profileImage, phoneNumber);
+                    user.updateProfile(req.getFullName(), req.getProfileImage(), req.getPhoneNumber());
                     return user;
                 })
                 .flatMap(userRepository::save)
@@ -138,7 +139,7 @@ public class UserApplicationService implements UserUseCase {
     }
 
     @Override
-    public Mono<User> updateAccountStatus(Email email, AccountStatus status, String reason) {
+    public Mono<User> updateAccountStatus(Email email, AccountStatus status, String reason, String changedBy) {
         log.info("Updating account status for user: {} to {}", email, status);
 
         return userRepository.findByEmail(email)
@@ -166,4 +167,122 @@ public class UserApplicationService implements UserUseCase {
                 })
                 .map(arr -> (User) arr[0]);
     }
+
+    @Override
+    public Mono<User> getUserById(UserId userId) {
+        log.debug("Getting user by ID: {}", userId);
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)));
+    }
+
+    @Override
+    public Mono<User> updateProfile(UserId userId, UpdateProfileRequest request) {
+        log.info("Updating profile for user: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                .map(user -> {
+                    user.updateProfile(
+                            request.getFullName(),
+                            request.getProfileImage(),
+                            request.getPhoneNumber()
+                    );
+                    return user;
+                })
+                .flatMap(userRepository::save)
+                .doOnSuccess(user -> {
+                    log.info("Profile updated successfully for user: {}", userId);
+                    kafkaEventPort.sendUserUpdatedEvent(user).subscribe(
+                            success -> log.debug("User updated event sent to Kafka"),
+                            error -> log.error("Failed to send user updated event to Kafka", error)
+                    );
+                });
+    }
+
+    @Override
+    public Mono<User> uploadProfileImage(UserId userId, Mono<FilePart> filePart) {
+        log.info("Uploading profile image for user: {}", userId);
+
+        return filePart
+                .flatMap(file -> fileStoragePort.uploadFile(file, "profile-images"))
+                .flatMap(imageUrl -> userRepository.findById(userId)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                        .map(user -> {
+                            user.updateProfile(null, imageUrl, null);
+                            return user;
+                        })
+                        .flatMap(userRepository::save)
+                )
+                .doOnSuccess(user -> {
+                    log.info("Profile image uploaded for user: {}", userId);
+                    kafkaEventPort.sendUserUpdatedEvent(user).subscribe();
+                });
+    }
+
+    @Override
+    public Mono<User> deleteProfileImage(UserId userId) {
+        log.info("Deleting profile image for user: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                .map(user -> {
+                    user.updateProfile(null, null, null);
+                    return user;
+                })
+                .flatMap(userRepository::save)
+                .doOnSuccess(user -> {
+                    log.info("Profile image deleted for user: {}", userId);
+                    kafkaEventPort.sendUserUpdatedEvent(user).subscribe();
+                });
+    }
+
+    @Override
+    public Mono<Void> deleteUserById(UserId userId) {
+        log.info("Deleting user by ID: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                .flatMap(user -> userRepository.deleteByEmail(user.getEmail()))
+                .doOnSuccess(v -> {
+                    log.info("User deleted successfully: {}", userId);
+                    kafkaEventPort.sendUserDeletedEvent(null).subscribe();
+                });
+    }
+
+    @Override
+    public Mono<User> verifyEmailById(UserId userId) {
+        log.info("Verifying email for user ID: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                .map(user -> {
+                    user.verifyEmail();
+                    return user;
+                })
+                .flatMap(userRepository::save)
+                .doOnSuccess(user -> {
+                    log.info("Email verified successfully for user: {}", userId);
+                    notificationPort.sendEmailVerifiedNotification(user.getEmail()).subscribe();
+                    kafkaEventPort.sendEmailVerifiedEvent(user).subscribe();
+                });
+    }
+
+    @Override
+    public Mono<User> changePasswordById(UserId userId, String newPassword) {
+        log.info("Changing password for user ID: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                .map(user -> {
+                    user.updateLastLogin();
+                    return user;
+                })
+                .flatMap(userRepository::save)
+                .doOnSuccess(user -> {
+                    log.info("Password changed for user: {}", userId);
+                    notificationPort.sendPasswordChangedNotification(user.getEmail()).subscribe();
+                    kafkaEventPort.sendPasswordChangedEvent(user.getEmail()).subscribe();
+                });
+    }
+
 }
