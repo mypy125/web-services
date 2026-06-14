@@ -7,9 +7,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
-public interface VerificationCodeRepository {
+public interface VerificationCodeRepositoryPort {
     Mono<VerificationCode> save(VerificationCode code);
     Mono<VerificationCode> findByEmailAndOtpAndPurpose(Email email, String otp, OtpPurpose purpose);
     Mono<VerificationCode> findValidOtp(Email email, String otp, OtpPurpose purpose, LocalDateTime now);

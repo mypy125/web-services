@@ -6,9 +6,9 @@ import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.port.JwtPort;
-import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
-import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
-import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
+import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepositoryPort;
+import com.mygitgor.auth_service.domain.auth.repository.TokenRepositoryPort;
+import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepositoryPort;
 import com.mygitgor.auth_service.domain.seller.port.SellerPort;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
@@ -39,9 +39,9 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationDomainService {
-    private final TokenRepository tokenRepository;
-    private final VerificationCodeRepository verificationCodeRepository;
-    private final BlacklistedTokenRepository blacklistedTokenRepository;
+    private final TokenRepositoryPort tokenRepository;
+    private final VerificationCodeRepositoryPort verificationCodeRepository;
+    private final BlacklistedTokenRepositoryPort blacklistedTokenRepository;
     private final OtpValiditySpecification otpValiditySpecification;
     private final TokenValiditySpecification tokenValiditySpecification;
     private final KafkaEventProducer kafkaEventProducer;

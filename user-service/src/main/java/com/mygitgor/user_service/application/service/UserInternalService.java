@@ -3,7 +3,7 @@ package com.mygitgor.user_service.application.service;
 import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
-import com.mygitgor.user_service.domain.repository.UserRepository;
+import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
 import com.mygitgor.user_service.domain.service.UserDomainService;
 import com.mygitgor.user_service.infrastructure.dto.request.*;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
@@ -28,7 +28,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserInternalService {
-    private final UserRepository userRepository;
+    private final UserRepositoryPort userRepository;
     private final UserDomainService userDomainService;
     private final UserStatisticsMapper userStatisticsMapper;
     private final UserMapper userMapper;

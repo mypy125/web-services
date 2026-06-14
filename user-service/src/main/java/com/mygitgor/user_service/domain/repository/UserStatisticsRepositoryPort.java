@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-public interface UserStatisticsRepository {
+public interface UserStatisticsRepositoryPort {
     Mono<UserStatistics> findByUserId(UserId userId);
     Mono<UserStatistics> save(UserStatistics statistics);
     Mono<UserStatistics> updateOrderStats(UserId userId, Double orderAmount, LocalDateTime orderDate);

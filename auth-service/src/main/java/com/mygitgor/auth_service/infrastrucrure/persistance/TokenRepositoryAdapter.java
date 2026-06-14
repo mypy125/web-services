@@ -1,7 +1,7 @@
 package com.mygitgor.auth_service.infrastrucrure.persistance;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
-import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
+import com.mygitgor.auth_service.domain.auth.repository.TokenRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
@@ -14,12 +14,10 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class TokenRepositoryImpl implements TokenRepository {
+public class TokenRepositoryAdapter implements TokenRepositoryPort {
     private final TokenR2dbcRepository r2dbcRepository;
     private final TokenMapper tokenMapper;
 

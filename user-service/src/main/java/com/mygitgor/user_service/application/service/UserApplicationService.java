@@ -7,7 +7,7 @@ import com.mygitgor.user_service.domain.port.incoming.UserUseCase;
 import com.mygitgor.user_service.domain.port.outgoing.FileStoragePort;
 import com.mygitgor.user_service.domain.port.outgoing.KafkaEventPort;
 import com.mygitgor.user_service.domain.port.outgoing.NotificationPort;
-import com.mygitgor.user_service.domain.repository.UserRepository;
+import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
 import com.mygitgor.user_service.domain.service.UserDomainService;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class UserApplicationService implements UserUseCase {
-    private final UserRepository userRepository;
+    private final UserRepositoryPort userRepository;
     private final UserDomainService userDomainService;
     private final NotificationPort notificationPort;
     private final KafkaEventPort kafkaEventPort;

@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface BlacklistedTokenRepository {
+public interface BlacklistedTokenRepositoryPort {
     Mono<Void> save(String token, UserId userId, LocalDateTime expiresAt);
     Mono<Boolean> existsByToken(String token);
     Mono<Optional<String>> findTokenByValue(TokenValue tokenValue);

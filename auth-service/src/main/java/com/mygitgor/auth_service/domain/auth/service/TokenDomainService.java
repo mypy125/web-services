@@ -4,7 +4,7 @@ import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.port.JwtPort;
-import com.mygitgor.auth_service.domain.auth.repository.TokenRepository;
+import com.mygitgor.auth_service.domain.auth.repository.TokenRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 public class TokenDomainService {
     private final JwtPort jwtPort;
     private final TokenValiditySpecification tokenValiditySpec;
-    private final TokenRepository tokenRepository;
+    private final TokenRepositoryPort tokenRepository;
 
     public Mono<Token> generateToken(Email email, UserId userId, UserRole role) {
         return jwtPort.generateToken(email.toString(), userId.toString(), role)

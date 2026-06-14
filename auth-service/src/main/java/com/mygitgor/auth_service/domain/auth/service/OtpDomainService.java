@@ -4,7 +4,7 @@ import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
 import com.mygitgor.auth_service.domain.auth.model.enums.UserRole;
 import com.mygitgor.auth_service.domain.auth.port.NotificationPort;
-import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
+import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.domain.shared.valueobject.Otp;
@@ -29,7 +29,7 @@ import java.util.UUID;
 public class OtpDomainService {
     private static final int OTP_VALIDITY_MINUTES = 10;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-    private final VerificationCodeRepository verificationCodeRepository;
+    private final VerificationCodeRepositoryPort verificationCodeRepository;
     private final OtpValiditySpecification otpValiditySpec;
     private final NotificationPort notificationPort;
     private final KafkaEventProducer kafkaEventProducer;

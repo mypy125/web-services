@@ -2,7 +2,7 @@ package com.mygitgor.auth_service.infrastrucrure.persistance;
 
 import com.mygitgor.auth_service.domain.auth.model.VerificationCode;
 import com.mygitgor.auth_service.domain.auth.model.enums.OtpPurpose;
-import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepository;
+import com.mygitgor.auth_service.domain.auth.repository.VerificationCodeRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.valueobject.Email;
 import com.mygitgor.auth_service.infrastrucrure.mapper.VerificationCodeMapper;
 import com.mygitgor.auth_service.infrastrucrure.persistance.entity.VerificationCodeEntity;
@@ -14,13 +14,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class VerificationCodeRepositoryImpl implements VerificationCodeRepository {
+public class VerificationCodeRepositoryAdapter implements VerificationCodeRepositoryPort {
     private final VerificationCodeR2dbcRepository r2dbcRepository;
     private final VerificationCodeMapper mapper;
 

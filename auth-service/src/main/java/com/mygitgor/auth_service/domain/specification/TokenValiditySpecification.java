@@ -2,7 +2,7 @@ package com.mygitgor.auth_service.domain.specification;
 
 import com.mygitgor.auth_service.domain.auth.model.Token;
 import com.mygitgor.auth_service.domain.auth.model.enums.TokenStatus;
-import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
+import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class TokenValiditySpecification {
-    private final BlacklistedTokenRepository blacklistedTokenRepository;
+    private final BlacklistedTokenRepositoryPort blacklistedTokenRepository;
 
     public Mono<Boolean> isSatisfiedBy(Token token) {
         if (token == null || !token.isValid()) {

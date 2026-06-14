@@ -7,7 +7,7 @@ import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface TokenRepository {
+public interface TokenRepositoryPort {
     Mono<Token> save(Token token);
     Mono<Token> findByValue(TokenValue value);
     Mono<Token> findActiveTokenByUserId(UserId userId);

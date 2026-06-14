@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public interface UserRepository {
+public interface UserRepositoryPort {
     Mono<User> save(User user);
     Mono<User> findById(UserId id);
     Mono<User> findByEmail(Email email);

@@ -1,6 +1,6 @@
 package com.mygitgor.auth_service.infrastrucrure.persistance;
 
-import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepository;
+import com.mygitgor.auth_service.domain.auth.repository.BlacklistedTokenRepositoryPort;
 import com.mygitgor.auth_service.domain.shared.valueobject.TokenValue;
 import com.mygitgor.auth_service.domain.shared.valueobject.UserId;
 import com.mygitgor.auth_service.infrastrucrure.mapper.TokenMapper;
@@ -8,7 +8,6 @@ import com.mygitgor.auth_service.infrastrucrure.persistance.entity.BlacklistedTo
 import com.mygitgor.auth_service.infrastrucrure.persistance.repository.BlacklistedTokenR2dbcRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -20,7 +19,7 @@ import java.util.UUID;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class BlacklistedTokenRepositoryImpl implements BlacklistedTokenRepository {
+public class BlacklistedTokenRepositoryAdapter implements BlacklistedTokenRepositoryPort {
     private final BlacklistedTokenR2dbcRepository r2dbcRepository;
     private final TokenMapper tokenMapper;
 
