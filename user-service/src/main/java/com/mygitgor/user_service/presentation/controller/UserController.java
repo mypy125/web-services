@@ -7,6 +7,7 @@ import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -82,8 +83,8 @@ public class UserController {
     )
     public Mono<Void> deleteCurrentUser(Authentication authentication) {
         log.info("Deleting current user");
-        String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
-        return userService.deleteUser(new UserId(userId));
+        String email = ((AuthUser) authentication.getPrincipal()).getEmail();
+        return userService.deleteUser(new Email(email));
     }
 
     @DeleteMapping("/{userId}")
@@ -94,7 +95,7 @@ public class UserController {
     )
     public Mono<Void> deleteUser(@PathVariable String userId) {
         log.info("Admin: Deleting user: {}", userId);
-        return userService.deleteUser(new UserId(userId));
+        return userService.deleteUserById(new UserId(userId));
     }
 
     @PostMapping("/me/verify-email")
@@ -103,8 +104,8 @@ public class UserController {
     )
     public Mono<UserResponse> verifyEmail(Authentication authentication) {
         log.info("Verifying email for current user");
-        String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
-        return userService.verifyEmail(new UserId(userId))
+        String email = ((AuthUser) authentication.getPrincipal()).getEmail();
+        return userService.verifyEmail(new Email(email))
                 .map(userMapper::toResponse);
     }
 
@@ -113,11 +114,12 @@ public class UserController {
     @Operation(summary = "Change current user password",
             description = "Validates the old password and sets up a new secure password for the authenticated account."
     )
-    public Mono<Void> changePassword(Authentication authentication,
+    public Mono<UserResponse> changePassword(Authentication authentication,
                                      @Valid @RequestBody ChangePasswordRequest request) {
         log.info("Changing password for current user");
-        String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
-        return userService.changePassword(new UserId(userId), request.getNewPassword());
+        String email = ((AuthUser) authentication.getPrincipal()).getEmail();
+        return userService.changePassword(new Email(email), request.getNewPassword())
+                .map(userMapper::toResponse);
     }
 
     @PostMapping("/me/profile-image")

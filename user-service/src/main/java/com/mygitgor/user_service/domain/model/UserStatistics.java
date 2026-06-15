@@ -1,5 +1,6 @@
 package com.mygitgor.user_service.domain.model;
 
+import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +32,10 @@ public class UserStatistics {
     private String loyaltyTier;
 
     public void updateOrderStats(Double orderAmount) {
+        if (orderAmount == null || orderAmount <= 0) {
+            throw new DomainException("Order amount must be positive");
+        }
+
         if (this.totalOrders == null) this.totalOrders = 0;
         if (this.totalSpent == null) this.totalSpent = 0.0;
 
@@ -38,11 +43,24 @@ public class UserStatistics {
         this.totalSpent += orderAmount;
         this.averageOrderValue = this.totalSpent / this.totalOrders;
         this.lastOrderDate = LocalDateTime.now();
+
+        int pointsEarned = (int) Math.floor(orderAmount);
+        updateLoyaltyPoints(pointsEarned);
     }
 
     public void updateProductStats(String category, String productId, String productName) {
+        if (productId == null) {
+            throw new DomainException("Product ID cannot be null");
+        }
+
         if (this.totalProductsPurchased == null) this.totalProductsPurchased = 0;
         this.totalProductsPurchased++;
+
+        if (category != null) {
+            this.mostPurchasedCategory = category;
+        }
+        this.favoriteProductId = productId;
+        this.favoriteProductName = productName;
     }
 
     public void updateReviewStats(Integer rating) {
@@ -81,6 +99,36 @@ public class UserStatistics {
         } else {
             this.loyaltyTier = "BRONZE";
         }
+    }
+
+    public void updateCartItemsCount(Integer newCount) {
+        if (newCount == null || newCount < 0) {
+            throw new DomainException("Cart items count cannot be negative");
+        }
+        this.cartItemsCount = newCount;
+    }
+
+    public void updateWishlistItemsCount(Integer newCount) {
+        if (newCount == null || newCount < 0) {
+            throw new DomainException("Wishlist items count cannot be negative");
+        }
+        this.wishlistItemsCount = newCount;
+    }
+
+    public int getLoyaltyLevel() {
+        if (loyaltyPoints == null) return 1;
+        if (loyaltyPoints >= 10000) return 4;
+        if (loyaltyPoints >= 5000) return 3;
+        if (loyaltyPoints >= 1000) return 2;
+        return 1;
+    }
+
+    public int getPointsToNextLevel() {
+        if (loyaltyPoints == null) return 1000;
+        if (loyaltyPoints >= 10000) return 0;
+        if (loyaltyPoints >= 5000) return 10000 - loyaltyPoints;
+        if (loyaltyPoints >= 1000) return 5000 - loyaltyPoints;
+        return 1000 - loyaltyPoints;
     }
 
     public static UserStatistics create(UserId userId) {

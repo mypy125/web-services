@@ -19,7 +19,7 @@ public class User {
     private String profileImage;
     private String phoneNumber;
     private AccountStatus accountStatus;
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastLoginAt;
     private LocalDateTime emailVerifiedAt;
@@ -36,6 +36,9 @@ public class User {
         }
         this.emailVerified = true;
         this.emailVerifiedAt = LocalDateTime.now();
+        if (this.accountStatus == AccountStatus.PENDING_VERIFICATION) {
+            this.accountStatus = AccountStatus.ACTIVE;
+        }
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -71,8 +74,10 @@ public class User {
                 .fullName(fullName.trim())
                 .phoneNumber(phoneNumber)
                 .role(role != null ? role : UserRole.ROLE_CUSTOMER)
-                .accountStatus(AccountStatus.PENDING)
+                .accountStatus(AccountStatus.PENDING_VERIFICATION)
                 .emailVerified(false)
+                .totalOrdersCount(0)
+                .totalSpentAmount(0.0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -88,11 +93,8 @@ public class User {
     }
 
     public void suspend() {
-        if (this.accountStatus == AccountStatus.SUSPENDED) {
-            throw new DomainException("Only active users can be suspended");
-        }
-        if (this.accountStatus == AccountStatus.BANNED) {
-            throw new DomainException("Cannot suspend banned user");
+        if (this.accountStatus != AccountStatus.ACTIVE) {
+            throw new DomainException("Only active users can be suspended. Current status: " + this.accountStatus);
         }
         this.accountStatus = AccountStatus.SUSPENDED;
         this.updatedAt = LocalDateTime.now();
@@ -102,21 +104,72 @@ public class User {
         if (this.accountStatus == AccountStatus.ACTIVE) {
             throw new DomainException("User is already active");
         }
-
-        if (!this.emailVerified) {
-            this.emailVerified = true;
-            this.emailVerifiedAt = LocalDateTime.now();
-        }
-
         this.accountStatus = AccountStatus.ACTIVE;
         this.updatedAt = LocalDateTime.now();
     }
 
     public boolean isActive() {
-        return this.accountStatus == AccountStatus.ACTIVE;
+        return this.accountStatus != null && this.accountStatus.isActive();
     }
 
     public boolean canLogin() {
-        return isActive() && (emailVerified || role == UserRole.ROLE_ADMIN);
+        if (this.accountStatus == null) return false;
+        return !this.accountStatus.isBlocked();
+    }
+
+    public void updateRole(UserRole newRole) {
+        if (newRole == null) {
+            throw new DomainException("New role cannot be null");
+        }
+
+        if (this.role == newRole) {
+            throw new DomainException("User already has the role: " + newRole);
+        }
+
+        if (this.role == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
+            throw new DomainException("Cannot downgrade an ADMIN role via standard user update");
+        }
+
+        if (this.accountStatus == AccountStatus.BANNED) {
+            throw new DomainException("Cannot change role for a banned user");
+        }
+
+        this.role = newRole;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateOrderStatistics(Integer newTotalOrders, Double newTotalSpent) {
+        if (newTotalOrders == null || newTotalSpent == null) {
+            throw new DomainException("Order statistics values cannot be null");
+        }
+        if (newTotalOrders < this.getTotalOrdersCount()) {
+            throw new DomainException("New total orders count cannot be less than current count");
+        }
+        if (newTotalSpent < this.getTotalSpentAmount()) {
+            throw new DomainException("New total spent amount cannot be less than current amount");
+        }
+        if (newTotalOrders < 0 || newTotalSpent < 0) {
+            throw new DomainException("Order statistics cannot have negative values");
+        }
+
+        this.totalOrdersCount = newTotalOrders;
+        this.totalSpentAmount = newTotalSpent;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public Integer getTotalOrdersCount() {
+        return totalOrdersCount != null ? totalOrdersCount : 0;
+    }
+
+    public Double getTotalSpentAmount() {
+        return totalSpentAmount != null ? totalSpentAmount : 0.0;
+    }
+
+    public boolean canPurchase() {
+        return isActive() && emailVerified;
+    }
+
+    public boolean needsEmailVerification() {
+        return !emailVerified && role != UserRole.ROLE_ADMIN;
     }
 }
