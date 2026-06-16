@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.client;
 
-import com.mygitgor.user_service.infrastructure.dto.response.UserInfoResponse;
+import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +34,11 @@ public class AuthServiceClient {
                 .onErrorReturn(false);
     }
 
-    public Mono<UserInfoResponse> getUserInfoFromToken(String token) {
+    public Mono<UserAuthInfoResponse> getUserInfoFromToken(String token) {
         return webClient.get()
                 .uri("/auth/user-info")
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
-                .bodyToMono(UserInfoResponse.class);
+                .bodyToMono(UserAuthInfoResponse.class);
     }
 }

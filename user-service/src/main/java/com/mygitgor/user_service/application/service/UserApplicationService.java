@@ -69,13 +69,13 @@ public class UserApplicationService implements UserUseCase {
         log.info("Updating user: {}", userId);
 
         return Mono.fromRunnable(() -> {
-                    if (req.getFullName() != null) validationService.validateFullName(req.getFullName());
-                    if (req.getPhoneNumber() != null) validationService.validatePhoneNumber(req.getPhoneNumber());
+                    if (req.fullName() != null) validationService.validateFullName(req.fullName());
+                    if (req.phoneNumber() != null) validationService.validatePhoneNumber(req.phoneNumber());
                 })
                 .then(userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .map(user -> {
-                    user.updateProfile(req.getFullName(), req.getProfileImage(), req.getPhoneNumber());
+                    user.updateProfile(req.fullName(), req.profileImage(), req.phoneNumber());
                     return user;
                 })
                 .flatMap(userRepository::save)
@@ -185,18 +185,18 @@ public class UserApplicationService implements UserUseCase {
         return Mono.fromRunnable(() -> {
                     validationService.validateUserId(userId.toString());
                     validationService.validateProfileUpdate(
-                            request.getFullName(),
-                            request.getPhoneNumber(),
-                            request.getProfileImage()
+                            request.fullName(),
+                            request.phoneNumber(),
+                            request.profileImage()
                     );
                 })
                 .then(userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .flatMap(user -> userDomainService.updateUserProfile(
                         user,
-                        request.getFullName(),
-                        request.getPhoneNumber(),
-                        request.getProfileImage()
+                        request.fullName(),
+                        request.phoneNumber(),
+                        request.profileImage()
                 ))
                 .flatMap(userRepository::save)
                 .doOnSuccess(user -> {

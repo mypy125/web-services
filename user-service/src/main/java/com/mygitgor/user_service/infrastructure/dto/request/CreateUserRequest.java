@@ -1,31 +1,30 @@
 package com.mygitgor.user_service.infrastructure.dto.request;
 
-import com.mygitgor.user_service.domain.model.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CreateUserRequest {
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    private String email;
+@Schema(description = "Request package for creating a new user account")
+public record CreateUserRequest(
 
-    @NotBlank(message = "Full name is required")
-    @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
-    private String fullName;
+        @Schema(description = "Unique electronic mail address of the user", example = "john.doe@example.com")
+        @NotBlank(message = "Email is required")
+        @Email(message = "Invalid email format")
+        String email,
 
-    @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 digits")
-    private String phoneNumber;
+        @Schema(description = "First and last name of the user", example = "John Doe")
+        @NotBlank(message = "Full name is required")
+        @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
+        String fullName,
 
-    private String profileImage;
-    private String role;
+        @Schema(description = "Contact phone number (digits only or international format)", example = "+37499112233")
+        @Size(min = 10, max = 15, message = "Phone number must be between 10 and 15 digits")
+        String phoneNumber,
 
-}
+        @Schema(description = "URL string or identifier for the hosted profile avatar image", example = "avatars/user-123.jpg")
+        String profileImage,
+
+        @Schema(description = "Security role assigned to the user profile", example = "ROLE_CUSTOMER")
+        String role
+) {}

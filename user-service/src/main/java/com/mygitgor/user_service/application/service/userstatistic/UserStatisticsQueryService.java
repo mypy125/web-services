@@ -20,21 +20,21 @@ public class UserStatisticsQueryService {
 
     public Mono<UserStatisticsResponse> getStatistics(UserId userId) {
         log.debug("Query: Getting statistics for user: {}", userId);
-        return findOrCreateStatistics(userId)
+        return findOrBuildDefault(userId)
                 .map(statisticsMapper::toResponse);
     }
 
     public Mono<LoyaltyInfoResponse> getLoyaltyInfo(UserId userId) {
         log.debug("Query: Getting loyalty info for user: {}", userId);
-        return findOrCreateStatistics(userId)
+        return findOrBuildDefault(userId)
                 .map(statisticsMapper::toLoyaltyInfo);
     }
 
-    private Mono<UserStatistics> findOrCreateStatistics(UserId userId) {
+    private Mono<UserStatistics> findOrBuildDefault(UserId userId) {
         return statisticsRepository.findByUserId(userId)
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.info("Statistics not found for user: {}, creating default", userId);
-                    return statisticsRepository.save(UserStatistics.create(userId));
+                .switchIfEmpty(Mono.fromSupplier(() -> {
+                    log.debug("Statistics not found in DB for user: {}, returning in-memory default", userId);
+                    return UserStatistics.create(userId);
                 }));
     }
 }

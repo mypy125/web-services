@@ -5,6 +5,7 @@ import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.port.outgoing.KafkaEventPort;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserCreatedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserUpdatedEvent;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -27,27 +28,60 @@ public class UserEventProducer implements KafkaEventPort {
 
     @Override
     public Mono<Void> sendUserCreatedEvent(User user) {
-        UserCreatedEvent event = UserCreatedEvent.builder()
-                .userId(user.getId().toString())
-                .email(user.getEmail().toString())
-                .fullName(user.getFullName())
-                .role(user.getRole().name())
-                .occurredAt(LocalDateTime.now())
-                .build();
+        UserCreatedEvent event = new UserCreatedEvent(
+                user.getId().getValue().toString(),
+                user.getEmail().toString(),
+                user.getFullName(),
+                user.getRole().name(),
+                user.getPhoneNumber(),
+                user.getProfileImage(),
+                LocalDateTime.now()
+        );
 
         return sendEvent(USER_CREATED_TOPIC, event);
     }
 
     @Override
     public Mono<Void> sendUserUpdatedEvent(User user) {
-        UserUpdatedEvent event = UserUpdatedEvent.builder()
-                .userId(user.getId().toString())
-                .email(user.getEmail().toString())
-                .fullName(user.getFullName())
-                .occurredAt(LocalDateTime.now())
-                .build();
+        UserUpdatedEvent event = new UserUpdatedEvent(
+                user.getId().getValue().toString(),
+                user.getEmail().toString(),
+                user.getFullName(),
+                user.getRole().name(),
+                LocalDateTime.now()
+        );
 
         return sendEvent(USER_UPDATED_TOPIC, event);
+    }
+
+    @Override
+    public Mono<Void> sendEmailVerifiedEvent(User user) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendUserDeletedEvent(Email user) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendPasswordChangedEvent(Email user) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendUserStatusChangedEvent(User user, String status, String reason, String changedBy) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendUserRoleChangedEvent(User user, String oldRole, String newRole, String changedBy) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendUserOrderStatsUpdatedEvent(User user) {
+        return null;
     }
 
     private Mono<Void> sendEvent(String topic, Object event) {

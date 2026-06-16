@@ -83,19 +83,19 @@ public class UserInternalService {
     }
 
     public Mono<UserResponse> createUser(CreateUserRequest request) {
-        log.info("Creating user with email: {}", request.getEmail());
+        log.info("Creating user with email: {}", request.email());
 
-        return userDomainService.validateEmailUniqueness(new Email(request.getEmail()))
+        return userDomainService.validateEmailUniqueness(new Email(request.email()))
                 .then(Mono.fromCallable(() -> User.register(
-                        new Email(request.getEmail()),
-                        request.getFullName(),
-                        request.getPhoneNumber(),
-                        request.getRole() != null ? UserRole.valueOf(request.getRole()) : UserRole.ROLE_CUSTOMER
+                        new Email(request.email()),
+                        request.fullName(),
+                        request.phoneNumber(),
+                        request.role() != null ? UserRole.valueOf(request.role()) : UserRole.ROLE_CUSTOMER
                 )))
                 .flatMap(userRepository::save)
                 .map(userMapper::toResponse)
-                .doOnSuccess(user -> log.info("User created successfully: {}", request.getEmail()))
-                .doOnError(error -> log.error("Failed to create user: {}", request.getEmail(), error));
+                .doOnSuccess(user -> log.info("User created successfully: {}", request.email()))
+                .doOnError(error -> log.error("Failed to create user: {}", request.email(), error));
     }
 
     public Mono<UserResponse> updateUser(UserId userId, UpdateUserRequest request) {
@@ -138,12 +138,12 @@ public class UserInternalService {
     }
 
     public Mono<UserResponse> updateAccountStatus(Email email, UpdateAccountStatusRequest request) {
-        log.info("Updating account status for user: {} to {}", email, request.getStatus());
+        log.info("Updating account status for user: {} to {}", email, request.status());
 
         return userRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .map(user -> {
-                    AccountStatus status = AccountStatus.valueOf(request.getStatus());
+                    AccountStatus status = AccountStatus.valueOf(request.status());
                     switch (status) {
                         case BANNED -> user.ban();
                         case SUSPENDED -> user.suspend();

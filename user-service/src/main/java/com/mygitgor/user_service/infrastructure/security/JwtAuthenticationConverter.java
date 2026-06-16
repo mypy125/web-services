@@ -41,16 +41,16 @@ public class JwtAuthenticationConverter implements ServerAuthenticationConverter
                 })
                 .map(userInfo -> {
                     List<SimpleGrantedAuthority> authorities = List.of(
-                            new SimpleGrantedAuthority("ROLE_" + userInfo.getRole())
+                            new SimpleGrantedAuthority("ROLE_" + userInfo.role())
                     );
 
                     AuthUser authUser = new AuthUser(
-                            userInfo.getEmail(),
-                            userInfo.getId(),
-                            userInfo.getRole()
+                            userInfo.email(),
+                            userInfo.id(),
+                            userInfo.role()
                     );
 
-                    log.debug("Authenticated user: {}, role: {}", userInfo.getEmail(), userInfo.getRole());
+                    log.debug("Authenticated user: {}, role: {}", userInfo.email(), userInfo.role());
 
                     return new UsernamePasswordAuthenticationToken(authUser, token, authorities);
                 });

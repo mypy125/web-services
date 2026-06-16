@@ -2,23 +2,26 @@ package com.mygitgor.user_service.infrastructure.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ChangePasswordRequest {
-    @NotBlank(message = "Current password is required")
-    private String currentPassword;
+@Schema(description = "Request to change current user password from profile")
+public record ChangePasswordRequest(
 
-    @NotBlank(message = "New password is required")
-    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
-    private String newPassword;
+        @Schema(description = "The user's current password for verification", example = "OldPassword123!")
+        @NotBlank(message = "Current password is required")
+        String currentPassword,
 
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
+        @Schema(description = "New secure password", example = "NewSecurePassword2026!")
+        @NotBlank(message = "New password is required")
+        @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+        String newPassword,
+
+        @Schema(description = "Confirmation of the new password", example = "NewSecurePassword2026!")
+        @NotBlank(message = "Confirm password is required")
+        String confirmPassword
+) {
+
+    public boolean isPasswordConfirmationValid() {
+        return newPassword != null && newPassword.equals(confirmPassword);
+    }
 }

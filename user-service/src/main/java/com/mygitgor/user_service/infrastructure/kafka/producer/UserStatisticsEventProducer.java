@@ -32,98 +32,98 @@ public class UserStatisticsEventProducer {
 
 
     public Mono<Void> sendOrderStatsUpdatedEvent(UserId userId, UserStatistics stats) {
-        OrderStatsUpdatedEvent event = OrderStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .totalOrders(stats.getTotalOrders())
-                .totalSpent(stats.getTotalSpent())
-                .averageOrderValue(stats.getAverageOrderValue())
-                .lastOrderDate(stats.getLastOrderDate())
-                .occurredAt(LocalDateTime.now())
-                .build();
+        OrderStatsUpdatedEvent event = new OrderStatsUpdatedEvent(
+                userId.getValue().toString(),
+                stats.getTotalOrders(),
+                stats.getTotalSpent(),
+                stats.getAverageOrderValue(),
+                stats.getLastOrderDate(),
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_ORDER_STATS_UPDATED, event);
     }
 
     public Mono<Void> sendReviewStatsUpdatedEvent(UserId userId, UserStatistics stats) {
-        ReviewStatsUpdatedEvent event = ReviewStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .totalReviews(stats.getTotalReviews())
-                .averageRating(stats.getAverageRating())
-                .occurredAt(LocalDateTime.now())
-                .build();
+        ReviewStatsUpdatedEvent event = new ReviewStatsUpdatedEvent(
+                userId.getValue().toString(),
+                stats.getTotalReviews(),
+                stats.getAverageRating(),
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_REVIEW_STATS_UPDATED, event);
     }
 
     public Mono<Void> sendLoyaltyUpdatedEvent(UserId userId, UserStatistics stats, String oldTier) {
-        LoyaltyUpdatedEvent event = LoyaltyUpdatedEvent.builder()
-                .userId(userId.toString())
-                .oldTier(oldTier)
-                .newTier(stats.getLoyaltyTier())
-                .loyaltyPoints(stats.getLoyaltyPoints())
-                .pointsChange(stats.getLoyaltyPoints() - getPreviousPoints(stats))
-                .occurredAt(LocalDateTime.now())
-                .build();
+        LoyaltyUpdatedEvent event = new LoyaltyUpdatedEvent(
+                userId.getValue().toString(),
+                oldTier,
+                stats.getLoyaltyTier(),
+                stats.getLoyaltyPoints(),
+                stats.getLoyaltyPoints() - getPreviousPoints(stats),
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_LOYALTY_UPDATED, event);
     }
 
     public Mono<Void> sendActivityUpdatedEvent(UserId userId, UserStatistics stats) {
-        ActivityUpdatedEvent event = ActivityUpdatedEvent.builder()
-                .userId(userId.toString())
-                .lastActiveAt(stats.getLastActiveAt())
-                .daysActive(stats.getDaysActive())
-                .consecutiveLoginDays(stats.getConsecutiveLoginDays())
-                .occurredAt(LocalDateTime.now())
-                .build();
+        ActivityUpdatedEvent event = new ActivityUpdatedEvent(
+                userId.getValue().toString(),
+                stats.getLastActiveAt(),
+                stats.getDaysActive(),
+                stats.getConsecutiveLoginDays(),
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_ACTIVITY_UPDATED, event);
     }
 
     public Mono<Void> sendCouponStatsUpdatedEvent(UserId userId, UserStatistics stats, Double discountAmount, String couponCode) {
-        CouponStatsUpdatedEvent event = CouponStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .couponsUsed(stats.getCouponsUsed())
-                .totalDiscountReceived(stats.getTotalDiscountReceived())
-                .lastUsedCouponCode(couponCode)
-                .lastUsedDiscountAmount(discountAmount)
-                .occurredAt(LocalDateTime.now())
-                .build();
+        CouponStatsUpdatedEvent event = new CouponStatsUpdatedEvent(
+                userId.getValue().toString(),
+                stats.getCouponsUsed(),
+                stats.getTotalDiscountReceived(),
+                couponCode,
+                discountAmount,
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_COUPON_STATS_UPDATED, event);
     }
 
     public Mono<Void> sendProductStatsUpdatedEvent(UserId userId, UserStatistics stats, String productId, String category) {
-        ProductStatsUpdatedEvent event = ProductStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .totalProductsPurchased(stats.getTotalProductsPurchased())
-                .mostPurchasedCategory(stats.getMostPurchasedCategory())
-                .favoriteProductId(stats.getFavoriteProductId())
-                .favoriteProductName(stats.getFavoriteProductName())
-                .lastPurchasedProductId(productId)
-                .lastPurchasedCategory(category)
-                .occurredAt(LocalDateTime.now())
-                .build();
+        ProductStatsUpdatedEvent event = new ProductStatsUpdatedEvent(
+                userId.getValue().toString(),
+                stats.getTotalProductsPurchased(),
+                stats.getMostPurchasedCategory(),
+                stats.getFavoriteProductId(),
+                stats.getFavoriteProductName(),
+                productId,
+                category,
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_PRODUCT_STATS_UPDATED, event);
     }
 
     public Mono<Void> sendWishlistStatsUpdatedEvent(UserId userId, Integer wishlistItemsCount) {
-        WishlistStatsUpdatedEvent event = WishlistStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .wishlistItemsCount(wishlistItemsCount)
-                .occurredAt(LocalDateTime.now())
-                .build();
+        WishlistStatsUpdatedEvent event = new WishlistStatsUpdatedEvent(
+                userId.getValue().toString(),
+                wishlistItemsCount,
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_WISHLIST_STATS_UPDATED, event);
     }
 
     public Mono<Void> sendCartStatsUpdatedEvent(UserId userId, Integer cartItemsCount) {
-        CartStatsUpdatedEvent event = CartStatsUpdatedEvent.builder()
-                .userId(userId.toString())
-                .cartItemsCount(cartItemsCount)
-                .occurredAt(LocalDateTime.now())
-                .build();
+        CartStatsUpdatedEvent event = new CartStatsUpdatedEvent(
+                userId.getValue().toString(),
+                cartItemsCount,
+                LocalDateTime.now()
+        );
 
         return sendEvent(TOPIC_CART_STATS_UPDATED, event);
     }

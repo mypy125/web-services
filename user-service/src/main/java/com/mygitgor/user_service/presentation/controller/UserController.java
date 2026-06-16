@@ -118,7 +118,7 @@ public class UserController {
                                      @Valid @RequestBody ChangePasswordRequest request) {
         log.info("Changing password for current user");
         String email = ((AuthUser) authentication.getPrincipal()).getEmail();
-        return userService.changePassword(new Email(email), request.getNewPassword())
+        return userService.changePassword(new Email(email), request.newPassword())
                 .map(userMapper::toResponse);
     }
 

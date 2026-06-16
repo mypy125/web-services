@@ -5,7 +5,6 @@ import com.mygitgor.user_service.infrastructure.dto.request.*;
 import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
-import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import jakarta.validation.Valid;
@@ -74,7 +73,7 @@ public class UserInternalController {
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        log.info("Internal API: Creating user with email: {}", request.getEmail());
+        log.info("Internal API: Creating user with email: {}", request.email());
         return userInternalService.createUser(request);
     }
 
@@ -95,14 +94,14 @@ public class UserInternalController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> updateLastLogin(@PathVariable String email,
                                       @Valid @RequestBody UpdateLastLoginRequest request) {
-        log.debug("Internal API: Updating last login for user: {} at {}", email, request.getLastLoginAt());
-        return userInternalService.updateLastLogin(new Email(email), request.getLastLoginAt());
+        log.debug("Internal API: Updating last login for user: {} at {}", email, request.lastLoginAt());
+        return userInternalService.updateLastLogin(new Email(email), request.lastLoginAt());
     }
 
     @PatchMapping("/{email}/status")
     public Mono<UserResponse> updateAccountStatus(@PathVariable String email,
                                                   @Valid @RequestBody UpdateAccountStatusRequest request) {
-        log.info("Internal API: Updating account status for user: {} to {}", email, request.getStatus());
+        log.info("Internal API: Updating account status for user: {} to {}", email, request.status());
         return userInternalService.updateAccountStatus(new Email(email), request);
     }
 
@@ -111,7 +110,7 @@ public class UserInternalController {
     public Mono<Void> changePassword(@PathVariable String email,
                                      @Valid @RequestBody ChangePasswordInternalRequest request) {
         log.info("Internal API: Changing password for user: {}", email);
-        return userInternalService.changePassword(new Email(email), request.getNewPassword());
+        return userInternalService.changePassword(new Email(email), request.newPassword());
     }
 
     @DeleteMapping("/{email}")

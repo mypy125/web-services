@@ -28,27 +28,22 @@ public interface UserStatisticsPersistenceMapper {
     void updateEntity(@MappingTarget UserStatisticsEntity entity, UserStatistics domain);
 
     default UUID mapUserIdToUuid(UserId userId) {
-        if (userId == null || userId.toString() == null) return null;
-        return UUID.fromString(userId.toString());
+        if (userId == null || userId.getValue() == null) return null;
+        return userId.getValue();
     }
 
     default UserId mapUuidToUserId(UUID uuid) {
         if (uuid == null) return null;
-        return new UserId(uuid.toString());
+        return new UserId(uuid);
     }
 
     @AfterMapping
-    default void setDatesToEntity(@MappingTarget UserStatisticsEntity entity) {
-        if (entity != null) {
-            entity.setCreatedAt(LocalDateTime.now());
-            entity.setUpdatedAt(LocalDateTime.now());
-        }
-    }
-
-    @AfterMapping
-    default void updateTimestamp(@MappingTarget UserStatisticsEntity entity, UserStatistics domain) {
+    default void updateTimestamp(@MappingTarget UserStatisticsEntity entity) {
         if (entity != null) {
             entity.setUpdatedAt(LocalDateTime.now());
+            if (entity.getCreatedAt() == null) {
+                entity.setCreatedAt(LocalDateTime.now());
+            }
         }
     }
 }
