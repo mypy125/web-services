@@ -33,15 +33,9 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    topics:
-      user-order-stats: user.order.stats.updated
-      user-review-stats: user.review.stats.updated
-      user-loyalty: user.loyalty.updated
-      user-activity: user.activity.updated
-      user-coupon-stats: user.coupon.stats.updated
-      user-product-stats: user.product.stats.updated
-      user-wishlist-stats: user.wishlist.stats.updated
-      user-cart-stats: user.cart.stats.updated
+    topic:
+      partitions: 3
+      replicas: 1
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
