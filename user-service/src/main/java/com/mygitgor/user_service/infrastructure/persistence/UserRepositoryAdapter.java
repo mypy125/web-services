@@ -9,10 +9,10 @@ import com.mygitgor.user_service.infrastructure.persistence.entity.UserEntity;
 import com.mygitgor.user_service.infrastructure.persistence.mapper.UserPersistenceMapper;
 import com.mygitgor.user_service.infrastructure.persistence.repository.UserR2dbcRepository;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -130,13 +130,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
                 .map(tuple -> {
                     List<User> users = tuple.getT1();
                     Long total = tuple.getT2();
-                    return Page.<User>builder()
-                            .content(users)
-                            .pageNumber(page)
-                            .pageSize(size)
-                            .totalElements(total)
-                            .totalPages((int) Math.ceil((double) total / size))
-                            .build();
+                    return Page.of(users, page, size, total);
                 })
                 .doOnSuccess(result -> log.debug("Search completed, found {} users", result.getTotalElements()))
                 .doOnError(error -> log.error("Failed to search users: {}", error.getMessage()));

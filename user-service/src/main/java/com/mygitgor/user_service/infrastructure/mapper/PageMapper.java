@@ -1,10 +1,9 @@
 package com.mygitgor.user_service.infrastructure.mapper;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -17,13 +16,23 @@ public class PageMapper {
             return Page.empty();
         }
 
-        List<U> content = sourcePage.getContent().stream()
+        if (sourcePage.getContent() == null || sourcePage.getContent().isEmpty()) {
+            return Page.of(
+                    Collections.emptyList(),
+                    sourcePage.getPageNumber(),
+                    sourcePage.getPageSize(),
+                    sourcePage.getTotalElements()
+            );
+        }
+
+        List<U> mappedContent = sourcePage.getContent().stream()
                 .map(mapper)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(
-                content,
-                PageRequest.of(sourcePage.getNumber(), sourcePage.getSize()),
+        return Page.of(
+                mappedContent,
+                sourcePage.getPageNumber(),
+                sourcePage.getPageSize(),
                 sourcePage.getTotalElements()
         );
     }

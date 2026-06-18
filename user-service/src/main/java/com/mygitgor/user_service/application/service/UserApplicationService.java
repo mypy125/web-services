@@ -11,16 +11,17 @@ import com.mygitgor.user_service.domain.port.outgoing.NotificationPort;
 import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
 import com.mygitgor.user_service.domain.service.UserDomainService;
 import com.mygitgor.user_service.domain.service.UserValidationService;
+import com.mygitgor.user_service.infrastructure.cache.UserCacheService;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
 import com.mygitgor.user_service.infrastructure.shared.exception.UserNotFoundException;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserAuthInfo;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -39,6 +41,7 @@ public class UserApplicationService implements UserUseCase {
     private final UserValidationService validationService;
     private final NotificationPort notificationPort;
     private final KafkaEventPort kafkaEventPort;
+    private final UserCacheService cacheService;
     private final FileStoragePort fileStoragePort;
 
     @Override
@@ -54,6 +57,7 @@ public class UserApplicationService implements UserUseCase {
                 .then(userDomainService.validateEmailUniqueness(email))
                 .then(Mono.fromCallable(() -> User.register(email, fullName, phoneNumber, role)))
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> notificationPort.sendWelcomeEmail(email, fullName)
                         .doOnSuccess(v -> log.debug("Welcome email sent to: {}", email))
                         .doOnError(e -> log.error("Failed to send welcome email to: {}", email, e))
@@ -79,6 +83,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(kafkaEventPort::sendUserUpdatedEvent);
     }
 
@@ -95,6 +100,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> notificationPort.sendEmailVerifiedNotification(email)
                         .onErrorResume(e -> Mono.empty()))
                 .delayUntil(kafkaEventPort::sendEmailVerifiedEvent);
@@ -110,6 +116,7 @@ public class UserApplicationService implements UserUseCase {
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
                 .delayUntil(userDomainService::validateAccountStatusForLogin)
                 .flatMap(user -> userRepository.deleteByEmail(email)
+                        .then(cacheService.evictAllUserCaches(user))
                         .then(kafkaEventPort.sendUserDeletedEvent(email)));
     }
 
@@ -162,6 +169,10 @@ public class UserApplicationService implements UserUseCase {
                 .cast(Object[].class)
                 .flatMap(arr -> userRepository.save((User) arr[0])
                         .thenReturn(arr))
+                .flatMap(arr -> {
+                    User savedUser = (User) arr[0];
+                    return cacheService.refreshUserCache(savedUser).thenReturn(arr);
+                })
                 .flatMap(arr -> kafkaEventPort.sendUserStatusChangedEvent(
                                 (User) arr[0],
                                 ((AccountStatus) arr[1]).name(),
@@ -173,8 +184,11 @@ public class UserApplicationService implements UserUseCase {
     @Override
     public Mono<User> getUserById(UserId userId) {
         log.debug("Getting user by ID: {}", userId);
-        return userRepository.findById(userId)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)));
+        return cacheService.getCachedUserById(userId)
+                .switchIfEmpty(Mono.defer(() -> userRepository.findById(userId)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
+                        .flatMap(user -> cacheService.cacheUserById(user).thenReturn(user))
+                ));
     }
 
     @Override
@@ -199,6 +213,7 @@ public class UserApplicationService implements UserUseCase {
                         request.profileImage()
                 ))
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .doOnSuccess(user -> {
                     log.info("Profile updated successfully for user: {}", userId);
                     kafkaEventPort.sendUserUpdatedEvent(user).subscribe();
@@ -222,6 +237,7 @@ public class UserApplicationService implements UserUseCase {
                         })
                 )
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(kafkaEventPort::sendUserUpdatedEvent);
     }
 
@@ -235,6 +251,7 @@ public class UserApplicationService implements UserUseCase {
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .flatMap(user -> userDomainService.updateUserProfile(user, null, null, null))
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .doOnSuccess(user -> {
                     log.info("Profile image deleted for user: {}", userId);
                     kafkaEventPort.sendUserUpdatedEvent(user).subscribe();
@@ -250,7 +267,8 @@ public class UserApplicationService implements UserUseCase {
                 .then(userRepository.findById(userId))
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
                 .flatMap(user -> userDomainService.validateAccountStatusForLogin(user)
-                        .then(userRepository.deleteByEmail(user.getEmail())))
+                        .then(userRepository.deleteByEmail(user.getEmail()))
+                        .then(cacheService.evictAllUserCaches(user)))
                 .doOnSuccess(v -> {
                     log.info("User deleted successfully: {}", userId);
                     kafkaEventPort.sendUserDeletedEvent(null).subscribe();
@@ -269,6 +287,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> notificationPort.sendEmailVerifiedNotification(user.getEmail())
                         .onErrorResume(e -> Mono.empty()))
                 .delayUntil(kafkaEventPort::sendEmailVerifiedEvent);
@@ -290,6 +309,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> notificationPort.sendPasswordChangedNotification(user.getEmail())
                         .onErrorResume(e -> Mono.empty()))
                 .delayUntil(user -> kafkaEventPort.sendPasswordChangedEvent(user.getEmail()));
@@ -298,28 +318,39 @@ public class UserApplicationService implements UserUseCase {
     @Override
     public Mono<User> getUserByEmail(Email email) {
         log.debug("Getting user by email: {}", email);
-        return userRepository.findByEmail(email)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)));
+        return cacheService.getCachedUserByEmail(email)
+                .switchIfEmpty(Mono.defer(() -> userRepository.findByEmail(email)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
+                        .flatMap(user -> cacheService.cacheUserByEmail(user).thenReturn(user))
+                ));
     }
 
     @Override
     public Mono<Boolean> existsByEmail(Email email) {
         log.debug("Checking if user exists by email: {}", email);
-        return userRepository.existsByEmail(email);
+        return cacheService.getCachedUserByEmail(email)
+                .map(user -> true)
+                .switchIfEmpty(userRepository.existsByEmail(email));
     }
 
     @Override
     public Mono<Boolean> isEmailVerified(Email email) {
         log.debug("Checking if email is verified: {}", email);
-        return userRepository.findByEmail(email)
+        return cacheService.getCachedUserByEmail(email)
                 .map(User::isEmailVerified)
-                .defaultIfEmpty(false);
+                .switchIfEmpty(Mono.defer(() -> userRepository.findByEmail(email)
+                        .map(User::isEmailVerified)
+                        .defaultIfEmpty(false)));
     }
 
     @Override
     public Mono<Page<User>> searchUsers(String searchTerm, int page, int size) {
         log.debug("Searching users with term: {}, page: {}, size: {}", searchTerm, page, size);
-        return userRepository.search(searchTerm, page, size);
+        return cacheService.getCachedDomainUserList(searchTerm, page, size)
+                .switchIfEmpty(Mono.defer(() -> userRepository.search(searchTerm, page, size)
+                        .flatMap(pageData -> cacheService.cacheDomainUserList(searchTerm, page, size, pageData)
+                                .thenReturn(pageData))
+                ));
     }
 
     @Override
@@ -331,8 +362,15 @@ public class UserApplicationService implements UserUseCase {
     @Override
     public Mono<UserStatistics> getUserStatistics(UserId userId) {
         log.debug("Getting statistics for user: {}", userId);
-        return userRepository.getStatistics(userId)
-                .switchIfEmpty(Mono.fromCallable(() -> UserStatistics.create(userId)));
+        return cacheService.getCachedStatistics(userId)
+                .map(map -> (UserStatistics) map.get("stats"))
+                .switchIfEmpty(Mono.defer(() -> userRepository.getStatistics(userId)
+                        .switchIfEmpty(Mono.fromCallable(() -> UserStatistics.create(userId)))
+                        .flatMap(stats -> {
+                            Map<String, Object> cacheMap = Map.of("stats", stats);
+                            return cacheService.cacheStatistics(userId, cacheMap).thenReturn(stats);
+                        })
+                ));
     }
 
     @Override
@@ -359,6 +397,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> kafkaEventPort.sendUserStatusChangedEvent(user, "INACTIVE", "Activated by admin", activatedBy))
                 .delayUntil(user -> notificationPort.sendAccountActivatedNotification(user.getEmail()).onErrorResume(e -> Mono.empty()));
     }
@@ -375,6 +414,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> kafkaEventPort.sendUserStatusChangedEvent(user, "ACTIVE", reason, bannedBy))
                 .delayUntil(user -> notificationPort.sendAccountBannedNotification(user.getEmail(), reason).onErrorResume(e -> Mono.empty()));
     }
@@ -391,6 +431,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .delayUntil(user -> kafkaEventPort.sendUserStatusChangedEvent(user, "ACTIVE", reason, suspendedBy))
                 .delayUntil(user -> notificationPort.sendAccountSuspendedNotification(user.getEmail(), reason).onErrorResume(e -> Mono.empty()));
     }
@@ -406,6 +447,7 @@ public class UserApplicationService implements UserUseCase {
                     UserRole oldRole = user.getRole();
                     user.updateRole(newRole);
                     return userRepository.save(user)
+                            .flatMap(savedUser -> cacheService.refreshUserCache(savedUser).thenReturn(savedUser))
                             .delayUntil(savedUser -> kafkaEventPort.sendUserRoleChangedEvent(savedUser, oldRole.name(), newRole.name(), changedBy));
                 });
     }
@@ -422,6 +464,7 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(cacheService::refreshUserCache)
                 .then();
     }
 
@@ -429,16 +472,33 @@ public class UserApplicationService implements UserUseCase {
     public Mono<UserAuthInfo> getUserAuthInfo(Email email) {
         log.debug("Getting auth info for user: {}", email);
 
-        return userRepository.findByEmail(email)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
-                .map(user -> UserAuthInfo.builder()
-                        .userId(user.getId())
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .role(user.getRole())
-                        .emailVerified(user.isEmailVerified())
-                        .accountStatus(user.getAccountStatus())
-                        .build());
+        return cacheService.getCachedAuthInfo(email.value())
+                .map(map -> UserAuthInfo.builder()
+                        .userId(new UserId((String) map.get("userId")))
+                        .email(new Email((String) map.get("email")))
+                        .fullName("") // Для токена авторизации полное имя обычно избыточно
+                        .role(UserRole.valueOf((String) map.get("role")))
+                        .emailVerified((Boolean) map.get("emailVerified"))
+                        .accountStatus(AccountStatus.valueOf((String) map.get("accountStatus")))
+                        .build())
+                .switchIfEmpty(Mono.defer(() -> userRepository.findByEmail(email)
+                        .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + email)))
+                        .flatMap(user -> cacheService.cacheAuthInfo(
+                                user.getEmail().value(),
+                                user.getId().getValue().toString(),
+                                user.getRole().name(),
+                                user.isEmailVerified(),
+                                user.getAccountStatus().name()
+                        ).thenReturn(user))
+                        .map(user -> UserAuthInfo.builder()
+                                .userId(user.getId())
+                                .email(user.getEmail())
+                                .fullName(user.getFullName())
+                                .role(user.getRole())
+                                .emailVerified(user.isEmailVerified())
+                                .accountStatus(user.getAccountStatus())
+                                .build())
+                ));
     }
 
     @Override
@@ -455,6 +515,10 @@ public class UserApplicationService implements UserUseCase {
                     return user;
                 })
                 .flatMap(userRepository::save)
+                .flatMap(user -> Mono.when(
+                        cacheService.refreshUserCache(user),
+                        cacheService.evictStatistics(userId)
+                ).thenReturn(user))
                 .delayUntil(kafkaEventPort::sendUserOrderStatsUpdatedEvent);
     }
 

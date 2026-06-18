@@ -1,8 +1,11 @@
 package com.mygitgor.user_service.infrastructure.cache;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.user_service.domain.model.User;
+import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -159,17 +162,19 @@ public class UserCacheService {
                 .then();
     }
 
-    public Mono<Map<String, Object>> getCachedUserList(String searchTerm, int page, int size) {
-        String key = USER_LIST_PREFIX + searchTerm + ":" + page + ":" + size;
-        return redisTemplate.opsForValue()
-                .get(key)
-                .flatMap(json -> {
+    public Mono<Page<UserResponse>> getCachedUserList(String searchTerm, int page, int size) {
+        String key = "user:search:" + searchTerm + ":" + page + ":" + size;
+
+        return redisTemplate.opsForValue().get(key)
+                .map(json -> {
                     try {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> map = objectMapper.readValue(json, Map.class);
-                        return Mono.just(map);
+                        return objectMapper.readValue(
+                                json,
+                                new TypeReference<Page<UserResponse>>() {}
+                        );
                     } catch (Exception e) {
-                        return Mono.empty();
+                        log.error("Failed to deserialize user list cache for key: {}", key, e);
+                        return null;
                     }
                 });
     }
@@ -198,5 +203,52 @@ public class UserCacheService {
                         cacheUserById(user),
                         cacheUserByEmail(user)
                 ));
+    }
+
+    public Mono<Void> evictStatistics(UserId userId) {
+        String key = USER_STATISTICS_PREFIX + userId.getValue().toString();
+        log.debug("Evicting statistics cache for user: {}", userId);
+        return redisTemplate.delete(key).then();
+    }
+
+    public Mono<Void> cacheUserList(String searchTerm, int page, int size, Page<UserResponse> pageResponse) {
+        String key = "user:search:" + searchTerm + ":" + page + ":" + size;
+
+        try {
+            String json = objectMapper.writeValueAsString(pageResponse);
+            return redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(10)).then();
+        } catch (Exception e) {
+            log.error("Failed to serialize user list cache for key: {}", key, e);
+            return Mono.empty();
+        }
+    }
+
+    public Mono<Page<User>> getCachedDomainUserList(String searchTerm, int page, int size) {
+        String key = "user:search:domain:" + searchTerm + ":" + page + ":" + size;
+
+        return redisTemplate.opsForValue().get(key)
+                .map(json -> {
+                    try {
+                        return objectMapper.readValue(
+                                json,
+                                new TypeReference<Page<User>>() {}
+                        );
+                    } catch (Exception e) {
+                        log.error("Failed to deserialize domain user list cache for key: {}", key, e);
+                        return null;
+                    }
+                });
+    }
+
+    public Mono<Void> cacheDomainUserList(String searchTerm, int page, int size, Page<User> pageData) {
+        String key = "user:search:domain:" + searchTerm + ":" + page + ":" + size;
+
+        try {
+            String json = objectMapper.writeValueAsString(pageData);
+            return redisTemplate.opsForValue().set(key, json, Duration.ofMinutes(10)).then();
+        } catch (Exception e) {
+            log.error("Failed to serialize domain user list cache for key: {}", key, e);
+            return Mono.empty();
+        }
     }
 }

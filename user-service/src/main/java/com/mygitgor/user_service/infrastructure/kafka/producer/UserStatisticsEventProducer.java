@@ -13,23 +13,14 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 
+import static com.mygitgor.user_service.infrastructure.kafka.KafkaTopics.*;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserStatisticsEventProducer {
-
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
-
-    private static final String TOPIC_ORDER_STATS_UPDATED = "user.order.stats.updated";
-    private static final String TOPIC_REVIEW_STATS_UPDATED = "user.review.stats.updated";
-    private static final String TOPIC_LOYALTY_UPDATED = "user.loyalty.updated";
-    private static final String TOPIC_ACTIVITY_UPDATED = "user.activity.updated";
-    private static final String TOPIC_COUPON_STATS_UPDATED = "user.coupon.stats.updated";
-    private static final String TOPIC_PRODUCT_STATS_UPDATED = "user.product.stats.updated";
-    private static final String TOPIC_WISHLIST_STATS_UPDATED = "user.wishlist.stats.updated";
-    private static final String TOPIC_CART_STATS_UPDATED = "user.cart.stats.updated";
-
 
     public Mono<Void> sendOrderStatsUpdatedEvent(UserId userId, UserStatistics stats) {
         OrderStatsUpdatedEvent event = new OrderStatsUpdatedEvent(
@@ -41,7 +32,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_ORDER_STATS_UPDATED, event);
+        return sendEvent(ORDER_STATS_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendReviewStatsUpdatedEvent(UserId userId, UserStatistics stats) {
@@ -52,7 +43,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_REVIEW_STATS_UPDATED, event);
+        return sendEvent(REVIEW_STATS_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendLoyaltyUpdatedEvent(UserId userId, UserStatistics stats, String oldTier) {
@@ -65,7 +56,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_LOYALTY_UPDATED, event);
+        return sendEvent(LOYALTY_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendActivityUpdatedEvent(UserId userId, UserStatistics stats) {
@@ -77,7 +68,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_ACTIVITY_UPDATED, event);
+        return sendEvent(ACTIVITY_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendCouponStatsUpdatedEvent(UserId userId, UserStatistics stats, Double discountAmount, String couponCode) {
@@ -90,7 +81,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_COUPON_STATS_UPDATED, event);
+        return sendEvent(COUPON_STATS_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendProductStatsUpdatedEvent(UserId userId, UserStatistics stats, String productId, String category) {
@@ -105,7 +96,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_PRODUCT_STATS_UPDATED, event);
+        return sendEvent(PRODUCT_STATS_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendWishlistStatsUpdatedEvent(UserId userId, Integer wishlistItemsCount) {
@@ -115,7 +106,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_WISHLIST_STATS_UPDATED, event);
+        return sendEvent(WISHLIST_STATS_UPDATED_TOPIC, event);
     }
 
     public Mono<Void> sendCartStatsUpdatedEvent(UserId userId, Integer cartItemsCount) {
@@ -125,7 +116,7 @@ public class UserStatisticsEventProducer {
                 LocalDateTime.now()
         );
 
-        return sendEvent(TOPIC_CART_STATS_UPDATED, event);
+        return sendEvent(CART_STATS_UPDATED_TOPIC, event);
     }
 
     private Mono<Void> sendEvent(String topic, Object event) {

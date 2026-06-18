@@ -1,9 +1,7 @@
 package com.mygitgor.user_service.domain.service;
 
-import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
-import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
 import com.mygitgor.user_service.domain.specification.UserAccountStatusSpec;
 import com.mygitgor.user_service.domain.specification.UserEmailUniquenessSpec;
 import com.mygitgor.user_service.domain.specification.UserEmailVerifiedSpec;
