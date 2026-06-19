@@ -7,48 +7,43 @@ import com.mygitgor.user_service.infrastructure.persistence.entity.UserEntity;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 
-import java.util.UUID;
 import org.mapstruct.*;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserPersistenceMapper {
 
+    @Mapping(target = "id", source = "id.value")
+    @Mapping(target = "email", source = "email.value")
     UserEntity toEntity(User domain);
 
-    User toDomain(UserEntity entity);
+    default User toDomain(UserEntity entity) {
+        if (entity == null) return null;
 
-    default UUID mapUserIdToUuid(UserId id) {
-        if (id == null || id.toString() == null) return null;
-        return UUID.fromString(id.toString());
-    }
-
-    default UserId mapUuidToUserId(UUID uuid) {
-        if (uuid == null) return null;
-        return new UserId(uuid.toString());
-    }
-
-    default String mapEmailToString(Email email) {
-        return email != null ? email.toString() : null;
-    }
-
-    default Email mapStringToEmail(String emailStr) {
-        return emailStr != null ? new Email(emailStr) : null;
-    }
-
-
-    default String mapRoleToString(UserRole role) {
-        return role != null ? role.name() : null;
-    }
-
-    default UserRole mapStringToUserRole(String roleStr) {
-        return roleStr != null ? UserRole.valueOf(roleStr) : null;
-    }
-
-    default String mapStatusToString(AccountStatus status) {
-        return status != null ? status.name() : null;
-    }
-
-    default AccountStatus mapStringToAccountStatus(String statusStr) {
-        return statusStr != null ? AccountStatus.valueOf(statusStr) : null;
+        return User.builder()
+                .id(new UserId(entity.id()))
+                .email(new Email(entity.email()))
+                .fullName(entity.fullName())
+                .role(UserRole.valueOf(entity.role()))
+                .emailVerified(entity.emailVerified())
+                .profileImage(entity.profileImage())
+                .phoneNumber(entity.phoneNumber())
+                .accountStatus(AccountStatus.valueOf(entity.accountStatus()))
+                .createdAt(entity.createdAt())
+                .updatedAt(entity.updatedAt())
+                .lastLoginAt(entity.lastLoginAt())
+                .emailVerifiedAt(entity.emailVerifiedAt())
+                .defaultAddressId(entity.defaultAddressId())
+                .defaultPaymentMethodId(entity.defaultPaymentMethodId())
+                .defaultShippingAddressId(entity.defaultShippingAddressId())
+                .totalOrdersCount(entity.totalOrdersCount())
+                .totalSpentAmount(entity.totalSpentAmount())
+                .language(entity.language())
+                .timezone(entity.timezone())
+                .newsletterSubscribed(entity.newsletterSubscribed())
+                .marketingConsent(entity.marketingConsent())
+                .lastPasswordChangeAt(entity.lastPasswordChangeAt())
+                .failedLoginAttempts(entity.failedLoginAttempts())
+                .lockedUntil(entity.lockedUntil())
+                .build();
     }
 }

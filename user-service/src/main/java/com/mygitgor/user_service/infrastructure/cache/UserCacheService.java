@@ -240,6 +240,15 @@ public class UserCacheService {
                 });
     }
 
+    public Mono<Void> evictUserDashboardCache(UserId userId) {
+        String dashboardKey = "user:dashboard:" + userId.getValue();
+        String profileKey = "user:profile:" + userId.getValue();
+
+        return redisTemplate.delete(dashboardKey)
+                .then(redisTemplate.delete(profileKey))
+                .then();
+    }
+
     public Mono<Void> cacheDomainUserList(String searchTerm, int page, int size, Page<User> pageData) {
         String key = "user:search:domain:" + searchTerm + ":" + page + ":" + size;
 

@@ -1,6 +1,9 @@
 package com.mygitgor.user_service.presentation.controller;
 
 import com.mygitgor.user_service.application.service.UserApplicationService;
+import com.mygitgor.user_service.application.service.UserDashboardService;
+import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardDto;
+import com.mygitgor.user_service.infrastructure.dto.external.UserProfileDto;
 import com.mygitgor.user_service.infrastructure.dto.request.ChangePasswordRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
@@ -28,6 +31,7 @@ import reactor.core.publisher.Mono;
 @Tag(name = "User Management", description = "Endpoints for managing user profiles")
 public class UserController {
     private final UserApplicationService userService;
+    private final UserDashboardService dashboardService;
     private final UserMapper userMapper;
 
     @GetMapping("/me")
@@ -140,5 +144,25 @@ public class UserController {
         String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
         return userService.deleteProfileImage(new UserId(userId))
                 .map(userMapper::toResponse);
+    }
+
+    @GetMapping("/dashboard")
+    public Mono<UserDashboardDto> getUserDashboard(Authentication authentication) {
+        String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
+        return dashboardService.getUserDashboard(userId);
+    }
+
+    @GetMapping("/me/profile")
+    public Mono<UserProfileDto> getMyProfile(Authentication authentication) {
+        String userId = ((AuthUser) authentication.getPrincipal()).getUserId();
+        return userService.getUserById(new UserId(userId))
+                .map(userMapper::toProfileDto);
+    }
+
+    @GetMapping("/{userId}/profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Mono<UserProfileDto> getUserProfile(@PathVariable String userId) {
+        return userService.getUserById(new UserId(userId))
+                .map(userMapper::toProfileDto);
     }
 }

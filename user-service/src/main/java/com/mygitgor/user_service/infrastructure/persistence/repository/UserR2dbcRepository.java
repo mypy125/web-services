@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Repository
@@ -24,25 +25,42 @@ public interface UserR2dbcRepository extends ReactiveCrudRepository<UserEntity, 
     Mono<Long> countByRole(String role);
     Mono<Long> countByAccountStatus(String accountStatus);
     Mono<Long> countByEmailVerifiedTrue();
-    @Query("UPDATE users SET last_login_at = :lastLoginAt, updated_at = NOW() WHERE id = :userId")
-    Mono<Void> updateLastLoginAt(UUID userId, java.time.LocalDateTime lastLoginAt);
-    @Query("UPDATE users SET email_verified = true, email_verified_at = NOW(), updated_at = NOW() WHERE id = :userId")
+    Flux<UserEntity> findByIdIn(Iterable<UUID> ids);
+
+    @Query("UPDATE users SET last_login_at = :lastLoginAt, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = :userId")
+    Mono<Void> updateLastLoginAt(UUID userId, LocalDateTime lastLoginAt);
+
+    @Query("UPDATE users SET email_verified = true, email_verified_at = NOW(), account_status = 'ACTIVE', updated_at = NOW() WHERE id = :userId")
     Mono<Void> updateEmailVerified(UUID userId);
+
     @Query("UPDATE users SET account_status = :status, updated_at = NOW() WHERE id = :userId")
     Mono<Void> updateAccountStatus(UUID userId, String status);
+
     @Query("UPDATE users SET total_orders_count = :totalOrders, total_spent_amount = :totalSpent, updated_at = NOW() WHERE id = :userId")
     Mono<Void> updateOrderStats(UUID userId, Integer totalOrders, Double totalSpent);
+
+    @Query("UPDATE users SET failed_login_attempts = failed_login_attempts + 1, updated_at = NOW() WHERE id = :userId")
+    Mono<Void> incrementFailedLoginAttempts(UUID userId);
+
+    @Query("UPDATE users SET locked_until = :lockedUntil, updated_at = NOW() WHERE id = :userId")
+    Mono<Void> lockAccountUntil(UUID userId, LocalDateTime lockedUntil);
+
     @Query("SELECT * FROM users WHERE email ILIKE CONCAT('%', :searchTerm, '%') OR full_name ILIKE CONCAT('%', :searchTerm, '%')")
     Flux<UserEntity> searchByEmailOrFullName(String searchTerm);
+
     @Query("SELECT * FROM users WHERE email ILIKE CONCAT('%', :searchTerm, '%') OR full_name ILIKE CONCAT('%', :searchTerm, '%') LIMIT :limit OFFSET :offset")
     Flux<UserEntity> searchByEmailOrFullNameWithPagination(String searchTerm, int limit, int offset);
+
+    @Query("SELECT COUNT(*) FROM users WHERE email ILIKE CONCAT('%', :searchTerm, '%') OR full_name ILIKE CONCAT('%', :searchTerm, '%')")
+    Mono<Long> countSearchMatches(String searchTerm);
+
     @Query("SELECT * FROM users WHERE " +
-            "(:email IS NULL OR email ILIKE CONCAT('%', :email, '%')) AND " +
-            "(:fullName IS NULL OR full_name ILIKE CONCAT('%', :fullName, '%')) AND " +
-            "(:role IS NULL OR role = :role) AND " +
-            "(:accountStatus IS NULL OR account_status = :accountStatus)")
+            "(:email IS NULL OR email ILIKE CONCAT('%', CAST(:email AS VARCHAR), '%')) AND " +
+            "(:fullName IS NULL OR full_name ILIKE CONCAT('%', CAST(:fullName AS VARCHAR), '%')) AND " +
+            "(:role IS NULL OR role = CAST(:role AS VARCHAR)) AND " +
+            "(:accountStatus IS NULL OR account_status = CAST(:accountStatus AS VARCHAR))")
     Flux<UserEntity> searchByCriteria(String email, String fullName, String role, String accountStatus);
-    Flux<UserEntity> findByIdIn(Iterable<UUID> ids);
+
     @Query("SELECT role, COUNT(*) as count FROM users GROUP BY role")
     Flux<RoleCountProjection> countUsersByRole();
 
@@ -51,7 +69,7 @@ public interface UserR2dbcRepository extends ReactiveCrudRepository<UserEntity, 
         Long getCount();
     }
 
-    @Query("SELECT account_status, COUNT(*) as count FROM users GROUP BY account_status")
+    @Query("SELECT account_status as accountStatus, COUNT(*) as count FROM users GROUP BY account_status")
     Flux<StatusCountProjection> countUsersByStatus();
 
     interface StatusCountProjection {
@@ -63,5 +81,5 @@ public interface UserR2dbcRepository extends ReactiveCrudRepository<UserEntity, 
     Flux<UserEntity> findMostRecentActiveUsers(int limit);
 
     @Query("SELECT * FROM users WHERE created_at >= :since")
-    Flux<UserEntity> findUsersRegisteredSince(java.time.LocalDateTime since);
+    Flux<UserEntity> findUsersRegisteredSince(LocalDateTime since);
 }

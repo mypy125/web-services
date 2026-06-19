@@ -24,11 +24,91 @@ public class User {
     private LocalDateTime lastLoginAt;
     private LocalDateTime emailVerifiedAt;
 
+    // TODO: Default address and payment settings
     private String defaultAddressId;
     private String defaultPaymentMethodId;
+    private String defaultShippingAddressId;
 
+    // TODO: Aggregated order statistics
     private Integer totalOrdersCount;
     private Double totalSpentAmount;
+
+    // TODO: Localization and Marketing
+    private String language;
+    private String timezone;
+    private boolean newsletterSubscribed;
+    private boolean marketingConsent;
+
+    // TODO: Safety
+    private LocalDateTime lastPasswordChangeAt;
+    private Integer failedLoginAttempts;
+    private LocalDateTime lockedUntil;
+
+    public static User register(Email email, String fullName, String phoneNumber, UserRole role) {
+        if (email == null) {
+            throw new DomainException("Email is required for registration");
+        }
+        if (fullName == null || fullName.isBlank()) {
+            throw new DomainException("Full name is required for registration");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return User.builder()
+                .id(new UserId())
+                .email(email)
+                .fullName(fullName.trim())
+                .phoneNumber(phoneNumber)
+                .role(role != null ? role : UserRole.ROLE_CUSTOMER)
+                .accountStatus(AccountStatus.PENDING_VERIFICATION)
+                .emailVerified(false)
+
+                .totalOrdersCount(0)
+                .totalSpentAmount(0.0)
+                .failedLoginAttempts(0)
+
+                .language("en")
+                .timezone("UTC")
+                .newsletterSubscribed(false)
+                .marketingConsent(false)
+
+                .createdAt(now)
+                .updatedAt(now)
+                .lastPasswordChangeAt(now)
+                .build();
+    }
+
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
+    }
+
+    public void registerFailedLoginAttempt(int maxAttempts, int lockDurationMinutes) {
+        if (this.failedLoginAttempts == null) {
+            this.failedLoginAttempts = 0;
+        }
+        this.failedLoginAttempts++;
+        this.updatedAt = LocalDateTime.now();
+
+        if (this.failedLoginAttempts >= maxAttempts) {
+            this.lockedUntil = LocalDateTime.now().plusMinutes(lockDurationMinutes);
+        }
+    }
+
+    public void resetFailedLoginAttempts() {
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void changePassword(String hashedNewPassword) {
+        this.lastPasswordChangeAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean canLogin() {
+        if (this.accountStatus == null) return false;
+        return !this.accountStatus.isBlocked() && !isLocked();
+    }
 
     public void verifyEmail() {
         if (this.emailVerified) {
@@ -58,36 +138,13 @@ public class User {
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-    }
-
-    public static User register(Email email, String fullName, String phoneNumber, UserRole role) {
-        if (email == null) {
-            throw new DomainException("Email is required for registration");
-        }
-        if (fullName == null || fullName.isBlank()) {
-            throw new DomainException("Full name is required for registration");
-        }
-
-        return User.builder()
-                .id(new UserId())
-                .email(email)
-                .fullName(fullName.trim())
-                .phoneNumber(phoneNumber)
-                .role(role != null ? role : UserRole.ROLE_CUSTOMER)
-                .accountStatus(AccountStatus.PENDING_VERIFICATION)
-                .emailVerified(false)
-                .totalOrdersCount(0)
-                .totalSpentAmount(0.0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        this.resetFailedLoginAttempts();
     }
 
     public void ban() {
         if (this.accountStatus == AccountStatus.BANNED) {
             throw new DomainException("User is already banned");
         }
-
         this.accountStatus = AccountStatus.BANNED;
         this.updatedAt = LocalDateTime.now();
     }
@@ -112,28 +169,19 @@ public class User {
         return this.accountStatus != null && this.accountStatus.isActive();
     }
 
-    public boolean canLogin() {
-        if (this.accountStatus == null) return false;
-        return !this.accountStatus.isBlocked();
-    }
-
     public void updateRole(UserRole newRole) {
         if (newRole == null) {
             throw new DomainException("New role cannot be null");
         }
-
         if (this.role == newRole) {
             throw new DomainException("User already has the role: " + newRole);
         }
-
         if (this.role == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
             throw new DomainException("Cannot downgrade an ADMIN role via standard user update");
         }
-
         if (this.accountStatus == AccountStatus.BANNED) {
             throw new DomainException("Cannot change role for a banned user");
         }
-
         this.role = newRole;
         this.updatedAt = LocalDateTime.now();
     }
@@ -155,6 +203,10 @@ public class User {
         this.totalOrdersCount = newTotalOrders;
         this.totalSpentAmount = newTotalSpent;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts != null ? failedLoginAttempts : 0;
     }
 
     public Integer getTotalOrdersCount() {

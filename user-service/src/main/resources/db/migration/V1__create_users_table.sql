@@ -6,11 +6,24 @@ CREATE TABLE IF NOT EXISTS users (
     profile_image TEXT,
     role VARCHAR(50) NOT NULL DEFAULT 'ROLE_CUSTOMER',
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    account_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    account_status VARCHAR(50) NOT NULL DEFAULT 'PENDING_VERIFICATION',
+
     default_address_id UUID,
+    default_shipping_address_id UUID,
     default_payment_method_id UUID,
-    total_orders_count INTEGER DEFAULT 0,
-    total_spent_amount DECIMAL(10,2) DEFAULT 0.00,
+
+    total_orders_count INTEGER NOT NULL DEFAULT 0,
+    total_spent_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+
+    language VARCHAR(10) NOT NULL DEFAULT 'en',
+    timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
+    newsletter_subscribed BOOLEAN NOT NULL DEFAULT FALSE,
+    marketing_consent BOOLEAN NOT NULL DEFAULT FALSE,
+
+    last_password_change_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until TIMESTAMP,
+
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP,
@@ -26,6 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_users_account_status ON users(account_status);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 CREATE INDEX IF NOT EXISTS idx_users_last_login_at ON users(last_login_at);
 CREATE INDEX IF NOT EXISTS idx_users_full_name ON users(full_name);
+CREATE INDEX IF NOT EXISTS idx_users_locked_until ON users(locked_until) WHERE locked_until IS NOT NULL; -- Частичный индекс для быстрой проверки заблокированных
 
 COMMENT ON TABLE users IS 'Хранит основную информацию о пользователях';
 COMMENT ON COLUMN users.id IS 'Уникальный идентификатор пользователя';
@@ -36,10 +50,18 @@ COMMENT ON COLUMN users.profile_image IS 'URL аватара пользоват�
 COMMENT ON COLUMN users.role IS 'Роль пользователя (CUSTOMER, SELLER, ADMIN, MODERATOR, ANALYST)';
 COMMENT ON COLUMN users.email_verified IS 'Флаг верификации email';
 COMMENT ON COLUMN users.account_status IS 'Статус аккаунта (ACTIVE, SUSPENDED, BANNED, PENDING_VERIFICATION)';
-COMMENT ON COLUMN users.default_address_id IS 'ID адреса по умолчанию (ссылка на address-service)';
+COMMENT ON COLUMN users.default_address_id IS 'ID платежного адреса по умолчанию (ссылка на address-service)';
+COMMENT ON COLUMN users.default_shipping_address_id IS 'ID адреса доставки по умолчанию (ссылка на address-service)';
 COMMENT ON COLUMN users.default_payment_method_id IS 'ID метода оплаты по умолчанию (ссылка на payment-service)';
 COMMENT ON COLUMN users.total_orders_count IS 'Общее количество заказов (кэш)';
 COMMENT ON COLUMN users.total_spent_amount IS 'Общая сумма потраченных средств (кэш)';
+COMMENT ON COLUMN users.language IS 'Язык интерфейса пользователя (например, ru, en)';
+COMMENT ON COLUMN users.timezone IS 'Часовой пояс пользователя (например, UTC, Europe/Moscow)';
+COMMENT ON COLUMN users.newsletter_subscribed IS 'Согласие на информационную рассылку';
+COMMENT ON COLUMN users.marketing_consent IS 'Согласие на маркетинговую активность и купоны';
+COMMENT ON COLUMN users.last_password_change_at IS 'Дата и время изменения пароля (для политик безопасности)';
+COMMENT ON COLUMN users.failed_login_attempts IS 'Количество подряд идущих неудачных попыток входа';
+COMMENT ON COLUMN users.locked_until IS 'Время, до которого аккаунт временно заблокирован из-за перебора паролей';
 
 CREATE TABLE IF NOT EXISTS user_statistics (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

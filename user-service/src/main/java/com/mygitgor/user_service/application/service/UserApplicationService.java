@@ -476,7 +476,7 @@ public class UserApplicationService implements UserUseCase {
                 .map(map -> UserAuthInfo.builder()
                         .userId(new UserId((String) map.get("userId")))
                         .email(new Email((String) map.get("email")))
-                        .fullName("") // Для токена авторизации полное имя обычно избыточно
+                        .fullName("")
                         .role(UserRole.valueOf((String) map.get("role")))
                         .emailVerified((Boolean) map.get("emailVerified"))
                         .accountStatus(AccountStatus.valueOf((String) map.get("accountStatus")))
