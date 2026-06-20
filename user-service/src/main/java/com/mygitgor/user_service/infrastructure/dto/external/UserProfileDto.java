@@ -1,12 +1,10 @@
 package com.mygitgor.user_service.infrastructure.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record UserProfileDto(
         String id,
@@ -45,6 +43,7 @@ public record UserProfileDto(
         LocalDateTime lockedUntil,
         String displayName
 ) {
+
     public boolean isActive() {
         return "ACTIVE".equals(accountStatus);
     }
@@ -55,5 +54,13 @@ public record UserProfileDto(
 
     public boolean isSeller() {
         return "ROLE_SELLER".equals(role);
+    }
+
+    public UserProfileDto {
+        if (displayName == null && fullName != null) {
+            displayName = fullName;
+        } else if (displayName == null) {
+            displayName = email;
+        }
     }
 }

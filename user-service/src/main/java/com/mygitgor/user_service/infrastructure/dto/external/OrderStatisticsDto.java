@@ -4,8 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import java.time.LocalDateTime;
+import lombok.Builder;
 
+import java.time.LocalDateTime;
+import java.util.Map;
+
+@Builder
 @Schema(description = "Comprehensive analytical data transfer object containing detailed user ordering statistics")
 public record OrderStatisticsDto(
 
@@ -27,6 +31,9 @@ public record OrderStatisticsDto(
 
         @Schema(description = "Total lifetime quantity of individual products purchased", example = "114")
         @NotNull @PositiveOrZero Integer totalItemsPurchased,
+
+        @Schema(description = "Map of order counts grouped by their statuses", example = "{\"PENDING\": 2, \"DELIVERED\": 35, \"CANCELLED\": 5}")
+        @NotNull Map<String, Integer> orderStatusCounts,
 
         @NotNull @PositiveOrZero Integer pendingOrders,
         @NotNull @PositiveOrZero Integer processingOrders,
@@ -50,4 +57,71 @@ public record OrderStatisticsDto(
         String favoriteProductName,
 
         @NotNull @PositiveOrZero Integer uniqueProductsPurchased
-) {}
+) {
+        public OrderStatisticsDto {
+                if (totalOrders == null) totalOrders = 0;
+                if (totalSpent == null) totalSpent = 0.0;
+                if (averageOrderValue == null) averageOrderValue = 0.0;
+                if (totalItemsPurchased == null) totalItemsPurchased = 0;
+                if (ordersThisMonth == null) ordersThisMonth = 0;
+                if (ordersLastMonth == null) ordersLastMonth = 0;
+                if (spentThisMonth == null) spentThisMonth = 0.0;
+                if (spentLastMonth == null) spentLastMonth = 0.0;
+                if (monthlyGrowth == null) monthlyGrowth = 0.0;
+                if (uniqueProductsPurchased == null) uniqueProductsPurchased = 0;
+
+                orderStatusCounts = orderStatusCounts != null ? Map.copyOf(orderStatusCounts) : Map.of();
+        }
+
+
+        public int getPendingCount() {
+                return orderStatusCounts.getOrDefault("PENDING", 0);
+        }
+
+        public int getDeliveredCount() {
+                return orderStatusCounts.getOrDefault("DELIVERED", 0);
+        }
+
+        public int getCancelledCount() {
+                return orderStatusCounts.getOrDefault("CANCELLED", 0);
+        }
+
+        public int getActiveOrdersCount() {
+                return (pendingOrders != null ? pendingOrders : 0) +
+                        (processingOrders != null ? processingOrders : 0) +
+                        (shippedOrders != null ? shippedOrders : 0);
+        }
+
+        public int getCompletedOrdersCount() {
+                return deliveredOrders != null ? deliveredOrders : 0;
+        }
+
+        public double getCompletionRate() {
+                if (totalOrders == null || totalOrders == 0) {
+                        return 0.0;
+                }
+                int completed = getCompletedOrdersCount();
+                return Math.round(((double) completed / totalOrders) * 100.0) / 100.0;
+        }
+
+        public static OrderStatisticsDto empty() {
+                return OrderStatisticsDto.builder()
+                        .userId("N/A")
+                        .totalOrders(0)
+                        .totalSpent(0.0)
+                        .averageOrderValue(0.0)
+                        .lastOrderDate(null)
+                        .totalItemsPurchased(0)
+                        .orderStatusCounts(java.util.Map.of())
+                        .ordersThisMonth(0)
+                        .ordersLastMonth(0)
+                        .spentThisMonth(0.0)
+                        .spentLastMonth(0.0)
+                        .monthlyGrowth(0.0)
+                        .mostPurchasedCategory("None")
+                        .favoriteProductId("N/A")
+                        .favoriteProductName("N/A")
+                        .uniqueProductsPurchased(0)
+                        .build();
+        }
+}

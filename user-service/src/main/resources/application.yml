@@ -36,11 +36,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-
       properties:
         spring.json.trusted.packages: "com.mygitgor.user_service.infrastructure.kafka.event"
       auto-offset-reset: earliest
@@ -60,6 +58,13 @@ address:
     timeout: 5000
     retry:
     attempts: 3
+
+cart:
+  service:
+    url: ${CART_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
 
 order:
   service:
