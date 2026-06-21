@@ -8,12 +8,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.UUID;
 
 @Repository
 public interface UserStatisticsR2dbcRepository extends ReactiveCrudRepository<UserStatisticsEntity, UUID> {
     Mono<UserStatisticsEntity> findByUserId(UUID userId);
-    Flux<UserStatisticsEntity> findByUserIdIn(Iterable<UUID> userIds);
+    Flux<UserStatisticsEntity> findByUserIdIn(Collection<UUID> userIds);
     Flux<UserStatisticsEntity> findTop10ByOrderByLoyaltyPointsDesc();
     Flux<UserStatisticsEntity> findByLoyaltyTier(String loyaltyTier);
     @Query("UPDATE user_statistics SET " +

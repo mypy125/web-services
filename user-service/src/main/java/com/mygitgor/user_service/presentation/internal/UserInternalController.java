@@ -6,11 +6,11 @@ import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoRespons
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
 import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;

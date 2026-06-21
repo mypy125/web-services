@@ -36,11 +36,15 @@ public interface UserMapper {
     }
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "fullName", source = "fullName")
-    @Mapping(target = "phoneNumber", source = "phoneNumber")
-    @Mapping(target = "profileImage", source = "profileImage")
+    @Mapping(target = "fullName", source = "request.fullName")
+    @Mapping(target = "phoneNumber", source = "request.phoneNumber")
+    @Mapping(target = "profileImage", source = "request.profileImage")
+    @Mapping(target = "defaultAddressId", source = "user.defaultAddressId")
+    @Mapping(target = "defaultPaymentMethodId", source = "user.defaultPaymentMethodId")
+    @Mapping(target = "defaultShippingAddressId", source = "user.defaultShippingAddressId")
     @Mapping(target = "updatedAt", expression = "java(LocalDateTime.now())")
-    void updateDomain(@MappingTarget User user, UpdateUserRequest request);
+    @Mapping(target = "id", ignore = true)
+    User updateDomain(User user, UpdateUserRequest request);
 
     @Mapping(target = "id", source = "id.value")
     @Mapping(target = "email", source = "email.value")
@@ -77,8 +81,8 @@ public interface UserMapper {
     @Mapping(target = "occurredAt", expression = "java(LocalDateTime.now())")
     EmailVerifiedEvent toEmailVerifiedEvent(User user);
 
-    @Mapping(target = "userId", source = "id.value")
-    @Mapping(target = "email", source = "email.value")
+    @Mapping(target = "userId", source = "user.id.value")
+    @Mapping(target = "email", source = "user.email.value")
     @Mapping(target = "newStatus", source = "user.accountStatus")
     @Mapping(target = "occurredAt", expression = "java(LocalDateTime.now())")
     UserStatusChangedEvent toUserStatusChangedEvent(User user, String oldStatus, String reason, String changedBy);

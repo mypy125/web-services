@@ -149,10 +149,7 @@ public class UserInternalService {
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found: " + userId)))
-                .map(user -> {
-                    userMapper.updateDomain(user, request);
-                    return user;
-                })
+                .map(user -> userMapper.updateDomain(user, request))
                 .flatMap(userRepository::save)
                 .flatMap(user -> cacheService.refreshUserCache(user).thenReturn(user))
                 .map(userMapper::toResponse);

@@ -110,8 +110,8 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
                 .map(entity -> {
                     return UserStatistics.builder()
                             .userId(userId)
-                            .totalOrders(entity.getTotalOrdersCount() != null ? entity.getTotalOrdersCount() : 0)
-                            .totalSpent(entity.getTotalSpentAmount() != null ? entity.getTotalSpentAmount() : 0.0)
+                            .totalOrders(entity.totalOrdersCount() != null ? entity.totalOrdersCount() : 0)
+                            .totalSpent(entity.totalSpentAmount() != null ? entity.totalSpentAmount() : 0.0)
                             .build();
                 })
                 .doOnSuccess(stats -> log.debug("Statistics retrieved for user: {}", userId))

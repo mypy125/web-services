@@ -26,7 +26,7 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
-    table: flyway_schema_history_auth
+    table: flyway_schema_history_user
     url: ${LOCAL_DBC_URL}user_db
     user: ${LOCAL_DBC_USERNAME}
     password: ${LOCAL_DBC_PASSWORD}

@@ -9,6 +9,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 @Repository
@@ -25,7 +27,7 @@ public interface UserR2dbcRepository extends ReactiveCrudRepository<UserEntity, 
     Mono<Long> countByRole(String role);
     Mono<Long> countByAccountStatus(String accountStatus);
     Mono<Long> countByEmailVerifiedTrue();
-    Flux<UserEntity> findByIdIn(Iterable<UUID> ids);
+    Flux<UserEntity> findByIdIn(Collection<UUID> ids);
 
     @Query("UPDATE users SET last_login_at = :lastLoginAt, failed_login_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE id = :userId")
     Mono<Void> updateLastLoginAt(UUID userId, LocalDateTime lastLoginAt);

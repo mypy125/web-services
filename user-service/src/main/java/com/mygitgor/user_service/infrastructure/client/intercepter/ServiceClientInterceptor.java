@@ -53,7 +53,10 @@ public class ServiceClientInterceptor {
                         .flatMap(errorBody -> {
                             log.error("Error response: {} - {}", response.statusCode(), errorBody);
                             return Mono.error(new ServiceClientException(
-                                    String.format("Service returned %s: %s", response.statusCode(), errorBody)
+                                    "External Service",
+                                    "HTTP_CLIENT_FILTER",
+                                    response.statusCode().value(),
+                                    String.format("Service returned error: %s", errorBody)
                             ));
                         });
             }
