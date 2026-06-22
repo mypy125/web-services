@@ -22,5 +22,6 @@
     <modules>
         <module>auth-service</module>
         <module>user-service</module>
+        <module>seller-service</module>
     </modules>
 </project>

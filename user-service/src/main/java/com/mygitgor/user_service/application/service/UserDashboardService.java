@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,17 +29,17 @@ public class UserDashboardService {
     private final PaymentPort paymentPort;
 
     private static final int RECENT_ORDERS_LIMIT = 5;
+    private static final Duration DASHBOARD_TIMEOUT = Duration.ofMillis(3000);
 
     public Mono<UserDashboardDto> getUserDashboard(UserId userId) {
         log.debug("Building dashboard for user: {}", userId);
+        String userIdStr = userId.getValue().toString();
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException(userId.getValue().toString())))
-                .flatMap(user -> {
-                    String userIdStr = userId.toString();
-
-                    return Mono.zip(
+                .flatMap(user -> Mono.zip(
                             Mono.just(userMapper.toProfileDto(user)),
+
                             addressPort.getDefaultAddress(userIdStr)
                                     .onErrorResume(e -> {
                                         log.warn("Failed to get default address for user {}: {}", userId, e.getMessage());
@@ -66,8 +67,7 @@ public class UserDashboardService {
                                         log.warn("Failed to get coupons count for user {}: {}", userId, e.getMessage());
                                         return Mono.just(0L);
                                     })
-                    );
-                })
+                )
                 .map(tuple -> {
                     UserProfileDto profile = tuple.getT1();
                     AddressDto defaultAddress = tuple.getT2();
@@ -93,19 +93,18 @@ public class UserDashboardService {
                             .memberSince(profile.createdAt())
                             .build();
                 })
+                .timeout(DASHBOARD_TIMEOUT)
                 .doOnSuccess(dashboard -> log.debug("Dashboard built successfully for user: {}", userId))
-                .doOnError(error -> log.error("Failed to build dashboard for user {}: {}", userId, error.getMessage()));
+                .doOnError(error -> log.error("Failed to build dashboard for user {}: {}", userId, error.getMessage())));
     }
 
     public Mono<UserDashboardSummaryDto> getDashboardSummary(UserId userId) {
         log.debug("Getting dashboard summary for user: {}", userId);
+        String userIdStr = userId.toString();
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException(userId.getValue().toString())))
-                .flatMap(user -> {
-                    String userIdStr = userId.toString();
-
-                    return Mono.zip(
+                .flatMap(user -> Mono.zip(
                             cartPort.getCartItemsCount(userIdStr)
                                     .onErrorResume(e -> {
                                         log.warn("Failed to get cart items count: {}", e.getMessage());
@@ -122,8 +121,7 @@ public class UserDashboardService {
                                         log.warn("Failed to get coupons count: {}", e.getMessage());
                                         return Mono.just(0L);
                                     })
-                    );
-                })
+                )
                 .map(tuple -> {
                     int cartItems = tuple.getT1();
                     OrderStatisticsDto orderStats = tuple.getT2();
@@ -141,22 +139,20 @@ public class UserDashboardService {
                             .lastOrderDate(orderStats.lastOrderDate())
                             .build();
                 })
-                .doOnSuccess(summary -> log.debug("Dashboard summary built for user: {}", userId));
+                .timeout(DASHBOARD_TIMEOUT)
+                .doOnSuccess(summary -> log.debug("Dashboard summary built for user: {}", userId)));
     }
 
     public Mono<OrderStatisticsDto> getOrderStatistics(UserId userId) {
         log.debug("Getting order statistics for user: {}", userId);
+        String userIdStr = userId.toString();
 
-        return userRepository.findById(userId)
-                .switchIfEmpty(Mono.error(new UserNotFoundException(userId.getValue().toString())))
-                .flatMap(user -> {
-                    String userIdStr = userId.toString();
-                    return orderPort.getOrderStatistics(userIdStr)
-                            .onErrorResume(e -> {
-                                log.warn("Failed to get order statistics for user {}: {}", userId, e.getMessage());
-                                return Mono.just(OrderStatisticsDto.empty());
-                            });
+        return orderPort.getOrderStatistics(userIdStr)
+                .onErrorResume(e -> {
+                    log.warn("Failed to get order statistics for user {}: {}", userId, e.getMessage());
+                    return Mono.just(OrderStatisticsDto.empty());
                 })
+                .timeout(DASHBOARD_TIMEOUT)
                 .doOnSuccess(stats -> log.debug("Order statistics retrieved for user: {}", userId))
                 .doOnError(error -> log.error("Failed to get order statistics for user {}: {}", userId, error.getMessage()));
     }
@@ -178,6 +174,7 @@ public class UserDashboardService {
                         .completedOrders(stats.getCompletedOrdersCount())
                         .completionRate(stats.getCompletionRate())
                         .build()
-                );
+                )
+                .timeout(DASHBOARD_TIMEOUT);
     }
 }
