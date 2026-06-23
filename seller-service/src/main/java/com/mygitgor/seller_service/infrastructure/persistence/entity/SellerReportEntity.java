@@ -1,8 +1,68 @@
 package com.mygitgor.seller_service.infrastructure.persistence.entity;
 
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Table("seller_reports")
 public record SellerReportEntity(
-
+        @Id UUID id,
+        @Column("seller_id") UUID sellerId,
+        String period,
+        @Column("period_start") LocalDateTime periodStart,
+        @Column("period_end") LocalDateTime periodEnd,
+        @Column("total_earnings") Double totalEarnings,
+        @Column("total_sales") Double totalSales,
+        @Column("total_refunds") Double totalRefunds,
+        @Column("total_tax") Double totalTax,
+        @Column("net_earnings") Double netEarnings,
+        @Column("total_commission") Double totalCommission,
+        @Column("total_shipping_cost") Double totalShippingCost,
+        @Column("total_discount_given") Double totalDiscountGiven,
+        @Column("total_cashback_given") Double totalCashbackGiven,
+        @Column("total_orders") Integer totalOrders,
+        @Column("completed_orders") Integer completedOrders,
+        @Column("canceled_orders") Integer canceledOrders,
+        @Column("returned_orders") Integer returnedOrders,
+        @Column("refunded_orders") Integer refundedOrders,
+        @Column("pending_orders") Integer pendingOrders,
+        @Column("processing_orders") Integer processingOrders,
+        @Column("shipped_orders") Integer shippedOrders,
+        @Column("delivered_orders") Integer deliveredOrders,
+        @Column("total_transactions") Integer totalTransactions,
+        @Column("total_products_sold") Integer totalProductsSold,
+        @Column("total_unique_products_sold") Integer totalUniqueProductsSold,
+        @Column("best_selling_product_id") String bestSellingProductId,
+        @Column("best_selling_product_name") String bestSellingProductName,
+        @Column("best_selling_product_quantity") Integer bestSellingProductQuantity,
+        @Column("best_selling_product_revenue") Double bestSellingProductRevenue,
+        @Column("top_category") String topCategory,
+        @Column("top_category_sales") Integer topCategorySales,
+        @Column("total_customers") Integer totalCustomers,
+        @Column("new_customers") Integer newCustomers,
+        @Column("returning_customers") Integer returningCustomers,
+        @Column("customer_retention_rate") Double customerRetentionRate,
+        @Column("average_order_value") Double averageOrderValue,
+        @Column("average_customer_lifetime_value") Double averageCustomerLifetimeValue,
+        @Column("average_rating") Double averageRating,
+        @Column("total_reviews") Integer totalReviews,
+        @Column("positive_reviews") Integer positiveReviews,
+        @Column("neutral_reviews") Integer neutralReviews,
+        @Column("negative_reviews") Integer negativeReviews,
+        @Column("response_rate") Double responseRate,
+        @Column("average_response_time_hours") Double averageResponseTimeHours,
+        @Column("conversion_rate") Double conversionRate,
+        @Column("return_rate") Double returnRate,
+        @Column("cancellation_rate") Double cancellationRate,
+        @Column("refund_rate") Double refundRate,
+        @Column("fulfillment_rate") Double fulfillmentRate,
+        @Column("on_time_delivery_rate") Double onTimeDeliveryRate,
+        @Column("profit_margin") Double profitMargin,
+        @Column("growth_percentage") Double growthPercentage,
+        @Column("comparison_metrics") String comparisonMetricsJson,
+        @Column("created_at") LocalDateTime createdAt,
+        @Column("updated_at") LocalDateTime updatedAt,
+        @Column("report_generated_at") LocalDateTime reportGeneratedAt
 ) {}
