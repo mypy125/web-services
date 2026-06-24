@@ -120,7 +120,6 @@ public class Seller {
 
     public static Seller register(
             Email email,
-            UserId userId,
             String sellerName,
             String mobile,
             BusinessDetails businessDetails,
