@@ -6,9 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.stream.Stream;
+
 @Slf4j
 @Component
 public class SellerBankDetailsSpec {
+    private static final String ACCOUNT_NUMBER_REGEX = "^[0-9]{9,18}$";
+    private static final String IFSC_CODE_REGEX = "^[A-Za-z]{4}[0-9]{7}$";
 
     public Mono<Boolean> isBankDetailsComplete(Seller seller) {
         if (seller == null || seller.getBankDetails() == null) {
@@ -16,30 +20,31 @@ public class SellerBankDetailsSpec {
         }
 
         BankDetails bank = seller.getBankDetails();
-        boolean isComplete = bank.accountNumber() != null && !bank.accountNumber().isBlank()
-                && bank.accountHolderName() != null && !bank.accountHolderName().isBlank()
-                && bank.bankName() != null && !bank.bankName().isBlank()
-                && bank.bankCode() != null && !bank.bankCode().isBlank();
+        boolean isComplete = Stream.of(
+                bank.accountNumber(),
+                bank.accountHolderName(),
+                bank.bankName(),
+                bank.bankCode()
+        ).allMatch(field -> field != null && !field.isBlank());
 
         log.debug("Seller {} bank details are complete: {}", seller.getEmail(), isComplete);
         return Mono.just(isComplete);
     }
 
     public Mono<Boolean> canReceivePayouts(Seller seller) {
+        if (seller == null) {
+            return Mono.just(false);
+        }
+
         return isBankDetailsComplete(seller)
-                .flatMap(isComplete -> {
-                    if (!isComplete) {
-                        return Mono.just(false);
-                    }
-                    return Mono.just(seller.isActive() && seller.isFullyVerified());
-                });
+                .map(isComplete -> isComplete && seller.isActive() && seller.isFullyVerified());
     }
 
     public Mono<Boolean> isValidAccountNumber(String accountNumber) {
         if (accountNumber == null || accountNumber.isBlank()) {
             return Mono.just(false);
         }
-        boolean isValid = accountNumber.matches("^[0-9]{9,18}$");
+        boolean isValid = accountNumber.matches(ACCOUNT_NUMBER_REGEX);
         log.debug("Account number {} is valid: {}", accountNumber, isValid);
         return Mono.just(isValid);
     }
@@ -48,7 +53,7 @@ public class SellerBankDetailsSpec {
         if (ifscCode == null || ifscCode.isBlank()) {
             return Mono.just(false);
         }
-        boolean isValid = ifscCode.matches("^[A-Za-z]{4}[0-9]{7}$");
+        boolean isValid = ifscCode.matches(IFSC_CODE_REGEX);
         log.debug("IFSC code {} is valid: {}", ifscCode, isValid);
         return Mono.just(isValid);
     }

@@ -2,7 +2,7 @@ package com.mygitgor.seller_service.domain.model;
 
 import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionType;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.TransactionType;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.OrderId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.TransactionId;

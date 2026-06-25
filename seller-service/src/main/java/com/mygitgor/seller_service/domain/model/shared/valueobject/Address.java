@@ -1,5 +1,6 @@
 package com.mygitgor.seller_service.domain.model.shared.valueobject;
 
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
 import lombok.Builder;
 
 @Builder
@@ -15,5 +16,5 @@ public record Address(
         String landmark,
         Double latitude,
         Double longitude,
-        String addressType
+        AddressType addressType
 ) {}

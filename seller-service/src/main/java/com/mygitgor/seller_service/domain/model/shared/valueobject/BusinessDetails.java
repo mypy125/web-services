@@ -1,5 +1,6 @@
 package com.mygitgor.seller_service.domain.model.shared.valueobject;
 
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.BusinessType;
 import lombok.Builder;
 
 @Builder
@@ -10,7 +11,7 @@ public record BusinessDetails(
         String businessAddress,
         String businessWebsite,
         String businessDescription,
-        String businessType,
+        BusinessType businessType,
         Integer yearOfEstablishment,
         Integer numberOfEmployees,
         String registrationNumber,

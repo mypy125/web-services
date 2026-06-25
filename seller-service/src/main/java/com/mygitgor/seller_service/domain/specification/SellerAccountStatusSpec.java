@@ -1,7 +1,6 @@
 package com.mygitgor.seller_service.domain.specification;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.AccountStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -14,7 +13,7 @@ public class SellerAccountStatusSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean isActive = seller.getAccountStatus() == AccountStatus.ACTIVE;
+        boolean isActive = seller.isActive();
         log.debug("Seller {} is active: {}", seller.getEmail(), isActive);
         return Mono.just(isActive);
     }
@@ -23,7 +22,7 @@ public class SellerAccountStatusSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean isBanned = seller.getAccountStatus() == AccountStatus.BANNED;
+        boolean isBanned = seller.isBanned();
         log.debug("Seller {} is banned: {}", seller.getEmail(), isBanned);
         return Mono.just(isBanned);
     }
@@ -32,20 +31,27 @@ public class SellerAccountStatusSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean isSuspended = seller.getAccountStatus() == AccountStatus.SUSPENDED;
+        boolean isSuspended = seller.isSuspended();
         log.debug("Seller {} is suspended: {}", seller.getEmail(), isSuspended);
         return Mono.just(isSuspended);
     }
 
     public Mono<Boolean> isNotBlocked(Seller seller) {
-        return isBanned(seller)
-                .flatMap(isBanned -> isSuspended(seller)
-                        .map(isSuspended -> !isBanned && !isSuspended));
+        if (seller == null) {
+            return Mono.just(false);
+        }
+
+        boolean isNotBlocked = !seller.isBanned() && !seller.isSuspended();
+        return Mono.just(isNotBlocked);
     }
 
     public Mono<Boolean> canPerformOperations(Seller seller) {
-        return isActive(seller)
-                .flatMap(isActive -> isNotBlocked(seller)
-                        .map(isNotBlocked -> isActive && isNotBlocked));
+        if (seller == null) {
+            return Mono.just(false);
+        }
+
+        boolean canPerform = seller.isActive() && !seller.isBanned() && !seller.isSuspended();
+        log.debug("Seller [{}] operational availability: {}", seller.getEmail(), canPerform);
+        return Mono.just(canPerform);
     }
 }

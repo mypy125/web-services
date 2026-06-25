@@ -14,7 +14,7 @@ public class SellerVerificationStatusSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean isFullyVerified = seller.getVerificationStatus() == SellerVerificationStatus.FULLY_VERIFIED;
+        boolean isFullyVerified = seller.isFullyVerified();
         log.debug("Seller {} is fully verified: {}", seller.getEmail(), isFullyVerified);
         return Mono.just(isFullyVerified);
     }
@@ -38,12 +38,12 @@ public class SellerVerificationStatusSpec {
     }
 
     public Mono<Boolean> canSell(Seller seller) {
-        return isFullyVerified(seller)
-                .flatMap(isVerified -> {
-                    if (!isVerified) {
-                        return Mono.just(false);
-                    }
-                    return Mono.just(seller.isActive() && seller.isEmailVerified());
-                });
+        if (seller == null) {
+            return Mono.just(false);
+        }
+
+        boolean canSell = seller.canSell();
+        log.debug("Seller [{}] authorization to sell check: {}", seller.getEmail(), canSell);
+        return Mono.just(canSell);
     }
 }

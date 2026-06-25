@@ -3,7 +3,6 @@ package com.mygitgor.seller_service.domain.model;
 import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.UserId;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDateTime;

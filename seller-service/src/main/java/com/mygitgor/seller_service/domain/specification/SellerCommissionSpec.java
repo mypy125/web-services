@@ -5,17 +5,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
+
 @Slf4j
 @Component
 public class SellerCommissionSpec {
+    private static final double DEFAULT_MIN_COMMISSION = 0.0;
+    private static final double DEFAULT_MAX_COMMISSION = 50.0;
+    private static final double MIN_CASHBACK = 0.0;
+    private static final double MAX_CASHBACK = 10.0;
 
     public Mono<Boolean> isCommissionRateValid(Seller seller, Double newRate) {
         if (seller == null || newRate == null) {
             return Mono.just(false);
         }
 
-        double min = seller.getMinimumCommissionRate() != null ? seller.getMinimumCommissionRate() : 0.0;
-        double max = seller.getMaximumCommissionRate() != null ? seller.getMaximumCommissionRate() : 50.0;
+        double min = Objects.requireNonNullElse(seller.getMinimumCommissionRate(), DEFAULT_MIN_COMMISSION);
+        double max = Objects.requireNonNullElse(seller.getMaximumCommissionRate(), DEFAULT_MAX_COMMISSION);
 
         boolean isValid = newRate >= min && newRate <= max;
         log.debug("Commission rate {} is valid (min: {}, max: {}): {}", newRate, min, max, isValid);
@@ -27,7 +33,7 @@ public class SellerCommissionSpec {
             return Mono.just(false);
         }
 
-        boolean canUpdate = seller.isActive() && seller.isFullyVerified();
+        boolean canUpdate = seller.canUpdateCommission();
         log.debug("Seller {} can update commission: {}", seller.getEmail(), canUpdate);
         return Mono.just(canUpdate);
     }
@@ -36,7 +42,7 @@ public class SellerCommissionSpec {
         if (cashbackRate == null) {
             return Mono.just(false);
         }
-        boolean isValid = cashbackRate >= 0 && cashbackRate <= 10;
+        boolean isValid = cashbackRate >= MIN_CASHBACK && cashbackRate <= MAX_CASHBACK;
         log.debug("Cashback rate {} is valid: {}", cashbackRate, isValid);
         return Mono.just(isValid);
     }

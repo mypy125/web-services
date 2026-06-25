@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.seller_service.domain.model.Transaction;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionType;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.TransactionType;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.OrderId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.TransactionId;

@@ -1,6 +1,7 @@
 package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.application.dto.request.RegisterSellerRequest;
+import com.mygitgor.seller_service.application.dto.response.SellerRegistrationResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
@@ -12,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,20 +22,20 @@ public class SellerRegistrationService {
     private final SellerEventProducer eventProducer;
     private final SellerMapper mapper;
 
-    public Mono<SellerRegistrationResponse> registerSeller(RegisterSellerRequest req) {
-        log.info("Registering new seller with email: {}", req.email());
+    public Mono<SellerRegistrationResponse> registerSeller(RegisterSellerRequest request) {
+        log.info("Registering new seller with email: {}", request.email());
 
-        Email email = new Email(req.email());
+        Email email = new Email(request.email());
 
         return sellerDomainService.validateEmailUniqueness(email)
                 .then(Mono.fromCallable(() -> {
                     Seller seller = Seller.register(
                             email,
-                            req.sellerName(),
-                            req.mobile(),
-                            req.businessDetails(),
-                            req.bankDetails(),
-                            req.pickupAddress()
+                            request.sellerName(),
+                            request.mobile(),
+                            request.businessDetails(),
+                            request.bankDetails(),
+                            request.pickupAddress()
                     );
                     return seller;
                 }))
@@ -56,7 +56,7 @@ public class SellerRegistrationService {
                     );
                 })
                 .map(mapper::toRegistrationResponse)
-                .doOnSuccess(response -> log.info("Seller registered successfully: {}", req.email()))
-                .doOnError(error -> log.error("Failed to register seller: {}", req.email(), error));
+                .doOnSuccess(response -> log.info("Seller registered successfully: {}", request.email()))
+                .doOnError(error -> log.error("Failed to register seller: {}", request.email(), error));
     }
 }

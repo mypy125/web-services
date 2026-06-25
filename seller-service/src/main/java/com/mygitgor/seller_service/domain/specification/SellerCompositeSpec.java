@@ -11,25 +11,17 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SellerCompositeSpec {
     private final SellerVerificationStatusSpec verificationStatusSpec;
-    private final SellerAccountStatusSpec accountStatusSpec;
     private final SellerBankDetailsSpec bankDetailsSpec;
     private final SellerBusinessDetailsSpec businessDetailsSpec;
-    private final SellerCommissionSpec commissionSpec;
 
     public Mono<Boolean> isReadyToSell(Seller seller) {
         if (seller == null) {
             return Mono.just(false);
         }
 
-        return Mono.zip(
-                verificationStatusSpec.isFullyVerified(seller),
-                accountStatusSpec.isActive(seller),
-                Mono.just(seller.isEmailVerified())
-        ).map(tuple -> {
-            boolean isReady = tuple.getT1() && tuple.getT2() && tuple.getT3();
-            log.debug("Seller {} is ready to sell: {}", seller.getEmail(), isReady);
-            return isReady;
-        });
+        boolean isReady = seller.canSell();
+        log.debug("Seller [{}] readiness to sell check: {}", seller.getEmail(), isReady);
+        return Mono.just(isReady);
     }
 
     public Mono<Boolean> isFullyConfigured(Seller seller) {
@@ -40,13 +32,10 @@ public class SellerCompositeSpec {
         return Mono.zip(
                 businessDetailsSpec.isBusinessDetailsComplete(seller),
                 bankDetailsSpec.isBankDetailsComplete(seller),
-                accountStatusSpec.isActive(seller),
-                verificationStatusSpec.isFullyVerified(seller),
-                Mono.just(seller.isEmailVerified())
+                isReadyToSell(seller)
         ).map(tuple -> {
-            boolean isConfigured = tuple.getT1() && tuple.getT2() && tuple.getT3()
-                    && tuple.getT4() && tuple.getT5();
-            log.debug("Seller {} is fully configured: {}", seller.getEmail(), isConfigured);
+            boolean isConfigured = tuple.getT1() && tuple.getT2() && tuple.getT3();
+            log.debug("Seller [{}] full configuration completeness check: {}", seller.getEmail(), isConfigured);
             return isConfigured;
         });
     }
@@ -56,12 +45,11 @@ public class SellerCompositeSpec {
     }
 
     public Mono<Boolean> canAddProducts(Seller seller) {
+        if (seller == null) {
+            return Mono.just(false);
+        }
+
         return businessDetailsSpec.canAddProducts(seller)
-                .flatMap(canAdd -> {
-                    if (!canAdd) {
-                        return Mono.just(false);
-                    }
-                    return verificationStatusSpec.canSell(seller);
-                });
+                .flatMap(canAdd -> canAdd ? verificationStatusSpec.canSell(seller) : Mono.just(false));
     }
 }

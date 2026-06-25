@@ -8,12 +8,17 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 public class SellerShippingSpec {
+    private static final int MIN_PROCESSING_DAYS = 1;
+    private static final int MAX_PROCESSING_DAYS = 30;
+    private static final int MIN_SHIPPING_DAYS = 1;
+    private static final int MAX_SHIPPING_DAYS = 45;
+    private static final double MIN_COST_THRESHOLD = 0.0;
 
     public Mono<Boolean> isValidProcessingTime(Integer processingTimeDays) {
         if (processingTimeDays == null) {
             return Mono.just(false);
         }
-        boolean isValid = processingTimeDays >= 1 && processingTimeDays <= 30;
+        boolean isValid = processingTimeDays >= MIN_PROCESSING_DAYS && processingTimeDays <= MAX_PROCESSING_DAYS;
         log.debug("Processing time {} is valid: {}", processingTimeDays, isValid);
         return Mono.just(isValid);
     }
@@ -22,7 +27,7 @@ public class SellerShippingSpec {
         if (shippingTimeDays == null) {
             return Mono.just(false);
         }
-        boolean isValid = shippingTimeDays >= 1 && shippingTimeDays <= 45;
+        boolean isValid = shippingTimeDays >= MIN_SHIPPING_DAYS && shippingTimeDays <= MAX_SHIPPING_DAYS;
         log.debug("Shipping time {} is valid: {}", shippingTimeDays, isValid);
         return Mono.just(isValid);
     }
@@ -31,7 +36,7 @@ public class SellerShippingSpec {
         if (threshold == null) {
             return Mono.just(false);
         }
-        boolean isValid = threshold >= 0;
+        boolean isValid = threshold >= MIN_COST_THRESHOLD;
         log.debug("Free shipping threshold {} is valid: {}", threshold, isValid);
         return Mono.just(isValid);
     }
@@ -40,7 +45,7 @@ public class SellerShippingSpec {
         if (shippingCost == null) {
             return Mono.just(false);
         }
-        boolean isValid = shippingCost >= 0;
+        boolean isValid = shippingCost >= MIN_COST_THRESHOLD;
         log.debug("Shipping cost {} is valid: {}", shippingCost, isValid);
         return Mono.just(isValid);
     }
@@ -49,7 +54,7 @@ public class SellerShippingSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean canAutoAccept = seller.canSell() && seller.isAutoAcceptOrders();
+        boolean canAutoAccept = seller.canAcceptOrders();
         log.debug("Seller {} can auto accept orders: {}", seller.getEmail(), canAutoAccept);
         return Mono.just(canAutoAccept);
     }

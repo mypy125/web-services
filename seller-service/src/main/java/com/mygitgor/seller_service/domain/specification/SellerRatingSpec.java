@@ -8,12 +8,16 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 public class SellerRatingSpec {
+    private static final int MIN_RATING = 1;
+    private static final int MAX_RATING = 5;
+    private static final double HIGH_RATING_THRESHOLD = 4.5;
+    private static final double GOOD_RESPONSE_RATE_THRESHOLD = 90.0;
 
     public Mono<Boolean> isValidRating(Integer rating) {
         if (rating == null) {
             return Mono.just(false);
         }
-        boolean isValid = rating >= 1 && rating <= 5;
+        boolean isValid = rating >= MIN_RATING && rating <= MAX_RATING;
         log.debug("Rating {} is valid: {}", rating, isValid);
         return Mono.just(isValid);
     }
@@ -22,7 +26,7 @@ public class SellerRatingSpec {
         if (seller == null || seller.getAverageRating() == null) {
             return Mono.just(false);
         }
-        boolean isHighRated = seller.getAverageRating() >= 4.5;
+        boolean isHighRated = seller.getAverageRating() >= HIGH_RATING_THRESHOLD;
         log.debug("Seller {} is high rated: {}", seller.getEmail(), isHighRated);
         return Mono.just(isHighRated);
     }
@@ -31,7 +35,7 @@ public class SellerRatingSpec {
         if (seller == null) {
             return Mono.just(false);
         }
-        boolean hasReviews = seller.getTotalReviews() != null && seller.getTotalReviews() > 0;
+        boolean hasReviews = seller.hasReviews();
         log.debug("Seller {} has reviews: {}", seller.getEmail(), hasReviews);
         return Mono.just(hasReviews);
     }
@@ -40,7 +44,7 @@ public class SellerRatingSpec {
         if (seller == null || seller.getResponseRate() == null) {
             return Mono.just(false);
         }
-        boolean hasGoodResponse = seller.getResponseRate() >= 90.0;
+        boolean hasGoodResponse = seller.getResponseRate() >= GOOD_RESPONSE_RATE_THRESHOLD;
         log.debug("Seller {} has good response rate: {}", seller.getEmail(), hasGoodResponse);
         return Mono.just(hasGoodResponse);
     }

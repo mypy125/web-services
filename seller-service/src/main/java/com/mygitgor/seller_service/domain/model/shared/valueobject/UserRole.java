@@ -1,5 +1,8 @@
 package com.mygitgor.seller_service.domain.model.shared.valueobject;
 
+import lombok.Getter;
+
+@Getter
 public enum UserRole {
     ROLE_CUSTOMER("CUSTOMER", "Customer"),
     ROLE_SELLER("SELLER", "Seller"),
@@ -15,14 +18,6 @@ public enum UserRole {
     UserRole(String code, String displayName) {
         this.code = code;
         this.displayName = displayName;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public boolean isAdmin() {
