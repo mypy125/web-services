@@ -3,6 +3,7 @@ package com.mygitgor.seller_service.domain.model;
 import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDateTime;
@@ -332,16 +333,34 @@ public class Seller {
     }
 
     public void updatePickupAddress(Address newAddress) {
+        if (newAddress == null) {
+            throw new DomainException("Pickup address cannot be null");
+        }
+        if (newAddress.addressType() != AddressType.PICKUP) {
+            throw new DomainException("Address type must be PICKUP");
+        }
         this.pickupAddress = newAddress;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void updateReturnAddress(Address newAddress) {
+        if (newAddress == null) {
+            throw new DomainException("Return address cannot be null");
+        }
+        if (newAddress.addressType() != AddressType.RETURN) {
+            throw new DomainException("Address type must be RETURN");
+        }
         this.returnAddress = newAddress;
         this.updatedAt = LocalDateTime.now();
     }
 
     public void addWarehouseAddress(Address warehouseAddress) {
+        if (warehouseAddress == null) {
+            throw new DomainException("Warehouse address cannot be null");
+        }
+        if (warehouseAddress.addressType() != AddressType.WAREHOUSE) {
+            throw new DomainException("Address type must be WAREHOUSE");
+        }
         if (this.warehouseAddresses == null) {
             this.warehouseAddresses = new ArrayList<>();
         }

@@ -3,8 +3,10 @@ package com.mygitgor.seller_service.infrastructure.kafka.producer;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
 import com.mygitgor.seller_service.domain.model.Transaction;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
 import com.mygitgor.seller_service.domain.port.outgoing.KafkaEventPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -109,6 +111,16 @@ public class SellerEventProducer implements KafkaEventPort {
 
     @Override
     public Mono<Void> sendBulkVerificationEvent(List<SellerId> sellerIds, String verifiedBy) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendAddressAddedEvent(SellerId sellerId, Address address, AddressType type) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendAddressUpdatedEvent(SellerId sellerId, Address address) {
         return null;
     }
 }

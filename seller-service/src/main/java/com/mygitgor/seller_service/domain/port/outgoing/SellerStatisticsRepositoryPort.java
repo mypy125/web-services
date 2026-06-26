@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.domain.port.outgoing;
 
-import com.mygitgor.seller_service.domain.model.SellerStatistics;
+import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import reactor.core.publisher.Mono;
 
 public interface SellerStatisticsRepositoryPort {

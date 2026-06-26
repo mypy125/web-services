@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.infrastructure.persistence;
 
-import com.mygitgor.seller_service.domain.model.SellerStatistics;
+import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.domain.port.outgoing.SellerStatisticsRepositoryPort;
 import com.mygitgor.seller_service.infrastructure.persistence.mapper.SellerStatisticsPersistenceMapper;
 import com.mygitgor.seller_service.infrastructure.persistence.repository.SellerStatisticsR2dbcRepository;

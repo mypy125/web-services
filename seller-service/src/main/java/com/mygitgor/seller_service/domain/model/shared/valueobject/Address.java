@@ -5,6 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record Address(
+        String id,
         String name,
         String addressLine1,
         String addressLine2,

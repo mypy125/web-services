@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.SellerStatistics;
+import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.page.Page;

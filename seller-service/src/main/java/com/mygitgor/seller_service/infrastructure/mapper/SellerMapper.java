@@ -3,15 +3,15 @@ package com.mygitgor.seller_service.infrastructure.mapper;
 import com.mygitgor.seller_service.application.dto.external.AddressDto;
 import com.mygitgor.seller_service.application.dto.external.BankDetailsDto;
 import com.mygitgor.seller_service.application.dto.external.BusinessDetailsDto;
+import com.mygitgor.seller_service.application.dto.request.AddressRequest;
 import com.mygitgor.seller_service.application.dto.request.RegisterSellerRequest;
 import com.mygitgor.seller_service.application.dto.request.UpdateSellerRequest;
-import com.mygitgor.seller_service.application.dto.response.SellerProfileResponse;
-import com.mygitgor.seller_service.application.dto.response.SellerRegistrationResponse;
-import com.mygitgor.seller_service.application.dto.response.SellerResponse;
+import com.mygitgor.seller_service.application.dto.response.*;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.page.Page;
+import com.mygitgor.seller_service.domain.model.statistic.AddressStatistics;
 import com.mygitgor.seller_service.infrastructure.kafka.event.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.*;
@@ -87,7 +87,13 @@ public interface SellerMapper {
 
     BusinessDetailsDto toBusinessDetailsDto(BusinessDetails domain);
     BankDetailsDto toBankDetailsDto(BankDetails domain);
+
+    @Mapping(target = "sellerId", source = "sellerId")
+    AddressResponse toAddressResponse(Address domain);
+
+    Address toAddress(AddressRequest request);
     AddressDto toAddressDto(Address domain);
+
 
     default Page<SellerResponse> toResponsePage(Page<Seller> sellerPage) {
         return sellerPage == null ? Page.empty() : sellerPage.map(this::toResponse);
@@ -98,7 +104,6 @@ public interface SellerMapper {
     }
 
     List<SellerResponse> toResponseList(List<Seller> sellers);
-
 
     default String mapSellerIdToString(SellerId id) {
         return id == null ? null : id.toString();

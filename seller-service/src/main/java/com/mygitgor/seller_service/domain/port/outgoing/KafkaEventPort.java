@@ -3,8 +3,10 @@ package com.mygitgor.seller_service.domain.port.outgoing;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
 import com.mygitgor.seller_service.domain.model.Transaction;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -29,4 +31,6 @@ public interface KafkaEventPort {
     Mono<Void> sendTransactionUpdatedEvent(Transaction transaction);
     Mono<Void> sendBulkSellerUpdateEvent(List<Seller> sellers, String action);
     Mono<Void> sendBulkVerificationEvent(List<SellerId> sellerIds, String verifiedBy);
+    Mono<Void> sendAddressAddedEvent(SellerId sellerId, Address address, AddressType type);
+    Mono<Void> sendAddressUpdatedEvent(SellerId sellerId, Address address);
 }

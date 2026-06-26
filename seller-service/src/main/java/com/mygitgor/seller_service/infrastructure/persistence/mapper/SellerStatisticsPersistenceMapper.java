@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.infrastructure.persistence.mapper;
 
-import com.mygitgor.seller_service.domain.model.SellerStatistics;
+import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.domain.model.shared.valueobject.id.StatisticsId;
 import com.mygitgor.seller_service.infrastructure.persistence.entity.SellerStatisticsEntity;
 import java.util.UUID;
