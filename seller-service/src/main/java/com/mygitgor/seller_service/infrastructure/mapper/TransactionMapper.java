@@ -1,7 +1,9 @@
 package com.mygitgor.seller_service.infrastructure.mapper;
 
 import com.mygitgor.seller_service.application.dto.response.TransactionResponse;
+import com.mygitgor.seller_service.domain.model.OrderStats;
 import com.mygitgor.seller_service.domain.model.Transaction;
+import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -28,4 +30,28 @@ public interface TransactionMapper {
     @Mapping(target = "audit.userAgent", source = "userAgent")
     @Mapping(target = "audit.metadata", source = "metadata")
     TransactionResponse toResponse(Transaction transaction);
+
+    default OrderStats toOrderStats(Transaction transaction) {
+        if (transaction == null) {
+            return null;
+        }
+
+        return OrderStats.builder()
+                .amount(transaction.getAmount())
+                .tax(transaction.getTax() != null ? transaction.getTax() : 0.0)
+                .shippingCost(transaction.getShippingCost() != null ? transaction.getShippingCost() : 0.0)
+                .discount(transaction.getDiscount() != null ? transaction.getDiscount() : 0.0)
+                .commission(transaction.getCommission() != null ? transaction.getCommission() : 0.0)
+                .status(transaction.getStatus() != null ? transaction.getStatus().name() : TransactionStatus.PENDING.name())
+                .isNewCustomer(false)
+                .customerId(transaction.getCustomerId() != null ? transaction.getCustomerId().toString() : null)
+                .productId(null)
+                .productName(null)
+                .category(null)
+                .quantity(0)
+                .productPrice(null)
+                .productTotal(null)
+                .isFirstPurchase(false)
+                .build();
+    }
 }
