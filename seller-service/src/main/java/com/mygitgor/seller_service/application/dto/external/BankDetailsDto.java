@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.application.dto.external;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.BankAccountType;
+import com.mygitgor.seller_service.shared.valueobject.type.BankAccountType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

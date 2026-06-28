@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.application.dto.external;
 
-import com.mygitgor.seller_service.domain.model.shared.external.Currency;
+import com.mygitgor.seller_service.shared.external.Currency;
 import lombok.Builder;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;

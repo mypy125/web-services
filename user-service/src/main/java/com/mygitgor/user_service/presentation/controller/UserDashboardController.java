@@ -5,7 +5,7 @@ import com.mygitgor.user_service.infrastructure.dto.external.OrderStatisticsDto;
 import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardDto;
 import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardSummaryDto;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

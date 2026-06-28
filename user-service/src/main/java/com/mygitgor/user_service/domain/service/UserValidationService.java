@@ -3,8 +3,8 @@ package com.mygitgor.user_service.domain.service;
 import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
-import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.exception.DomainException;
+import com.mygitgor.user_service.shared.valueobject.Email;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

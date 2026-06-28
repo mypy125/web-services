@@ -1,16 +1,19 @@
 package com.mygitgor.seller_service.domain.model;
 
-import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.exception.DomainException;
+import com.mygitgor.seller_service.shared.valueobject.*;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 public class Seller {
     // TODO: Identification
@@ -664,6 +667,104 @@ public class Seller {
 
     public Double getAverageOrderValue() {
         return averageOrderValue != null ? averageOrderValue : 0.0;
+    }
+
+    public void verifyTax(String verifiedBy) {
+        this.taxInfoVerified = true;
+        this.taxInfoVerifiedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateStoreDetails(String storeName, String storeDescription, String storeTagline,
+                                   String storeLogo, String storeBanner, String storeWebsite,
+                                   String storeEmail, String storePhone) {
+        updateStore(storeName, storeDescription, storeTagline, storeLogo, storeBanner, storeWebsite, storeEmail, storePhone);
+    }
+
+    public void updateSocialLinks(String socialMediaLinks) {
+        this.socialMediaLinks = socialMediaLinks;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateTaxDetails(String gstNumber, String panNumber, String tinNumber, String businessRegistrationNumber) {
+        updateTaxInfo(gstNumber, panNumber, tinNumber, businessRegistrationNumber);
+    }
+
+    public void addWarehouse(Address warehouseAddress) {
+        addWarehouseAddress(warehouseAddress);
+    }
+
+    public void removeWarehouse(Address warehouseAddress) {
+        removeWarehouseAddress(warehouseAddress);
+    }
+
+    public void updateCommission(double newRate, String updatedBy) {
+        updateCommissionRate(newRate, updatedBy);
+    }
+
+    public void updateCashback(Double cashbackRate) {
+        updateCashbackRate(cashbackRate);
+    }
+
+    public void updateShipping(Integer processingTimeDays, Integer shippingTimeDays,
+                               Double freeShippingThreshold, Double domesticShippingCost, Double internationalShippingCost) {
+        updateShippingSettings(processingTimeDays, shippingTimeDays, freeShippingThreshold, domesticShippingCost, internationalShippingCost);
+    }
+
+    public static Seller createPending(Email email, String sellerName, String mobile,
+                                       BusinessDetails businessDetails, BankDetails bankDetails, Address pickupAddress) {
+        return register(email, sellerName, mobile, businessDetails, bankDetails, pickupAddress);
+    }
+
+    public void verifyBusinessDetails(String verifiedBy, String notes) {
+        if (this.verificationStatus == SellerVerificationStatus.FULLY_VERIFIED) {
+            throw new DomainException("Business already fully verified");
+        }
+        this.verificationStatus = SellerVerificationStatus.BUSINESS_VERIFIED;
+        this.businessVerifiedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void changeFollowers(Integer increment) {
+        int current = this.followersCount == null ? 0 : this.followersCount;
+        this.followersCount = Math.max(0, current + increment);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void appendRating(Integer newRating) {
+        if (newRating < 1 || newRating > 5) {
+            throw new DomainException("Rating must be between 1 and 5");
+        }
+        updateRating(newRating);
+    }
+
+    public void updateProductCounters(Integer totalProducts, Integer totalActiveProducts, Integer totalOutOfStockProducts) {
+        updateProductStats(totalProducts, totalActiveProducts, totalOutOfStockProducts);
+    }
+
+    public void recalculateOrderStats(Double orderAmount, boolean isCancelled, boolean isRefunded) {
+        this.totalOrders = (this.totalOrders == null ? 0 : this.totalOrders) + 1;
+        this.totalSales = (this.totalSales == null ? 0.0 : this.totalSales) + orderAmount;
+        this.totalTransactions = (this.totalTransactions == null ? 0 : this.totalTransactions) + 1;
+
+        if (isCancelled) {
+            this.canceledOrders = (this.canceledOrders == null ? 0 : this.canceledOrders) + 1;
+        }
+        if (isRefunded) {
+            this.totalRefunds = (this.totalRefunds == null ? 0.0 : this.totalRefunds) + orderAmount;
+        }
+
+        this.cancellationRate = (double) this.canceledOrders / this.totalOrders * 100;
+        this.averageOrderValue = this.totalSales / this.totalOrders;
+
+        double commissionPaid = (this.totalCommissionPaid == null ? 0.0 : this.totalCommissionPaid);
+        this.netEarnings = this.totalSales - (this.totalRefunds == null ? 0.0 : this.totalRefunds) - commissionPaid;
+
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    private void triggerUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     @Override

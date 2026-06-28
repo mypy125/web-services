@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.domain.model.statistic;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.Address;
 import lombok.Builder;
 import lombok.Getter;
 

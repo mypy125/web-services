@@ -1,8 +1,8 @@
 package com.mygitgor.seller_service.domain.service;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.exception.DomainException;
+import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import com.mygitgor.seller_service.domain.specification.*;
 import lombok.RequiredArgsConstructor;

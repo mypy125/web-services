@@ -9,9 +9,9 @@ import com.mygitgor.user_service.infrastructure.dto.response.*;
 import com.mygitgor.user_service.infrastructure.kafka.event.EmailVerifiedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserCreatedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserStatusChangedEvent;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.Page;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import org.mapstruct.*;
 
 import java.time.LocalDateTime;

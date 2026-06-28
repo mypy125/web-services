@@ -1,8 +1,8 @@
 package com.mygitgor.seller_service.application.dto.request;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.BankDetails;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.BusinessDetails;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.BankDetails;
+import com.mygitgor.seller_service.shared.valueobject.BusinessDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,8 +1,8 @@
 package com.mygitgor.seller_service.domain.repository;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

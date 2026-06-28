@@ -5,7 +5,7 @@ import com.mygitgor.user_service.domain.repository.UserStatisticsRepositoryPort;
 import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
 import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserStatisticsMapper;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

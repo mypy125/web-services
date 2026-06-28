@@ -1,8 +1,8 @@
 package com.mygitgor.seller_service.domain.port.incoming;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.*;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;

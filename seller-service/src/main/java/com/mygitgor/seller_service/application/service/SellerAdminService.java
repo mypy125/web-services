@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.ReportPeriod;
+import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
 import com.mygitgor.seller_service.domain.model.statistic.ReportStatistics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

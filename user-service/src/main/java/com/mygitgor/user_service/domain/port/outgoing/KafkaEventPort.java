@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
 import com.mygitgor.user_service.domain.model.User;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.Email;
 import reactor.core.publisher.Mono;
 
 public interface KafkaEventPort {

@@ -2,9 +2,9 @@ package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.page.Page;
+import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.page.Page;
 import com.mygitgor.seller_service.domain.port.incoming.SellerQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

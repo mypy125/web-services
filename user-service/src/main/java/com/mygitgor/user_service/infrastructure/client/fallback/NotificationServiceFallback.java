@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.client.fallback;
 
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.Email;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.application.dto.external;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

@@ -1,12 +1,14 @@
 package com.mygitgor.seller_service.domain.port.outgoing;
 
+import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
 import com.mygitgor.seller_service.domain.model.Transaction;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public interface KafkaEventPort {
     Mono<Void> sendCommissionRateUpdatedEvent(Seller seller, Double oldRate, Double newRate);
     Mono<Void> sendOrderStatsUpdatedEvent(Seller seller);
     Mono<Void> sendRatingUpdatedEvent(Seller seller);
+    Mono<Void> sendTaxVerifiedEvent(Seller seller);
     Mono<Void> sendSellerReportGeneratedEvent(SellerReport report);
     Mono<Void> sendTransactionCreatedEvent(Transaction transaction);
     Mono<Void> sendTransactionUpdatedEvent(Transaction transaction);
@@ -33,4 +36,14 @@ public interface KafkaEventPort {
     Mono<Void> sendBulkVerificationEvent(List<SellerId> sellerIds, String verifiedBy);
     Mono<Void> sendAddressAddedEvent(SellerId sellerId, Address address, AddressType type);
     Mono<Void> sendAddressUpdatedEvent(SellerId sellerId, Address address);
+    Mono<Void> sendProductCreatedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductUpdatedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductPriceUpdatedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductQuantityUpdatedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductStatusUpdatedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductDeletedEvent(SellerId sellerId, ProductId productId);
+    Mono<Void> sendProductFeaturedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductUnfeaturedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductImageAddedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendProductImageRemovedEvent(SellerId sellerId, ProductResponse product);
 }

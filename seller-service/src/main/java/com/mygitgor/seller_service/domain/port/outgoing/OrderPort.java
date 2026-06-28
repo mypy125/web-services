@@ -3,8 +3,8 @@ package com.mygitgor.seller_service.domain.port.outgoing;
 import com.mygitgor.seller_service.application.dto.external.OrderDetailsDto;
 import com.mygitgor.seller_service.application.dto.external.OrderStatisticsDto;
 import com.mygitgor.seller_service.application.dto.external.OrderSummaryDto;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.OrderId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.id.OrderId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

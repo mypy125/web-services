@@ -1,12 +1,14 @@
 package com.mygitgor.seller_service.infrastructure.kafka.producer;
 
+import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
 import com.mygitgor.seller_service.domain.model.Transaction;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import com.mygitgor.seller_service.domain.port.outgoing.KafkaEventPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +92,11 @@ public class SellerEventProducer implements KafkaEventPort {
     }
 
     @Override
+    public Mono<Void> sendTaxVerifiedEvent(Seller seller) {
+        return null;
+    }
+
+    @Override
     public Mono<Void> sendSellerReportGeneratedEvent(SellerReport report) {
         return null;
     }
@@ -121,6 +128,56 @@ public class SellerEventProducer implements KafkaEventPort {
 
     @Override
     public Mono<Void> sendAddressUpdatedEvent(SellerId sellerId, Address address) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductCreatedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductUpdatedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductPriceUpdatedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductQuantityUpdatedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductStatusUpdatedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductDeletedEvent(SellerId sellerId, ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductFeaturedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductUnfeaturedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductImageAddedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendProductImageRemovedEvent(SellerId sellerId, ProductResponse product) {
         return null;
     }
 }

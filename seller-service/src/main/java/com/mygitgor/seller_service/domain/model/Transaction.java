@@ -1,12 +1,12 @@
 package com.mygitgor.seller_service.domain.model;
 
-import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.TransactionType;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.OrderId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.TransactionId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.UserId;
+import com.mygitgor.seller_service.shared.exception.DomainException;
+import com.mygitgor.seller_service.shared.valueobject.TransactionStatus;
+import com.mygitgor.seller_service.shared.valueobject.type.TransactionType;
+import com.mygitgor.seller_service.shared.valueobject.id.OrderId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.id.TransactionId;
+import com.mygitgor.seller_service.shared.valueobject.id.UserId;
 import lombok.Builder;
 import lombok.Getter;
 

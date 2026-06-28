@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.mapper;
 
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Page;
+import com.mygitgor.user_service.shared.valueobject.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

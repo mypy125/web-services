@@ -1,9 +1,9 @@
 package com.mygitgor.seller_service.application.dto.external;
 
-import com.mygitgor.seller_service.domain.model.shared.external.Currency;
-import com.mygitgor.seller_service.domain.model.shared.external.DeliveryStatus;
-import com.mygitgor.seller_service.domain.model.shared.external.OrderStatus;
-import com.mygitgor.seller_service.domain.model.shared.external.PaymentStatus;
+import com.mygitgor.seller_service.shared.external.Currency;
+import com.mygitgor.seller_service.shared.external.DeliveryStatus;
+import com.mygitgor.seller_service.shared.external.OrderStatus;
+import com.mygitgor.seller_service.shared.external.PaymentStatus;
 import lombok.Builder;
 import java.time.LocalDateTime;
 import io.swagger.v3.oas.annotations.media.Schema;

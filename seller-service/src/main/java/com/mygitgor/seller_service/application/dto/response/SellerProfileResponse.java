@@ -1,11 +1,7 @@
 package com.mygitgor.seller_service.application.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.AccountStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.SellerLevel;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.SellerVerificationStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.StoreCategory;
+import com.mygitgor.seller_service.shared.valueobject.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

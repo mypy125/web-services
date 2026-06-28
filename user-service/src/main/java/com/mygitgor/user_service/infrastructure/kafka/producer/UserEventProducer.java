@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.port.outgoing.KafkaEventPort;
 import com.mygitgor.user_service.infrastructure.kafka.event.*;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

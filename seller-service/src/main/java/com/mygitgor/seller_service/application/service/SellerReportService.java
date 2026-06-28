@@ -2,11 +2,11 @@ package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.domain.model.PeriodSummary;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.domain.model.shared.exception.SellerNotFoundException;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.ReportPeriod;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.ProductId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerReportId;
+import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
+import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
+import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import com.mygitgor.seller_service.domain.model.statistic.ReportStatistics;
 import com.mygitgor.seller_service.domain.port.outgoing.OrderPort;
 import com.mygitgor.seller_service.domain.port.outgoing.ProductPort;

@@ -2,8 +2,8 @@ package com.mygitgor.seller_service.infrastructure.mapper;
 
 import com.mygitgor.seller_service.application.dto.response.SellerReportResponse;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerReportId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

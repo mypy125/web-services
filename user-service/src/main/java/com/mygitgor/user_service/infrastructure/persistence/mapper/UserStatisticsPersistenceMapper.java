@@ -2,7 +2,7 @@ package com.mygitgor.user_service.infrastructure.persistence.mapper;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
 import com.mygitgor.user_service.infrastructure.persistence.entity.UserStatisticsEntity;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import org.mapstruct.*;
 
 import java.time.LocalDateTime;

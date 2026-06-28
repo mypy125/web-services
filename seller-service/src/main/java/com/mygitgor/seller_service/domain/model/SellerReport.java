@@ -1,8 +1,9 @@
 package com.mygitgor.seller_service.domain.model;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.ReportPeriod;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerReportId;
+import com.mygitgor.seller_service.shared.valueobject.OrderStats;
+import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDateTime;

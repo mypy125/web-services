@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.domain.specification;
 
 import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

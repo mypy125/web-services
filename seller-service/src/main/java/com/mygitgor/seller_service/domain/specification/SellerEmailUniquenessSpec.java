@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.domain.specification;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Email;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

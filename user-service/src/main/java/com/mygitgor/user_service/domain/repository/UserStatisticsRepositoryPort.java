@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.domain.repository;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;

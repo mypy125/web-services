@@ -2,10 +2,10 @@ package com.mygitgor.seller_service.infrastructure.mapper;
 
 import com.mygitgor.seller_service.application.dto.external.OrderDetailsDto;
 import com.mygitgor.seller_service.application.dto.external.ProductDetailsDto;
-import com.mygitgor.seller_service.domain.model.OrderStats;
+import com.mygitgor.seller_service.shared.valueobject.OrderStats;
 import com.mygitgor.seller_service.domain.model.Transaction;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.TransactionStatus;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.UserId;
+import com.mygitgor.seller_service.shared.valueobject.TransactionStatus;
+import com.mygitgor.seller_service.shared.valueobject.id.UserId;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

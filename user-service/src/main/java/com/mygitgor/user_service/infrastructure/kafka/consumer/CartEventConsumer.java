@@ -3,7 +3,7 @@ package com.mygitgor.user_service.infrastructure.kafka.consumer;
 import com.mygitgor.user_service.infrastructure.cache.UserCacheService;
 import com.mygitgor.user_service.infrastructure.kafka.event.CartAbandonedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.CartUpdatedEvent;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

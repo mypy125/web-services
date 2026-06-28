@@ -3,7 +3,7 @@ package com.mygitgor.user_service.infrastructure.kafka.producer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.user_service.domain.model.UserStatistics;
 import com.mygitgor.user_service.infrastructure.kafka.event.*;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

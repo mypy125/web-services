@@ -1,11 +1,10 @@
 package com.mygitgor.seller_service.application.service;
 
-import com.mygitgor.seller_service.application.dto.response.AddressStatisticsResponse;
-import com.mygitgor.seller_service.domain.model.shared.exception.DomainException;
-import com.mygitgor.seller_service.domain.model.shared.exception.SellerNotFoundException;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.Address;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.shared.exception.DomainException;
+import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
 import com.mygitgor.seller_service.domain.model.statistic.AddressStatistics;
 import com.mygitgor.seller_service.domain.repository.AddressRepositoryPort;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;

@@ -8,10 +8,12 @@ import com.mygitgor.seller_service.application.dto.request.RegisterSellerRequest
 import com.mygitgor.seller_service.application.dto.request.UpdateSellerRequest;
 import com.mygitgor.seller_service.application.dto.response.*;
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.*;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.page.Page;
-import com.mygitgor.seller_service.domain.model.statistic.AddressStatistics;
+import com.mygitgor.seller_service.shared.valueobject.Address;
+import com.mygitgor.seller_service.shared.valueobject.BankDetails;
+import com.mygitgor.seller_service.shared.valueobject.BusinessDetails;
+import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.shared.valueobject.page.Page;
 import com.mygitgor.seller_service.infrastructure.kafka.event.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.*;

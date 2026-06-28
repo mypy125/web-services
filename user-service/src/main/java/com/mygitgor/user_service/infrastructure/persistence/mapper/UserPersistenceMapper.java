@@ -4,8 +4,8 @@ import com.mygitgor.user_service.domain.model.AccountStatus;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
 import com.mygitgor.user_service.infrastructure.persistence.entity.UserEntity;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 
 import org.mapstruct.*;
 

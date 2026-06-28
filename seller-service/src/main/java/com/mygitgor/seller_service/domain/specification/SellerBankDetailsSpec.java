@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.domain.specification;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.BankDetails;
+import com.mygitgor.seller_service.shared.valueobject.BankDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

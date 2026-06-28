@@ -1,9 +1,6 @@
 package com.mygitgor.user_service.presentation.controller;
 
 import com.mygitgor.user_service.application.service.UserApplicationService;
-import com.mygitgor.user_service.application.service.UserDashboardService;
-import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardDto;
-import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardSummaryDto;
 import com.mygitgor.user_service.infrastructure.dto.external.UserProfileDto;
 import com.mygitgor.user_service.infrastructure.dto.request.ChangePasswordRequest;
 import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
@@ -11,8 +8,8 @@ import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

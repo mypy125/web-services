@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.infrastructure.persistence.repository;
 
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.StatisticsId;
+import com.mygitgor.seller_service.shared.valueobject.id.StatisticsId;
 import com.mygitgor.seller_service.infrastructure.persistence.entity.SellerStatisticsEntity;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;

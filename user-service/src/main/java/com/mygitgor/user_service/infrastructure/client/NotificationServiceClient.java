@@ -7,7 +7,7 @@ import com.mygitgor.user_service.infrastructure.client.exception.ServiceTimeoutE
 import com.mygitgor.user_service.infrastructure.client.exception.ServiceUnavailableException;
 import com.mygitgor.user_service.infrastructure.client.fallback.NotificationServiceFallback;
 import com.mygitgor.user_service.infrastructure.client.intercepter.ServiceClientInterceptor;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.Email;
 import reactor.core.publisher.Mono;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

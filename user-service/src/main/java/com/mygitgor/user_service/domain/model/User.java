@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.domain.model;
 
-import com.mygitgor.user_service.infrastructure.shared.exception.DomainException;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.Email;
-import com.mygitgor.user_service.infrastructure.shared.valueobject.UserId;
+import com.mygitgor.user_service.shared.exception.DomainException;
+import com.mygitgor.user_service.shared.valueobject.Email;
+import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.Builder;
 import lombok.Getter;
 

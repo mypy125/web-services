@@ -1,10 +1,14 @@
 package com.mygitgor.seller_service.infrastructure.client;
 
+import com.mygitgor.seller_service.application.dto.external.CategorySummaryDto;
 import com.mygitgor.seller_service.application.dto.external.ProductDetailsDto;
 import com.mygitgor.seller_service.application.dto.external.ProductStatisticsDto;
 import com.mygitgor.seller_service.application.dto.external.ProductSummaryDto;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.ProductId;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.id.SellerId;
+import com.mygitgor.seller_service.infrastructure.mapper.ProductMapper;
+import com.mygitgor.seller_service.shared.valueobject.Product;
+import com.mygitgor.seller_service.shared.valueobject.ProductStatus;
+import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.domain.port.outgoing.ProductPort;
 import com.mygitgor.seller_service.infrastructure.client.exception.ProductServiceException;
 import com.mygitgor.seller_service.infrastructure.client.exception.ServiceTimeoutException;
@@ -27,6 +31,9 @@ import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -195,6 +202,212 @@ public class ProductServiceClient implements ProductPort {
                     log.warn("Failed to get top products for seller: {}", sellerId, e);
                     return Flux.empty();
                 });
+    }
+
+    @Override
+    public Mono<Product> createProduct(Product product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Product> updateProduct(Product product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Product> getProductById(ProductId productId) {
+        return null;
+    }
+
+
+    @Override
+    public Mono<Void> deleteProduct(ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> deleteProduct(ProductId productId, SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getProductsBySellerIdSummary(SellerId sellerId, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getProductsByStatus(SellerId sellerId, ProductStatus status, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getProductsByCategory(SellerId sellerId, String categoryId, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getLowStockProductsBySellerId(SellerId sellerId, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getOnSaleProductsBySellerId(SellerId sellerId, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getNewProductsBySellerId(SellerId sellerId, int limit) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getProductsByPriceRange(SellerId sellerId, Double minPrice, Double maxPrice, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Mono<Boolean> existsProduct(ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Boolean> isProductActive(ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Boolean> isProductInStock(ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Integer> getAvailableQuantity(ProductId productId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Long> countProductsByStatus(SellerId sellerId, ProductStatus status) {
+        return null;
+    }
+
+    @Override
+    public Mono<Long> countProductsByCategory(SellerId sellerId, String categoryId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Long> countLowStockProductsBySellerId(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Long> countOnSaleProductsBySellerId(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Mono<ProductStatisticsDto> getProductStatistics(SellerId sellerId, LocalDateTime startDate, LocalDateTime endDate) {
+        return null;
+    }
+
+    @Override
+    public Mono<Map<String, Long>> getCategoryStatistics(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Map<String, Long>> getStatusStatistics(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> searchProductsBySellerId(SellerId sellerId, String searchTerm, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> searchProductsWithFilters(SellerId sellerId, String searchTerm, String categoryId, Double minPrice, Double maxPrice, ProductStatus status, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> reserveProductStock(ProductId productId, Integer quantity) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> releaseReservedStock(ProductId productId, Integer quantity) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sellProductStock(ProductId productId, Integer quantity) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> returnProductStock(ProductId productId, Integer quantity) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> updateProductStock(ProductId productId, Integer newQuantity) {
+        return null;
+    }
+
+    @Override
+    public Flux<Product> bulkCreateProducts(List<Product> products) {
+        return null;
+    }
+
+    @Override
+    public Flux<Product> bulkUpdateStatus(List<ProductId> productIds, ProductStatus status) {
+        return null;
+    }
+
+    @Override
+    public Flux<Product> bulkUpdatePrices(Map<ProductId, Double> priceUpdates) {
+        return null;
+    }
+
+    @Override
+    public Flux<Product> bulkUpdateQuantities(Map<ProductId, Integer> quantityUpdates) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> bulkDeleteProducts(List<ProductId> productIds) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getProductsByCategories(SellerId sellerId, List<String> categoryIds, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Flux<CategorySummaryDto> getCategoriesBySellerId(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> updateProductRating(ProductId productId, Double rating, Integer reviewCount) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getTopRatedProductsBySellerId(SellerId sellerId, int limit) {
+        return null;
+    }
+
+    @Override
+    public Flux<ProductSummaryDto> getFeaturedProductsBySellerId(SellerId sellerId, int page, int size) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> updateFeaturedStatus(ProductId productId, boolean featured) {
+        return null;
     }
 
     private Mono<ProductDetailsDto> getProductDetailsFallback(ProductId productId, Throwable t) {

@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.domain.specification;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.domain.model.shared.valueobject.SellerVerificationStatus;
+import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
