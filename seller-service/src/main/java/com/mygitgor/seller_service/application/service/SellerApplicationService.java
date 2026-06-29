@@ -9,7 +9,6 @@ import com.mygitgor.seller_service.domain.port.incoming.SellerUseCase;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import com.mygitgor.seller_service.domain.service.SellerDomainService;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;
-import com.mygitgor.seller_service.infrastructure.mapper.SellerMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -38,11 +38,11 @@ public enum ProductStatus {
 
     public static ProductStatus fromString(String status) {
         if (status == null || status.isBlank()) {
-            return DRAFT; // Дефолтный статус при пустом значении
+            return DRAFT;
         }
         return Arrays.stream(values())
                 .filter(s -> s.name().equalsIgnoreCase(status.trim()))
                 .findFirst()
-                .orElse(DRAFT); // Или можно выбрать throw new DomainException(...)
+                .orElse(DRAFT);
     }
 }
