@@ -80,7 +80,7 @@ public class SellerProductController {
         log.info("REST request to update status for product: {} to {}", productId, status);
         return productService.updateProductStatus(new SellerId(sellerId), new ProductId(productId), status);
     }
-    
+
     @PatchMapping("/bulk/status")
     public Flux<ProductResponse> bulkUpdateStatus(@PathVariable String sellerId,
                                                   @RequestBody List<String> productIds,

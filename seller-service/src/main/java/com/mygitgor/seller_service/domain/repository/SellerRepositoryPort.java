@@ -1,7 +1,9 @@
 package com.mygitgor.seller_service.domain.repository;
 
 import com.mygitgor.seller_service.domain.model.Seller;
+import com.mygitgor.seller_service.shared.valueobject.AccountStatus;
 import com.mygitgor.seller_service.shared.valueobject.Email;
+import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,6 +20,8 @@ public interface SellerRepositoryPort {
     Flux<Seller> findAll(int page, int size);
     Flux<Seller> findByAccountStatus(String status, int page, int size);
     Flux<Seller> findByVerificationStatus(String verificationStatus, int page, int size);
+    Flux<Seller> findAllByAccountStatus(AccountStatus accountStatus, int page, int size);
+    Flux<Seller> findAllByVerificationStatus(SellerVerificationStatus verificationStatus, int page, int size);
     Flux<Seller> findActiveSellers(int page, int size);
     Flux<Seller> findVerifiedSellers(int page, int size);
     Flux<Seller> findByStoreCategory(String category, int page, int size);
