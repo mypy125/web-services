@@ -43,7 +43,7 @@ public class ProductServiceClient implements ProductPort {
     private final ServiceClientInterceptor clientInterceptor;
     private final ProductServiceFallback fallback;
 
-    @Value("${product.service.url:http://localhost:8088/api/products}")
+    @Value("${product.service.url:http://localhost:8088/api/v1/products}")
     private String baseUrl;
 
     @Value("${product.service.timeout:5000}")

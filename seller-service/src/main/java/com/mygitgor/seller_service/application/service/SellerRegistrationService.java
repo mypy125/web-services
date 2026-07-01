@@ -1,17 +1,28 @@
 package com.mygitgor.seller_service.application.service;
 
 import com.mygitgor.seller_service.application.dto.request.RegisterSellerRequest;
+import com.mygitgor.seller_service.application.dto.request.UploadDocumentRequest;
 import com.mygitgor.seller_service.application.dto.response.SellerRegistrationResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
+import com.mygitgor.seller_service.shared.exception.DomainException;
+import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
 import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import com.mygitgor.seller_service.domain.service.SellerDomainService;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;
 import com.mygitgor.seller_service.infrastructure.mapper.SellerMapper;
+import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
+import com.mygitgor.seller_service.shared.valueobject.VerificationDocument;
+import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
 
 @Slf4j
 @Service
@@ -22,41 +33,103 @@ public class SellerRegistrationService {
     private final SellerEventProducer eventProducer;
     private final SellerMapper mapper;
 
+    @Transactional
     public Mono<SellerRegistrationResponse> registerSeller(RegisterSellerRequest request) {
         log.info("Registering new seller with email: {}", request.email());
 
         Email email = new Email(request.email());
 
         return sellerDomainService.validateEmailUniqueness(email)
-                .then(Mono.fromCallable(() -> {
-                    Seller seller = Seller.register(
+                .then(Mono.fromCallable(() -> Seller.register(
                             email,
                             request.sellerName(),
                             request.mobile(),
                             request.businessDetails(),
                             request.bankDetails(),
                             request.pickupAddress()
-                    );
-                    return seller;
-                }))
+                    )))
                 .flatMap(sellerRepository::save)
-                .flatMap(seller ->
-                        sellerDomainService.isReadyToSell(seller)
-                                .map(isReady -> {
-                                    if (isReady) {
-                                        log.info("Seller {} is ready to sell", seller.getEmail());
-                                    }
-                                    return seller;
-                                })
+                .flatMap(seller ->eventProducer.sendSellerRegisteredEvent(seller)
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .onErrorResume(err -> {
+                            log.error("Failed to send seller registered event for {}", seller.getSellerId(), err);
+                            return Mono.empty();
+                        })
+                        .thenReturn(seller)
                 )
-                .doOnSuccess(seller -> {
-                    eventProducer.sendSellerRegisteredEvent(seller).subscribe(
-                            success -> log.debug("Seller registered event sent to Kafka"),
-                            error -> log.error("Failed to send seller registered event", error)
-                    );
-                })
                 .map(mapper::toRegistrationResponse)
-                .doOnSuccess(response -> log.info("Seller registered successfully: {}", request.email()))
-                .doOnError(error -> log.error("Failed to register seller: {}", request.email(), error));
+                .doOnSuccess(res -> log.info("Seller registered successfully, ID: {}", res.id()))
+                .doOnError(err -> log.error("Failed to register seller: {}", request.email(), err));
+
+    }
+
+    @Transactional
+    public Mono<SellerRegistrationResponse> verifyEmailToken(String emailStr, String token) {
+        log.info("Verifying email token for: {}", emailStr);
+        Email email = new Email(emailStr);
+
+        return sellerRepository.findByEmail(email)
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(emailStr)))
+                .flatMap(seller -> sellerDomainService.verifyRegistrationToken(seller, token)
+                        .then(Mono.fromRunnable(seller::verifyEmail))
+                        .then(sellerRepository.save(seller))
+                )
+                .flatMap(seller -> eventProducer.sendEmailVerifiedEvent(seller)
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .onErrorResume(err -> {
+                            log.error("Failed to send EmailVerifiedEvent for seller: {}", seller.getSellerId(), err);
+                            return Mono.empty();
+                        })
+                        .thenReturn(seller)
+                )
+                .map(mapper::toRegistrationResponse);
+    }
+
+    public Mono<Void> resendVerificationEmail(String emailStr) {
+        log.info("Request to resend verification email for: {}", emailStr);
+
+        return sellerRepository.findByEmail(new Email(emailStr))
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(emailStr)))
+                .doOnNext(seller -> {
+                    if (seller.isEmailVerified()) {
+                        throw new DomainException("Email is already verified");
+                    }
+                })
+                .flatMap(eventProducer::sendEmailVerificationRequestedEvent)
+                .subscribeOn(Schedulers.boundedElastic())
+                .then();
+    }
+
+    @Transactional
+    public Mono<SellerRegistrationResponse> uploadVerificationDocuments(SellerId sellerId, UploadDocumentRequest request) {
+        log.info("Uploading verification documents for seller: {}", sellerId);
+
+        return sellerRepository.findById(sellerId)
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
+                .map(seller -> {
+                    VerificationDocument document = VerificationDocument.builder()
+                            .documentType(request.documentType())
+                            .documentUrl(request.documentUrl())
+                            .documentNumber(request.documentNumber())
+                            .documentName(request.documentType() + "_doc")
+                            .issuedDate(LocalDateTime.now())
+                            .verificationStatus("PENDING")
+                            .metadata(new HashMap<>())
+                            .build();
+
+                    seller.setVerificationDocument(document);
+                    seller.setVerificationStatus(SellerVerificationStatus.PENDING);
+                    return seller;
+                })
+                .flatMap(sellerRepository::save)
+                .flatMap(seller -> eventProducer.sendDocumentsUploadedEvent(seller)
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .onErrorResume(err -> {
+                            log.error("Failed to send DocumentsUploadedEvent for seller: {}", sellerId, err);
+                            return Mono.empty();
+                        })
+                        .thenReturn(seller)
+                )
+                .map(mapper::toRegistrationResponse);
     }
 }

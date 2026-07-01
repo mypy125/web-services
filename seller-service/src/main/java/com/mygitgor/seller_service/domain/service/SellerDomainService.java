@@ -1,6 +1,7 @@
 package com.mygitgor.seller_service.domain.service;
 
 import com.mygitgor.seller_service.domain.model.Seller;
+import com.mygitgor.seller_service.domain.port.outgoing.AuthPort;
 import com.mygitgor.seller_service.shared.exception.DomainException;
 import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
@@ -22,6 +23,19 @@ public class SellerDomainService {
     private final SellerBankDetailsSpec bankDetailsSpec;
     private final SellerBusinessDetailsSpec businessDetailsSpec;
     private final SellerCommissionSpec commissionSpec;
+    private final AuthPort authPort;
+
+    public Mono<Void> verifyRegistrationToken(Seller seller, String token) {
+        log.debug("Validating registration token via AuthPort for seller email: {}", seller.getEmail());
+
+        return authPort.verifyOtp(seller.getEmail(), token)
+                .flatMap(isValid -> {
+                    if (!isValid) {
+                        return Mono.error(new DomainException("Invalid or expired registration token"));
+                    }
+                    return Mono.empty();
+                });
+    }
 
     public Mono<Void> validateEmailUniqueness(Email email) {
         log.debug("Validating email uniqueness: {}", email);

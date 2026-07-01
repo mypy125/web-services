@@ -46,4 +46,6 @@ public interface KafkaEventPort {
     Mono<Void> sendProductUnfeaturedEvent(SellerId sellerId, ProductResponse product);
     Mono<Void> sendProductImageAddedEvent(SellerId sellerId, ProductResponse product);
     Mono<Void> sendProductImageRemovedEvent(SellerId sellerId, ProductResponse product);
+    Mono<Void> sendEmailVerificationRequestedEvent(Seller seller);
+    Mono<Void> sendDocumentsUploadedEvent(Seller seller);
 }

@@ -37,7 +37,7 @@ public class OrderServiceClient implements OrderPort {
     private final ServiceClientInterceptor clientInterceptor;
     private final OrderServiceFallback fallback;
 
-    @Value("${order.service.url:http://localhost:8086/api/orders}")
+    @Value("${order.service.url:http://localhost:8086/api/v1/orders}")
     private String baseUrl;
 
     @Value("${order.service.timeout:5000}")
