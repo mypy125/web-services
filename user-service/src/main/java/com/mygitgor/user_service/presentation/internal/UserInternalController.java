@@ -1,10 +1,10 @@
 package com.mygitgor.user_service.presentation.internal;
 
+import com.mygitgor.user_service.application.dto.request.*;
 import com.mygitgor.user_service.application.service.UserInternalService;
-import com.mygitgor.user_service.infrastructure.dto.request.*;
-import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.application.dto.response.UserAuthInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserResponse;
+import com.mygitgor.user_service.application.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.shared.valueobject.Email;
 import com.mygitgor.user_service.shared.valueobject.Page;
 import com.mygitgor.user_service.shared.valueobject.UserId;

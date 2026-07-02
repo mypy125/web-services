@@ -6,7 +6,7 @@ import com.mygitgor.user_service.infrastructure.client.exception.ServiceTimeoutE
 import com.mygitgor.user_service.infrastructure.client.exception.ServiceUnavailableException;
 import com.mygitgor.user_service.infrastructure.client.fallback.CouponServiceFallback;
 import com.mygitgor.user_service.infrastructure.client.intercepter.ServiceClientInterceptor;
-import com.mygitgor.user_service.infrastructure.dto.external.CouponDto;
+import com.mygitgor.user_service.application.dto.external.CouponDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;

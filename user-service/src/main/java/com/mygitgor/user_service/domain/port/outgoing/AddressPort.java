@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
-import com.mygitgor.user_service.infrastructure.dto.external.AddressDto;
+import com.mygitgor.user_service.application.dto.external.AddressDto;
 import reactor.core.publisher.Mono;
 
 public interface AddressPort {

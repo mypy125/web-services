@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.client.fallback;
 
-import com.mygitgor.user_service.infrastructure.dto.external.CouponDto;
+import com.mygitgor.user_service.application.dto.external.CouponDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

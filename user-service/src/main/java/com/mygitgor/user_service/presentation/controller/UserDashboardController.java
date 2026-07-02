@@ -1,9 +1,9 @@
 package com.mygitgor.user_service.presentation.controller;
 
 import com.mygitgor.user_service.application.service.UserDashboardService;
-import com.mygitgor.user_service.infrastructure.dto.external.OrderStatisticsDto;
-import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardDto;
-import com.mygitgor.user_service.infrastructure.dto.external.UserDashboardSummaryDto;
+import com.mygitgor.user_service.application.dto.external.OrderStatisticsDto;
+import com.mygitgor.user_service.application.dto.external.UserDashboardDto;
+import com.mygitgor.user_service.application.dto.external.UserDashboardSummaryDto;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
 import com.mygitgor.user_service.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;

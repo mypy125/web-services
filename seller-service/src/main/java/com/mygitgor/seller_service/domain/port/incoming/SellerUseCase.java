@@ -89,4 +89,6 @@ public interface SellerUseCase {
     Mono<Seller> updateResponseTime(SellerId sellerId, Double hours);
     Mono<Seller> updateLastActive(SellerId sellerId);
     Mono<Seller> updateLastLogin(SellerId sellerId, LocalDateTime lastLoginAt);
+    Mono<Void> updateLastActiveTime(SellerId sellerId, LocalDateTime lastActiveAt);
+    Mono<Void> updateLastLoginByEmail(Email email, LocalDateTime lastLoginAt);
 }

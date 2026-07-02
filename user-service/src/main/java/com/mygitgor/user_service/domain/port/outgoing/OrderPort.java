@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
-import com.mygitgor.user_service.infrastructure.dto.external.OrderStatisticsDto;
-import com.mygitgor.user_service.infrastructure.dto.external.OrderSummaryDto;
+import com.mygitgor.user_service.application.dto.external.OrderStatisticsDto;
+import com.mygitgor.user_service.application.dto.external.OrderSummaryDto;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 

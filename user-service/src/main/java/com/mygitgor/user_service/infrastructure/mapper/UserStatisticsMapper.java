@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.infrastructure.mapper;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
-import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.application.dto.response.LoyaltyInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserStatisticsResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;

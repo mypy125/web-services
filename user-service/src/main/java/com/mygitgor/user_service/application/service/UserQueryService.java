@@ -2,8 +2,8 @@ package com.mygitgor.user_service.application.service;
 
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
-import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
+import com.mygitgor.user_service.application.dto.response.UserAuthInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.PageMapper;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.shared.valueobject.Email;

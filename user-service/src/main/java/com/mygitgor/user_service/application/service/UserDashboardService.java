@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.application.service;
 
+import com.mygitgor.user_service.application.dto.external.*;
 import com.mygitgor.user_service.domain.port.outgoing.*;
 import com.mygitgor.user_service.domain.repository.UserRepositoryPort;
-import com.mygitgor.user_service.infrastructure.dto.external.*;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.shared.exception.UserNotFoundException;
 import com.mygitgor.user_service.shared.valueobject.UserId;

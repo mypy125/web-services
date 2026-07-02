@@ -1,5 +1,6 @@
 package com.mygitgor.seller_service.application.service;
 
+import com.mygitgor.seller_service.application.dto.response.UserAuthInfoResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.shared.valueobject.Email;
@@ -130,6 +131,11 @@ public class SellerQueryService implements SellerQueryUseCase {
 
     @Override
     public Mono<Boolean> canSellerReceivePayouts(SellerId sellerId) {
+        return null;
+    }
+
+    @Override
+    public Mono<UserAuthInfoResponse> getSellerAuthInfoByEmail(Email email) {
         return null;
     }
 }

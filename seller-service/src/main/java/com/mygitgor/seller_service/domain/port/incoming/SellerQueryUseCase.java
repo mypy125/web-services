@@ -1,5 +1,6 @@
 package com.mygitgor.seller_service.domain.port.incoming;
 
+import com.mygitgor.seller_service.application.dto.response.UserAuthInfoResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.shared.valueobject.Email;
@@ -34,4 +35,5 @@ public interface SellerQueryUseCase {
     Mono<Boolean> canSellerSell(SellerId sellerId);
     Mono<Boolean> canSellerAddProducts(SellerId sellerId);
     Mono<Boolean> canSellerReceivePayouts(SellerId sellerId);
+    Mono<UserAuthInfoResponse> getSellerAuthInfoByEmail(Email email);
 }

@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.client;
 
-import com.mygitgor.user_service.infrastructure.dto.response.UserAuthInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserAuthInfoResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

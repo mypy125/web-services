@@ -1,11 +1,11 @@
 package com.mygitgor.user_service.presentation.controller;
 
 import com.mygitgor.user_service.application.service.UserApplicationService;
-import com.mygitgor.user_service.infrastructure.dto.external.UserProfileDto;
-import com.mygitgor.user_service.infrastructure.dto.request.ChangePasswordRequest;
-import com.mygitgor.user_service.infrastructure.dto.request.UpdateProfileRequest;
-import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
-import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
+import com.mygitgor.user_service.application.dto.external.UserProfileDto;
+import com.mygitgor.user_service.application.dto.request.ChangePasswordRequest;
+import com.mygitgor.user_service.application.dto.request.UpdateProfileRequest;
+import com.mygitgor.user_service.application.dto.request.UpdateUserRequest;
+import com.mygitgor.user_service.application.dto.response.UserResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserMapper;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
 import com.mygitgor.user_service.shared.valueobject.Email;

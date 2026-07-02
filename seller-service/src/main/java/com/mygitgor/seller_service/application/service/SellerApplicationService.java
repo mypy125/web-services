@@ -441,4 +441,31 @@ public class SellerApplicationService implements SellerUseCase {
                 })
                 .flatMap(sellerRepository::save);
     }
+
+    @Override
+    @Transactional
+    public Mono<Void> updateLastActiveTime(SellerId sellerId, LocalDateTime lastActiveAt) {
+        log.debug("Updating last active time for seller: {} to {}", sellerId, lastActiveAt);
+
+        return sellerRepository.findById(sellerId)
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
+                .flatMap(seller -> {
+                    seller.setLastActiveAt(lastActiveAt);
+                    return sellerRepository.save(seller);
+                })
+                .then();
+    }
+
+    @Override
+    @Transactional
+    public Mono<Void> updateLastLoginByEmail(Email email, LocalDateTime lastLoginAt) {
+        return sellerRepository.findByEmail(email)
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(email.toString())))
+                .flatMap(seller -> {
+                    seller.setLastLoginAt(lastLoginAt);
+                    seller.setLastActiveAt(lastLoginAt);
+                    return sellerRepository.save(seller);
+                })
+                .then();
+    }
 }

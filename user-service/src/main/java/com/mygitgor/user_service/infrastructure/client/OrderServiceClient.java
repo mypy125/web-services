@@ -6,8 +6,8 @@ import com.mygitgor.user_service.infrastructure.client.exception.ServiceTimeoutE
 import com.mygitgor.user_service.infrastructure.client.exception.ServiceUnavailableException;
 import com.mygitgor.user_service.infrastructure.client.fallback.OrderServiceFallback;
 import com.mygitgor.user_service.infrastructure.client.intercepter.ServiceClientInterceptor;
-import com.mygitgor.user_service.infrastructure.dto.external.OrderStatisticsDto;
-import com.mygitgor.user_service.infrastructure.dto.external.OrderSummaryDto;
+import com.mygitgor.user_service.application.dto.external.OrderStatisticsDto;
+import com.mygitgor.user_service.application.dto.external.OrderSummaryDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;

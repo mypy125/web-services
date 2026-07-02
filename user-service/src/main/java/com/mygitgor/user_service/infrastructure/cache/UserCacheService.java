@@ -3,7 +3,7 @@ package com.mygitgor.user_service.infrastructure.cache;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.user_service.domain.model.User;
-import com.mygitgor.user_service.infrastructure.dto.response.UserResponse;
+import com.mygitgor.user_service.application.dto.response.UserResponse;
 import com.mygitgor.user_service.shared.valueobject.Email;
 import com.mygitgor.user_service.shared.valueobject.Page;
 import com.mygitgor.user_service.shared.valueobject.UserId;

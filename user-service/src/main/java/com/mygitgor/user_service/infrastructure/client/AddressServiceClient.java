@@ -6,7 +6,7 @@ import com.mygitgor.user_service.infrastructure.client.exception.ServiceTimeoutE
 import com.mygitgor.user_service.infrastructure.client.exception.ServiceUnavailableException;
 import com.mygitgor.user_service.infrastructure.client.fallback.AddressServiceFallback;
 import com.mygitgor.user_service.infrastructure.client.intercepter.ServiceClientInterceptor;
-import com.mygitgor.user_service.infrastructure.dto.external.AddressDto;
+import com.mygitgor.user_service.application.dto.external.AddressDto;
 import reactor.core.publisher.Mono;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;

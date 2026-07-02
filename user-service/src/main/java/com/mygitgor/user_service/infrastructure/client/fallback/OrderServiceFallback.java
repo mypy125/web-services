@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.infrastructure.client.fallback;
 
-import com.mygitgor.user_service.infrastructure.dto.external.OrderStatisticsDto;
-import com.mygitgor.user_service.infrastructure.dto.external.OrderSummaryDto;
+import com.mygitgor.user_service.application.dto.external.OrderStatisticsDto;
+import com.mygitgor.user_service.application.dto.external.OrderSummaryDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

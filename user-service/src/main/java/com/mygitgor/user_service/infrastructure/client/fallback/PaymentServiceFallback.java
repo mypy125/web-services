@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.infrastructure.client.fallback;
 
-import com.mygitgor.user_service.infrastructure.dto.external.PaymentMethodDto;
+import com.mygitgor.user_service.application.dto.external.PaymentMethodDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

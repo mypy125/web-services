@@ -2,8 +2,8 @@ package com.mygitgor.user_service.application.service.userstatistic;
 
 import com.mygitgor.user_service.domain.model.UserStatistics;
 import com.mygitgor.user_service.domain.repository.UserStatisticsRepositoryPort;
-import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.application.dto.response.LoyaltyInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.infrastructure.mapper.UserStatisticsMapper;
 import com.mygitgor.user_service.shared.valueobject.UserId;
 import lombok.RequiredArgsConstructor;

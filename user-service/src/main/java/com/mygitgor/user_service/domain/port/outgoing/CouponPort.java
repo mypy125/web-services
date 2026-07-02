@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
-import com.mygitgor.user_service.infrastructure.dto.external.CouponDto;
+import com.mygitgor.user_service.application.dto.external.CouponDto;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 

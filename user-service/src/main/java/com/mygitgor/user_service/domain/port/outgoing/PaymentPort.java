@@ -1,6 +1,6 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
-import com.mygitgor.user_service.infrastructure.dto.external.PaymentMethodDto;
+import com.mygitgor.user_service.application.dto.external.PaymentMethodDto;
 import reactor.core.publisher.Mono;
 
 import java.util.List;

@@ -96,6 +96,12 @@ public interface SellerMapper {
     Address toAddress(AddressRequest request);
     AddressDto toAddressDto(Address domain);
 
+    @Mapping(target = "id", source = "sellerId")
+    @Mapping(target = "fullName", source = "sellerName")
+    @Mapping(target = "role", constant = "ROLE_SELLER")
+    @Mapping(target = "emailVerified", expression = "java(seller.isEmailVerified())")
+    UserAuthInfoResponse toUserAuthInfoResponse(Seller seller);
+
 
     default Page<SellerResponse> toResponsePage(Page<Seller> sellerPage) {
         return sellerPage == null ? Page.empty() : sellerPage.map(this::toResponse);

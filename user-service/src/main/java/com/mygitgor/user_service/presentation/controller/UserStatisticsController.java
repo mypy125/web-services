@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.presentation.controller;
 
 import com.mygitgor.user_service.application.service.userstatistic.UserStatisticsQueryService;
-import com.mygitgor.user_service.infrastructure.dto.response.LoyaltyInfoResponse;
-import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.application.dto.response.LoyaltyInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.infrastructure.security.AuthUser;
 import com.mygitgor.user_service.shared.valueobject.UserId;
 import io.swagger.v3.oas.annotations.Operation;

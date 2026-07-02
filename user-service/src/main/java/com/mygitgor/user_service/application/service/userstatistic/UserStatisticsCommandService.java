@@ -1,8 +1,8 @@
 package com.mygitgor.user_service.application.service.userstatistic;
 
+import com.mygitgor.user_service.application.dto.request.*;
 import com.mygitgor.user_service.domain.repository.UserStatisticsRepositoryPort;
-import com.mygitgor.user_service.infrastructure.dto.request.*;
-import com.mygitgor.user_service.infrastructure.dto.response.UserStatisticsResponse;
+import com.mygitgor.user_service.application.dto.response.UserStatisticsResponse;
 import com.mygitgor.user_service.infrastructure.kafka.producer.UserStatisticsEventProducer;
 import com.mygitgor.user_service.infrastructure.mapper.UserStatisticsMapper;
 import com.mygitgor.user_service.shared.exception.UserNotFoundException;

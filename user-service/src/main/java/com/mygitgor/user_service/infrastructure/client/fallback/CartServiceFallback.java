@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.infrastructure.client.fallback;
 
-import com.mygitgor.user_service.infrastructure.dto.external.CartSummaryDto;
-import com.mygitgor.user_service.infrastructure.dto.external.CartItemRequest;
+import com.mygitgor.user_service.application.dto.external.CartSummaryDto;
+import com.mygitgor.user_service.application.dto.external.CartItemRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

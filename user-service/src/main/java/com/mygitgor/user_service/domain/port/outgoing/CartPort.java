@@ -1,7 +1,7 @@
 package com.mygitgor.user_service.domain.port.outgoing;
 
-import com.mygitgor.user_service.infrastructure.dto.external.CartItemRequest;
-import com.mygitgor.user_service.infrastructure.dto.external.CartSummaryDto;
+import com.mygitgor.user_service.application.dto.external.CartItemRequest;
+import com.mygitgor.user_service.application.dto.external.CartSummaryDto;
 import reactor.core.publisher.Mono;
 
 public interface CartPort {

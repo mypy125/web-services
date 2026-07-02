@@ -1,11 +1,12 @@
 package com.mygitgor.user_service.infrastructure.mapper;
 
+import com.mygitgor.user_service.application.dto.response.UserAuthInfoResponse;
+import com.mygitgor.user_service.application.dto.response.UserResponse;
 import com.mygitgor.user_service.domain.model.User;
 import com.mygitgor.user_service.domain.model.UserRole;
-import com.mygitgor.user_service.infrastructure.dto.external.UserProfileDto;
-import com.mygitgor.user_service.infrastructure.dto.request.CreateUserRequest;
-import com.mygitgor.user_service.infrastructure.dto.request.UpdateUserRequest;
-import com.mygitgor.user_service.infrastructure.dto.response.*;
+import com.mygitgor.user_service.application.dto.external.UserProfileDto;
+import com.mygitgor.user_service.application.dto.request.CreateUserRequest;
+import com.mygitgor.user_service.application.dto.request.UpdateUserRequest;
 import com.mygitgor.user_service.infrastructure.kafka.event.EmailVerifiedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserCreatedEvent;
 import com.mygitgor.user_service.infrastructure.kafka.event.UserStatusChangedEvent;
