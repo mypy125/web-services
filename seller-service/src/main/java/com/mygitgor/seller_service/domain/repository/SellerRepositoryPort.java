@@ -34,7 +34,7 @@ public interface SellerRepositoryPort {
     Mono<Boolean> existsById(SellerId sellerId);
     Mono<Long> count();
     Mono<Long> countByAccountStatus(String status);
-    Mono<Long> countByVerificationStatus(String verificationStatus);
+    Mono<Long> countByVerificationStatus(SellerVerificationStatus status);
     Mono<Long> countActiveSellers();
     Mono<Long> countVerifiedSellers();
     Mono<Seller> updateAccountStatus(SellerId sellerId, String status, String reason);
@@ -43,4 +43,13 @@ public interface SellerRepositoryPort {
     Mono<Seller> updateStatistics(SellerId sellerId, Seller statistics);
     Mono<Seller> updateCommissionRate(SellerId sellerId, Double commissionRate);
     Mono<Seller> updateLastActive(SellerId sellerId);
+    Mono<Long> countAll();
+    Mono<Long> countSearchMatches(String searchTerm);
+    Flux<Seller> findAllByCategory(String category, int page, int size);
+    Mono<Long> countByCategory(String category);
+    Flux<Seller> findAllByMinRating(Double minRating, int page, int size);;
+    Mono<Long> countByMinRating(Double minRating);
+    Flux<Seller> findTopRated(int limit);
+    Flux<Seller> findAllByIds(List<SellerId> sellerIds);
+    Flux<Seller> findAllByEmails(List<Email> emails);
 }
