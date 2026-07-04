@@ -1,5 +1,6 @@
-package com.mygitgor.seller_service.shared.valueobject;
+package com.mygitgor.seller_service.domain.model;
 
+import com.mygitgor.seller_service.domain.model.status.ProductStatus;
 import com.mygitgor.seller_service.shared.exception.DomainException;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;

@@ -1,7 +1,5 @@
 package com.mygitgor.seller_service.domain.model;
 
-import com.mygitgor.seller_service.shared.valueobject.OrderStats;
-import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import lombok.Builder;
@@ -148,11 +146,11 @@ public class SellerReport {
 
     public void updateOrderStats(OrderStats orderStats) {
         this.totalOrders = (this.totalOrders == null ? 0 : this.totalOrders) + 1;
-        this.totalSales = (this.totalSales == null ? 0.0 : this.totalSales) + orderStats.getAmount();
-        this.totalTax = (this.totalTax == null ? 0.0 : this.totalTax) + orderStats.getTax();
-        this.totalShippingCost = (this.totalShippingCost == null ? 0.0 : this.totalShippingCost) + orderStats.getShippingCost();
-        this.totalDiscountGiven = (this.totalDiscountGiven == null ? 0.0 : this.totalDiscountGiven) + orderStats.getDiscount();
-        this.totalCommission = (this.totalCommission == null ? 0.0 : this.totalCommission) + orderStats.getCommission();
+        this.totalSales = (this.totalSales == null ? 0.0 : this.totalSales) + orderStats.amount();
+        this.totalTax = (this.totalTax == null ? 0.0 : this.totalTax) + orderStats.tax();
+        this.totalShippingCost = (this.totalShippingCost == null ? 0.0 : this.totalShippingCost) + orderStats.shippingCost();
+        this.totalDiscountGiven = (this.totalDiscountGiven == null ? 0.0 : this.totalDiscountGiven) + orderStats.discount();
+        this.totalCommission = (this.totalCommission == null ? 0.0 : this.totalCommission) + orderStats.commission();
 
         this.totalEarnings = this.totalSales - this.totalRefunds - this.totalCommission - this.totalShippingCost - this.totalTax;
         this.netEarnings = this.totalEarnings - this.totalTax;

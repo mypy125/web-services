@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.domain.specification;
 
-import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.domain.model.type.AddressType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

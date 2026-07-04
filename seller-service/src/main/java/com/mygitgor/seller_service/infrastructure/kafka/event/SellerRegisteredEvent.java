@@ -1,7 +1,7 @@
 package com.mygitgor.seller_service.infrastructure.kafka.event;
 
-import com.mygitgor.seller_service.shared.valueobject.AccountStatus;
-import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
+import com.mygitgor.seller_service.domain.model.status.AccountStatus;
+import com.mygitgor.seller_service.domain.model.status.SellerVerificationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

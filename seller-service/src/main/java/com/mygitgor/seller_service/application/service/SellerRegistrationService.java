@@ -11,7 +11,7 @@ import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import com.mygitgor.seller_service.domain.service.SellerDomainService;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;
 import com.mygitgor.seller_service.infrastructure.mapper.SellerMapper;
-import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
+import com.mygitgor.seller_service.domain.model.status.SellerVerificationStatus;
 import com.mygitgor.seller_service.shared.valueobject.VerificationDocument;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import lombok.RequiredArgsConstructor;

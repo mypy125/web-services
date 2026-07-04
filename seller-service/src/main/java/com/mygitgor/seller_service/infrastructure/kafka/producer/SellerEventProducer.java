@@ -8,7 +8,7 @@ import com.mygitgor.seller_service.shared.valueobject.Address;
 import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.domain.model.type.AddressType;
 import com.mygitgor.seller_service.domain.port.outgoing.KafkaEventPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

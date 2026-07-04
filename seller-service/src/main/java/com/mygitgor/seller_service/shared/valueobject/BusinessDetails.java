@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.shared.valueobject;
 
-import com.mygitgor.seller_service.shared.valueobject.type.BusinessType;
+import com.mygitgor.seller_service.domain.model.type.BusinessType;
 import lombok.Builder;
 
 @Builder

@@ -1,6 +1,6 @@
 package com.mygitgor.seller_service.shared.valueobject;
 
-import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.domain.model.type.AddressType;
 import lombok.Builder;
 
 @Builder

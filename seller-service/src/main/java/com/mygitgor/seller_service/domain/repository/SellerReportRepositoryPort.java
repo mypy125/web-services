@@ -3,7 +3,7 @@ package com.mygitgor.seller_service.domain.repository;
 import com.mygitgor.seller_service.domain.model.PeriodSummary;
 import com.mygitgor.seller_service.domain.model.statistic.ReportStatistics;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
+import com.mygitgor.seller_service.domain.model.ReportPeriod;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import reactor.core.publisher.Flux;

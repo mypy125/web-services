@@ -1,4 +1,4 @@
-package com.mygitgor.seller_service.shared.valueobject.type;
+package com.mygitgor.seller_service.domain.model.type;
 
 public enum TransactionType {
     SALE,

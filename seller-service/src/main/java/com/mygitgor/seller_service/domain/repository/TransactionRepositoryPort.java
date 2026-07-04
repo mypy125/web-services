@@ -2,12 +2,12 @@ package com.mygitgor.seller_service.domain.repository;
 
 import com.mygitgor.seller_service.domain.model.Transaction;
 import com.mygitgor.seller_service.domain.model.statistic.TransactionStatistics;
-import com.mygitgor.seller_service.shared.valueobject.TransactionStatus;
+import com.mygitgor.seller_service.domain.model.status.TransactionStatus;
 import com.mygitgor.seller_service.shared.valueobject.id.OrderId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.TransactionId;
 import com.mygitgor.seller_service.shared.valueobject.id.UserId;
-import com.mygitgor.seller_service.shared.valueobject.type.TransactionType;
+import com.mygitgor.seller_service.domain.model.type.TransactionType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

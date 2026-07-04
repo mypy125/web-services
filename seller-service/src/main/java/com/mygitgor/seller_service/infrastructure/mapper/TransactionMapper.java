@@ -1,9 +1,9 @@
 package com.mygitgor.seller_service.infrastructure.mapper;
 
 import com.mygitgor.seller_service.application.dto.response.TransactionResponse;
-import com.mygitgor.seller_service.shared.valueobject.OrderStats;
+import com.mygitgor.seller_service.domain.model.OrderStats;
 import com.mygitgor.seller_service.domain.model.Transaction;
-import com.mygitgor.seller_service.shared.valueobject.TransactionStatus;
+import com.mygitgor.seller_service.domain.model.status.TransactionStatus;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;

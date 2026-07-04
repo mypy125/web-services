@@ -1,4 +1,4 @@
-package com.mygitgor.seller_service.shared.valueobject;
+package com.mygitgor.seller_service.domain.model.status;
 
 public enum TransactionStatus {
     PENDING,

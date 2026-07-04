@@ -1,9 +1,11 @@
 package com.mygitgor.seller_service.domain.model;
 
+import com.mygitgor.seller_service.domain.model.status.AccountStatus;
+import com.mygitgor.seller_service.domain.model.status.SellerVerificationStatus;
 import com.mygitgor.seller_service.shared.exception.DomainException;
 import com.mygitgor.seller_service.shared.valueobject.*;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
-import com.mygitgor.seller_service.shared.valueobject.type.AddressType;
+import com.mygitgor.seller_service.domain.model.type.AddressType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

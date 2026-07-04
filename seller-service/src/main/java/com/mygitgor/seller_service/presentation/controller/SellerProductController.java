@@ -4,7 +4,7 @@ import com.mygitgor.seller_service.application.dto.request.CreateProductRequest;
 import com.mygitgor.seller_service.application.dto.request.UpdateProductRequest;
 import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.application.service.SellerProductService;
-import com.mygitgor.seller_service.shared.valueobject.ProductStatus;
+import com.mygitgor.seller_service.domain.model.status.ProductStatus;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import jakarta.validation.Valid;

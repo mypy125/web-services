@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.shared.valueobject.ReportPeriod;
+import com.mygitgor.seller_service.domain.model.ReportPeriod;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import com.mygitgor.seller_service.infrastructure.persistence.entity.SellerReportEntity;

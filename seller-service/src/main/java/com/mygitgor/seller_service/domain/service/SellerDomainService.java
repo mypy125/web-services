@@ -15,13 +15,9 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class SellerDomainService {
-    private final SellerRepositoryPort sellerRepository;
     private final SellerEmailUniquenessSpec emailUniquenessSpec;
     private final SellerCompositeSpec compositeSpec;
-    private final SellerVerificationStatusSpec verificationStatusSpec;
-    private final SellerAccountStatusSpec accountStatusSpec;
     private final SellerBankDetailsSpec bankDetailsSpec;
-    private final SellerBusinessDetailsSpec businessDetailsSpec;
     private final SellerCommissionSpec commissionSpec;
     private final AuthPort authPort;
 

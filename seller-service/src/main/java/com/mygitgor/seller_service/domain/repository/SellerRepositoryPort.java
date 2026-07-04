@@ -1,9 +1,9 @@
 package com.mygitgor.seller_service.domain.repository;
 
 import com.mygitgor.seller_service.domain.model.Seller;
-import com.mygitgor.seller_service.shared.valueobject.AccountStatus;
+import com.mygitgor.seller_service.domain.model.status.AccountStatus;
 import com.mygitgor.seller_service.shared.valueobject.Email;
-import com.mygitgor.seller_service.shared.valueobject.SellerVerificationStatus;
+import com.mygitgor.seller_service.domain.model.status.SellerVerificationStatus;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
