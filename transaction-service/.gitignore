@@ -1,0 +1,48 @@
+# --- Временные файлы сборки и логи ---
+target/
+**/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.log
+
+# --- Системные файлы и конфигурация (То, что просили исключить) ---
+.env
+.gitignore
+.gitattributes
+mvnw
+mvnw.cmd
+.mvn/
+.mvn/wrapper/maven-wrapper.jar
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+**/out/
+
+# --- VS Code ---
+.vscode/
+
+# --- Spring Tool Suite (STS) ---
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# --- NetBeans ---
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# --- Документация (По желанию) ---
+HELP.md

@@ -1,9 +1,13 @@
 package com.mygitgor.seller_service.application.service;
 
+import com.mygitgor.seller_service.application.dto.external.TransactionDto;
+import com.mygitgor.seller_service.domain.model.OrderStats;
 import com.mygitgor.seller_service.domain.model.PeriodSummary;
 import com.mygitgor.seller_service.domain.model.SellerReport;
+import com.mygitgor.seller_service.domain.port.outgoing.TransactionPort;
 import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
 import com.mygitgor.seller_service.domain.model.ReportPeriod;
+import com.mygitgor.seller_service.shared.valueobject.id.OrderId;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
@@ -12,7 +16,6 @@ import com.mygitgor.seller_service.domain.port.outgoing.OrderPort;
 import com.mygitgor.seller_service.domain.port.outgoing.ProductPort;
 import com.mygitgor.seller_service.domain.repository.SellerReportRepositoryPort;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
-import com.mygitgor.seller_service.domain.repository.TransactionRepositoryPort;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;
 import com.mygitgor.seller_service.infrastructure.mapper.OrderStatsMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +34,7 @@ import java.time.temporal.TemporalAdjusters;
 public class SellerReportService {
     private final SellerReportRepositoryPort reportRepository;
     private final SellerRepositoryPort sellerRepository;
-    private final TransactionRepositoryPort transactionRepository;
+    private final TransactionPort transactionPort;
     private final SellerEventProducer eventProducer;
     private final OrderStatsMapper orderStatsMapper;
     private final OrderPort orderPort;
@@ -43,24 +46,21 @@ public class SellerReportService {
 
         return sellerRepository.findById(sellerId)
                 .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
-                .flatMap(seller -> reportRepository.findBySellerIdAndPeriod(sellerId, period, startDate, endDate)
-                        .doOnNext(existing -> log.warn("Report already exists for seller: {}, period: {}", sellerId, period))
-                        .switchIfEmpty(Mono.defer(() -> reportRepository.save(SellerReport.createNew(sellerId, period, startDate, endDate)))))
-                .flatMap(report -> transactionRepository.findBySellerIdAndDateBetween(sellerId, startDate, endDate, 0, Integer.MAX_VALUE)
+                .flatMap(seller -> getOrCreateReport(sellerId, period, startDate, endDate))
+                .flatMap(report -> transactionPort.getTransactionsBySellerIdAndDateBetween(
+                                sellerId, startDate, endDate, 0, 5000)
                         .collectList()
                         .flatMap(transactions -> {
                             if (transactions.isEmpty()) {
-                                log.warn("No transactions found for seller: {}, period: {}", sellerId, period);
+                                log.warn("No transactions found in transaction-service for seller: {}", sellerId);
                                 return Mono.just(report);
                             }
 
                             return Flux.fromIterable(transactions)
-                                    .flatMap(transaction -> orderPort.getOrderDetails(transaction.getOrderId())
-                                            .flatMap(orderDetails -> productPort.getProductDetails(new ProductId(orderDetails.productId()))
-                                                    .map(productDetails -> orderStatsMapper.toOrderStatsFull(transaction, orderDetails, productDetails)))
+                                    .flatMap(transactionDto -> enrichTransactionData(transactionDto) // Передаем DTO
                                             .onErrorResume(e -> {
-                                                log.warn("Failed to get order/product details for transaction {}: {}", transaction.getTransactionId(), e.getMessage());
-                                                return Mono.just(orderStatsMapper.toOrderStats(transaction));
+                                                log.warn("Fallback for transaction {}: {}", transactionDto.transactionId(), e.getMessage());
+                                                return Mono.just(orderStatsMapper.toOrderStats(transactionDto)); // Используем обновленный маппер
                                             }))
                                     .collectList()
                                     .flatMap(orderStatsList -> {
@@ -80,10 +80,7 @@ public class SellerReportService {
                                         return reportRepository.save(report);
                                     });
                         }))
-                .flatMap(report -> eventProducer.sendSellerReportGeneratedEvent(report)
-                        .then(Mono.just(report))
-                        .doOnSuccess(r -> log.info("Report generated successfully and event emitted for seller: {}, period: {}", sellerId, period))
-                );
+                .delayUntil(eventProducer::sendSellerReportGeneratedEvent);
     }
 
     public Mono<SellerReport> generateMonthlyReport(SellerId sellerId, int year, int month) {
@@ -212,5 +209,18 @@ public class SellerReportService {
 
         return sellerRepository.findActiveSellers(0, Integer.MAX_VALUE)
                 .flatMap(seller -> generateReport(seller.getSellerId(), period, startDate, endDate));
+    }
+
+    private Mono<SellerReport> getOrCreateReport(SellerId sellerId, ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
+        return reportRepository.findBySellerIdAndPeriod(sellerId, period, startDate, endDate)
+                .doOnNext(existing -> log.warn("Report already exists for seller: {}, period: {}. Overwriting stats.", sellerId, period))
+                .switchIfEmpty(Mono.defer(() -> reportRepository.save(SellerReport.createNew(sellerId, period, startDate, endDate))));
+    }
+
+    private Mono<OrderStats> enrichTransactionData(TransactionDto transaction) {
+        return orderPort.getOrderDetails(new OrderId(transaction.orderId()))
+                .flatMap(orderDetails -> productPort.getProductDetails(new ProductId(orderDetails.productId()))
+                        .map(productDetails -> orderStatsMapper.toOrderStatsFull(transaction, orderDetails, productDetails))
+                );
     }
 }

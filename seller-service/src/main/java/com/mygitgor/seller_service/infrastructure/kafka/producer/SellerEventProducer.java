@@ -1,9 +1,9 @@
 package com.mygitgor.seller_service.infrastructure.kafka.producer;
 
+import com.mygitgor.seller_service.application.dto.external.TransactionDto;
 import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.domain.model.Transaction;
 import com.mygitgor.seller_service.shared.valueobject.Address;
 import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
@@ -102,12 +102,27 @@ public class SellerEventProducer implements KafkaEventPort {
     }
 
     @Override
-    public Mono<Void> sendTransactionCreatedEvent(Transaction transaction) {
+    public Mono<Void> sendTransactionCreatedEvent(TransactionDto transaction) {
         return null;
     }
 
     @Override
-    public Mono<Void> sendTransactionUpdatedEvent(Transaction transaction) {
+    public Mono<Void> sendTransactionCompletedEvent(TransactionDto transaction) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendTransactionFailedEvent(TransactionDto transaction) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendTransactionRefundedEvent(TransactionDto transaction) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendTransactionUpdatedEvent(TransactionDto transaction) {
         return null;
     }
 
@@ -178,6 +193,16 @@ public class SellerEventProducer implements KafkaEventPort {
 
     @Override
     public Mono<Void> sendProductImageRemovedEvent(SellerId sellerId, ProductResponse product) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendEmailVerificationRequestedEvent(Seller seller) {
+        return null;
+    }
+
+    @Override
+    public Mono<Void> sendDocumentsUploadedEvent(Seller seller) {
         return null;
     }
 }

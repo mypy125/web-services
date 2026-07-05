@@ -1,9 +1,9 @@
 package com.mygitgor.seller_service.domain.port.outgoing;
 
+import com.mygitgor.seller_service.application.dto.external.TransactionDto;
 import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.SellerReport;
-import com.mygitgor.seller_service.domain.model.Transaction;
 import com.mygitgor.seller_service.shared.valueobject.Address;
 import com.mygitgor.seller_service.shared.valueobject.Email;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
@@ -30,8 +30,11 @@ public interface KafkaEventPort {
     Mono<Void> sendRatingUpdatedEvent(Seller seller);
     Mono<Void> sendTaxVerifiedEvent(Seller seller);
     Mono<Void> sendSellerReportGeneratedEvent(SellerReport report);
-    Mono<Void> sendTransactionCreatedEvent(Transaction transaction);
-    Mono<Void> sendTransactionUpdatedEvent(Transaction transaction);
+    Mono<Void> sendTransactionCreatedEvent(TransactionDto transaction);
+    Mono<Void> sendTransactionCompletedEvent(TransactionDto transaction);
+    Mono<Void> sendTransactionFailedEvent(TransactionDto transaction);
+    Mono<Void> sendTransactionRefundedEvent(TransactionDto transaction);
+    Mono<Void> sendTransactionUpdatedEvent(TransactionDto transaction);
     Mono<Void> sendBulkSellerUpdateEvent(List<Seller> sellers, String action);
     Mono<Void> sendBulkVerificationEvent(List<SellerId> sellerIds, String verifiedBy);
     Mono<Void> sendAddressAddedEvent(SellerId sellerId, Address address, AddressType type);
