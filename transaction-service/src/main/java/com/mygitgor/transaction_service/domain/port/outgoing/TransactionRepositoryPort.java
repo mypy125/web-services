@@ -2,8 +2,8 @@ package com.mygitgor.transaction_service.domain.port.outgoing;
 
 import com.mygitgor.transaction_service.domain.model.Transaction;
 import com.mygitgor.transaction_service.domain.model.TransactionStatistics;
-import com.mygitgor.transaction_service.domain.model.TransactionStatus;
-import com.mygitgor.transaction_service.domain.model.TransactionType;
+import com.mygitgor.transaction_service.domain.model.valueobject.TransactionStatus;
+import com.mygitgor.transaction_service.domain.model.valueobject.TransactionType;
 import com.mygitgor.transaction_service.shared.valueobject.OrderId;
 import com.mygitgor.transaction_service.shared.valueobject.SellerId;
 import com.mygitgor.transaction_service.shared.valueobject.TransactionId;

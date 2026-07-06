@@ -8,14 +8,14 @@ import java.util.UUID;
 
 @Getter
 @EqualsAndHashCode
-public class SellerId {
+public class reconciliationId {
     private final UUID value;
 
-    public SellerId() {
+    public reconciliationId() {
         this.value = UUID.randomUUID();
     }
 
-    public SellerId(String value) {
+    public reconciliationId(String value) {
         try {
             this.value = UUID.fromString(value);
         } catch (IllegalArgumentException e) {
@@ -23,7 +23,7 @@ public class SellerId {
         }
     }
 
-    public SellerId(UUID value) {
+    public reconciliationId(UUID value) {
         if (value == null) {
             throw new DomainException("User ID cannot be null");
         }

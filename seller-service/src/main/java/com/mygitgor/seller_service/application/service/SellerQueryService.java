@@ -4,7 +4,7 @@ import com.mygitgor.seller_service.application.dto.response.UserAuthInfoResponse
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.model.statistic.SellerStatistics;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
-import com.mygitgor.seller_service.domain.repository.SellerStatisticsRepositoryPort;
+import com.mygitgor.seller_service.infrastructure.cache.SellerCacheService;
 import com.mygitgor.seller_service.infrastructure.mapper.SellerMapper;
 import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
 import com.mygitgor.seller_service.domain.model.status.AccountStatus;
@@ -19,28 +19,32 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SellerQueryService implements SellerQueryUseCase {
-    private final SellerStatisticsRepositoryPort statisticsRepository;
     private final SellerRepositoryPort sellerRepository;
+    private final SellerCacheService cacheService;
     private final SellerMapper sellerMapper;
 
     @Override
     public Mono<Seller> getSellerById(SellerId sellerId) {
         log.debug("Fetching seller by ID: {}", sellerId);
-        return sellerRepository.findById(sellerId)
-                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())));
+        return cacheService.getCachedSellerById(sellerId)
+                .switchIfEmpty(Mono.defer(() -> sellerRepository.findById(sellerId)
+                        .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
+                        .flatMap(seller -> cacheService.cacheSellerById(seller).thenReturn(seller))));
     }
 
     @Override
     public Mono<Seller> getSellerByEmail(Email email) {
         log.debug("Fetching seller by email: {}", email);
         return sellerRepository.findByEmail(email)
-                .switchIfEmpty(Mono.error(new SellerNotFoundException(email.toString())));
+                .switchIfEmpty(Mono.error(new SellerNotFoundException(email.toString())))
+                .flatMap(seller -> cacheService.cacheSellerById(seller).thenReturn(seller));
     }
 
     @Override
@@ -158,7 +162,22 @@ public class SellerQueryService implements SellerQueryUseCase {
     @Override
     public Mono<SellerStatistics> getSellerStatistics() {
         log.debug("Aggregating global seller statistics");
-        return statisticsRepository.getGlobalStatistics();
+        return cacheService.getCachedGlobalStatistics()
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("Global statistics cache miss. Re-compiling aggregates from repository.");
+                    return compileStatisticsFromRepository()
+                            .flatMap(freshStats -> {
+                                if (freshStats.isEmpty()) {
+                                    return Mono.just(freshStats);
+                                }
+                                return cacheService.cacheGlobalStatistics(freshStats)
+                                        .thenReturn(freshStats);
+                            });
+                }))
+                .onErrorResume(e -> {
+                    log.error("Fallback standard isolation activated for global statistics aggregation", e);
+                    return Mono.just(SellerStatistics.empty());
+                });
     }
 
     @Override
@@ -194,5 +213,49 @@ public class SellerQueryService implements SellerQueryUseCase {
         return sellerRepository.findByEmail(email)
                 .switchIfEmpty(Mono.error(new SellerNotFoundException(email.toString())))
                 .map(sellerMapper::toUserAuthInfoResponse);
+    }
+
+    private Mono<SellerStatistics> compileStatisticsFromRepository() {
+        return Mono.zip(
+                List.of(
+                        sellerRepository.countAll(),
+                        sellerRepository.countByAccountStatus(AccountStatus.ACTIVE.name()),
+                        sellerRepository.countByAccountStatus(AccountStatus.SUSPENDED.name()),
+                        sellerRepository.countByAccountStatus(AccountStatus.BANNED.name()),
+                        sellerRepository.countByVerificationStatus(SellerVerificationStatus.PENDING),
+                        sellerRepository.countByVerificationStatus(SellerVerificationStatus.FULLY_VERIFIED),
+                        sellerRepository.countByVerificationStatus(SellerVerificationStatus.REJECTED),
+                        sellerRepository.getAverageRating(),
+                        sellerRepository.getAverageOrderValue(),
+                        sellerRepository.getAverageCommissionRate(),
+                        sellerRepository.getAverageResponseRate(),
+                        sellerRepository.getAverageResponseTimeHours(),
+                        sellerRepository.getTotalEarnings(),
+                        sellerRepository.getTotalSales(),
+                        sellerRepository.getTotalCommissionPaid(),
+                        sellerRepository.getTotalOrdersCount(),
+                        sellerRepository.getTotalProductsCount()
+                ),
+                args -> SellerStatistics.builder()
+                        .totalSellers((Long) args[0])
+                        .activeSellers((Long) args[1])
+                        .suspendedSellers((Long) args[2])
+                        .bannedSellers((Long) args[3])
+                        .pendingVerification((Long) args[4])
+                        .fullyVerified((Long) args[5])
+                        .rejected((Long) args[6])
+                        .averageRating((Double) args[7])
+                        .averageOrderValue((Double) args[8])
+                        .averageCommissionRate((Double) args[9])
+                        .averageResponseRate((Double) args[10])
+                        .averageResponseTimeHours((Double) args[11])
+                        .totalEarnings((Double) args[12])
+                        .totalSales((Double) args[13])
+                        .totalCommissionPaid((Double) args[14])
+                        .totalOrders((Integer) args[15])
+                        .totalProducts((Integer) args[16])
+                        .calculatedAt(LocalDateTime.now())
+                        .build()
+        );
     }
 }

@@ -80,6 +80,13 @@ payment:
     retry:
       attempts: 3
 
+transaction:
+  service:
+    url: ${TRANSACTION_SERVICE_BASE_URL}
+    timeout: 5000
+    retry:
+      attempts: 3
+
 notification:
   service:
     url: ${NOTIFICATION_SERVICE_BASE_URL}

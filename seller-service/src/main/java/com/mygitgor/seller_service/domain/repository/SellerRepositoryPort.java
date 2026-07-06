@@ -52,4 +52,14 @@ public interface SellerRepositoryPort {
     Flux<Seller> findTopRated(int limit);
     Flux<Seller> findAllByIds(List<SellerId> sellerIds);
     Flux<Seller> findAllByEmails(List<Email> emails);
+    Mono<Double> getAverageRating();
+    Mono<Double> getAverageOrderValue();
+    Mono<Double> getAverageCommissionRate();
+    Mono<Double> getAverageResponseRate();
+    Mono<Double> getAverageResponseTimeHours();
+    Mono<Double> getTotalEarnings();
+    Mono<Double> getTotalSales();
+    Mono<Double> getTotalCommissionPaid();
+    Mono<Integer> getTotalOrdersCount();
+    Mono<Integer> getTotalProductsCount();
 }

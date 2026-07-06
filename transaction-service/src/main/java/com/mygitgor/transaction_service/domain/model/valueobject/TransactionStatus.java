@@ -1,4 +1,4 @@
-package com.mygitgor.transaction_service.domain.model;
+package com.mygitgor.transaction_service.domain.model.valueobject;
 
 import lombok.Getter;
 

@@ -41,27 +41,27 @@ CREATE INDEX IF NOT EXISTS idx_users_last_login_at ON users(last_login_at);
 CREATE INDEX IF NOT EXISTS idx_users_full_name ON users(full_name);
 CREATE INDEX IF NOT EXISTS idx_users_locked_until ON users(locked_until) WHERE locked_until IS NOT NULL; -- Частичный индекс для быстрой проверки заблокированных
 
-COMMENT ON TABLE users IS 'Хранит основную информацию о пользователях';
-COMMENT ON COLUMN users.id IS 'Уникальный идентификатор пользователя';
-COMMENT ON COLUMN users.email IS 'Email пользователя (уникальный)';
-COMMENT ON COLUMN users.full_name IS 'Полное имя пользователя';
-COMMENT ON COLUMN users.phone_number IS 'Номер телефона';
-COMMENT ON COLUMN users.profile_image IS 'URL аватара пользователя';
-COMMENT ON COLUMN users.role IS 'Роль пользователя (CUSTOMER, SELLER, ADMIN, MODERATOR, ANALYST)';
-COMMENT ON COLUMN users.email_verified IS 'Флаг верификации email';
-COMMENT ON COLUMN users.account_status IS 'Статус аккаунта (ACTIVE, SUSPENDED, BANNED, PENDING_VERIFICATION)';
-COMMENT ON COLUMN users.default_address_id IS 'ID платежного адреса по умолчанию (ссылка на address-service)';
-COMMENT ON COLUMN users.default_shipping_address_id IS 'ID адреса доставки по умолчанию (ссылка на address-service)';
-COMMENT ON COLUMN users.default_payment_method_id IS 'ID метода оплаты по умолчанию (ссылка на payment-service)';
-COMMENT ON COLUMN users.total_orders_count IS 'Общее количество заказов (кэш)';
-COMMENT ON COLUMN users.total_spent_amount IS 'Общая сумма потраченных средств (кэш)';
-COMMENT ON COLUMN users.language IS 'Язык интерфейса пользователя (например, ru, en)';
-COMMENT ON COLUMN users.timezone IS 'Часовой пояс пользователя (например, UTC, Europe/Moscow)';
-COMMENT ON COLUMN users.newsletter_subscribed IS 'Согласие на информационную рассылку';
-COMMENT ON COLUMN users.marketing_consent IS 'Согласие на маркетинговую активность и купоны';
-COMMENT ON COLUMN users.last_password_change_at IS 'Дата и время изменения пароля (для политик безопасности)';
-COMMENT ON COLUMN users.failed_login_attempts IS 'Количество подряд идущих неудачных попыток входа';
-COMMENT ON COLUMN users.locked_until IS 'Время, до которого аккаунт временно заблокирован из-за перебора паролей';
+COMMENT ON TABLE users IS 'Stores basic information about users';
+COMMENT ON COLUMN users.id IS 'Unique user identifier';
+COMMENT ON COLUMN users.email IS 'User email (unique)';
+COMMENT ON COLUMN users.full_name IS 'Full username';
+COMMENT ON COLUMN users.phone_number IS 'Phone number';
+COMMENT ON COLUMN users.profile_image IS 'User avatar URL';
+COMMENT ON COLUMN users.role IS 'User role (CUSTOMER, SELLER, ADMIN, MODERATOR, ANALYST)';
+COMMENT ON COLUMN users.email_verified IS 'Email verification flag';
+COMMENT ON COLUMN users.account_status IS 'Account status (ACTIVE, SUSPENDED, BANNED, PENDING_VERIFICATION)';
+COMMENT ON COLUMN users.default_address_id IS 'Default billing address ID (address-service link)';
+COMMENT ON COLUMN users.default_shipping_address_id IS 'Default shipping address ID (address-service link)';
+COMMENT ON COLUMN users.default_payment_method_id IS 'Default payment method ID (link to payment-service)';
+COMMENT ON COLUMN users.total_orders_count IS 'Total number of orders (cash)';
+COMMENT ON COLUMN users.total_spent_amount IS 'Total amount spent (cash)';
+COMMENT ON COLUMN users.language IS 'User interface language (for example, ru, en)';
+COMMENT ON COLUMN users.timezone IS 'User time zone (e.g. UTC, Europe/Moscow)';
+COMMENT ON COLUMN users.newsletter_subscribed IS 'Consent to receive newsletters';
+COMMENT ON COLUMN users.marketing_consent IS 'Consent to marketing activities and coupons';
+COMMENT ON COLUMN users.last_password_change_at IS 'Date and time of password change (for security policies)';
+COMMENT ON COLUMN users.failed_login_attempts IS 'Number of consecutive unsuccessful login attempts';
+COMMENT ON COLUMN users.locked_until IS 'The time until which an account is temporarily blocked due to password brute-force attacks';
 
 CREATE TABLE IF NOT EXISTS user_statistics (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -105,13 +105,13 @@ CREATE INDEX IF NOT EXISTS idx_user_stats_last_active ON user_statistics(last_ac
 CREATE INDEX IF NOT EXISTS idx_user_stats_total_spent ON user_statistics(total_spent);
 CREATE INDEX IF NOT EXISTS idx_user_stats_total_orders ON user_statistics(total_orders);
 
-COMMENT ON TABLE user_statistics IS 'Хранит статистику и метрики пользователей';
-COMMENT ON COLUMN user_statistics.user_id IS 'ID пользователя (ссылка на users)';
-COMMENT ON COLUMN user_statistics.total_orders IS 'Общее количество заказов';
-COMMENT ON COLUMN user_statistics.total_spent IS 'Общая сумма потраченных средств';
-COMMENT ON COLUMN user_statistics.average_order_value IS 'Средняя стоимость заказа';
-COMMENT ON COLUMN user_statistics.loyalty_points IS 'Количество бонусных баллов';
-COMMENT ON COLUMN user_statistics.loyalty_tier IS 'Уровень лояльности (BRONZE, SILVER, GOLD, PLATINUM)';
+COMMENT ON TABLE user_statistics IS 'Stores user statistics and metrics';
+COMMENT ON COLUMN user_statistics.user_id IS 'User ID (link to users)';
+COMMENT ON COLUMN user_statistics.total_orders IS 'Total number of orders';
+COMMENT ON COLUMN user_statistics.total_spent IS 'Total amount spent';
+COMMENT ON COLUMN user_statistics.average_order_value IS 'Average order value';
+COMMENT ON COLUMN user_statistics.loyalty_points IS 'Number of bonus points';
+COMMENT ON COLUMN user_statistics.loyalty_tier IS 'Loyalty level (BRONZE, SILVER, GOLD, PLATINUM)';
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
