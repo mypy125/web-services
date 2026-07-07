@@ -1,5 +1,6 @@
 package com.mygitgor.seller_service.domain.port.incoming;
 
+import com.mygitgor.seller_service.application.dto.request.UpdateSellerRequest;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.shared.valueobject.*;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
@@ -16,6 +17,7 @@ public interface SellerUseCase {
             BankDetails bankDetails,
             Address pickupAddress
     );
+    Mono<Seller> updateSeller(SellerId sellerId, UpdateSellerRequest req);
     Mono<Seller> verifyEmail(Email email);
     Mono<Seller> verifyBusiness(SellerId sellerId, String verifiedBy, String notes);
     Mono<Seller> verifyTaxInfo(SellerId sellerId, String verifiedBy);

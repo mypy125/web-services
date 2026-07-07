@@ -5,6 +5,8 @@ import com.mygitgor.seller_service.domain.model.OrderStats;
 import com.mygitgor.seller_service.domain.model.PeriodSummary;
 import com.mygitgor.seller_service.domain.model.SellerReport;
 import com.mygitgor.seller_service.domain.port.outgoing.TransactionPort;
+import com.mygitgor.seller_service.infrastructure.cache.SellerCacheService;
+import com.mygitgor.seller_service.infrastructure.cache.SellerReportCacheService;
 import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
 import com.mygitgor.seller_service.domain.model.ReportPeriod;
 import com.mygitgor.seller_service.shared.valueobject.id.OrderId;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
@@ -35,6 +38,8 @@ public class SellerReportService {
     private final SellerReportRepositoryPort reportRepository;
     private final SellerRepositoryPort sellerRepository;
     private final TransactionPort transactionPort;
+    private final SellerCacheService sellerCacheService;
+    private final SellerReportCacheService reportCache;
     private final SellerEventProducer eventProducer;
     private final OrderStatsMapper orderStatsMapper;
     private final OrderPort orderPort;
@@ -44,8 +49,10 @@ public class SellerReportService {
     public Mono<SellerReport> generateReport(SellerId sellerId, ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Generating report for seller: {}, period: {}, from: {} to: {}", sellerId, period, startDate, endDate);
 
-        return sellerRepository.findById(sellerId)
-                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
+        return sellerCacheService.getCachedSellerById(sellerId)
+                .switchIfEmpty(Mono.defer(() -> sellerRepository.findById(sellerId)
+                        .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
+                        .flatMap(seller -> sellerCacheService.cacheSellerById(seller).thenReturn(seller))))
                 .flatMap(seller -> getOrCreateReport(sellerId, period, startDate, endDate))
                 .flatMap(report -> transactionPort.getTransactionsBySellerIdAndDateBetween(
                                 sellerId, startDate, endDate, 0, 5000)
@@ -57,10 +64,10 @@ public class SellerReportService {
                             }
 
                             return Flux.fromIterable(transactions)
-                                    .flatMap(transactionDto -> enrichTransactionData(transactionDto) // Передаем DTO
+                                    .flatMap(transactionDto -> enrichTransactionData(transactionDto)
                                             .onErrorResume(e -> {
                                                 log.warn("Fallback for transaction {}: {}", transactionDto.transactionId(), e.getMessage());
-                                                return Mono.just(orderStatsMapper.toOrderStats(transactionDto)); // Используем обновленный маппер
+                                                return Mono.just(orderStatsMapper.toOrderStats(transactionDto));
                                             }))
                                     .collectList()
                                     .flatMap(orderStatsList -> {
@@ -80,7 +87,15 @@ public class SellerReportService {
                                         return reportRepository.save(report);
                                     });
                         }))
-                .delayUntil(eventProducer::sendSellerReportGeneratedEvent);
+                .flatMap(report -> reportCache.cacheReport(report).thenReturn(report))
+                .flatMap(report -> eventProducer.sendSellerReportGeneratedEvent(report)
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .onErrorResume(err -> {
+                            log.error("Failed to send ReportGeneratedEvent for report: {}", report.getReportId(), err);
+                            return Mono.empty();
+                        })
+                        .thenReturn(report)
+                );
     }
 
     public Mono<SellerReport> generateMonthlyReport(SellerId sellerId, int year, int month) {
@@ -124,7 +139,9 @@ public class SellerReportService {
 
     public Mono<SellerReport> getReportById(SellerReportId reportId) {
         log.debug("Getting report by ID: {}", reportId);
-        return reportRepository.findById(reportId);
+        return reportCache.getCachedReportById(reportId)
+                .switchIfEmpty(Mono.defer(() -> reportRepository.findById(reportId)
+                        .flatMap(report -> reportCache.cacheReport(report).thenReturn(report))));
     }
 
     public Flux<SellerReport> getReportsBySellerId(SellerId sellerId, int page, int size) {
@@ -134,7 +151,9 @@ public class SellerReportService {
 
     public Mono<SellerReport> getReportByPeriod(SellerId sellerId, ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
         log.debug("Getting report for seller: {}, period: {}, from: {} to: {}", sellerId, period, startDate, endDate);
-        return reportRepository.findBySellerIdAndPeriod(sellerId, period, startDate, endDate);
+        return reportCache.getCachedReportByPeriod(sellerId, period, startDate, endDate)
+                .switchIfEmpty(Mono.defer(() -> reportRepository.findBySellerIdAndPeriod(sellerId, period, startDate, endDate)
+                        .flatMap(report -> reportCache.cacheReport(report).thenReturn(report))));
     }
 
     public Mono<SellerReport> getLatestReport(SellerId sellerId) {
@@ -165,25 +184,25 @@ public class SellerReportService {
     @Transactional
     public Mono<Void> deleteReport(SellerReportId reportId) {
         log.info("Deleting report: {}", reportId);
-        return reportRepository.deleteById(reportId);
+        return reportRepository.findById(reportId)
+                .flatMap(report -> reportRepository.deleteById(reportId)
+                        .then(reportCache.evictReportCache(report)));
     }
 
     @Transactional
     public Mono<Void> deleteAllReportsBySellerId(SellerId sellerId) {
         log.info("Deleting all reports for seller: {}", sellerId);
 
-        return sellerRepository.findById(sellerId)
-                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
-                .flatMap(seller -> reportRepository.deleteBySellerId(sellerId));
+        return reportRepository.deleteBySellerId(sellerId)
+                .then(reportCache.evictAllReportsForSeller(sellerId));
     }
 
     @Transactional
     public Mono<Void> deleteReportsByPeriod(SellerId sellerId, ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Deleting reports for seller: {}, period: {}, from: {} to: {}", sellerId, period, startDate, endDate);
 
-        return sellerRepository.findById(sellerId)
-                .switchIfEmpty(Mono.error(new SellerNotFoundException(sellerId.toString())))
-                .flatMap(seller -> reportRepository.deleteByPeriod(sellerId, period, startDate, endDate));
+        return reportRepository.deleteByPeriod(sellerId, period, startDate, endDate)
+                .then(reportCache.evictReportByPeriod(sellerId, period, startDate, endDate));
     }
 
     public Flux<SellerReport> searchReports(SellerId sellerId, String searchTerm, int page, int size) {
@@ -199,7 +218,7 @@ public class SellerReportService {
     public Flux<SellerReport> generateReportsForAllSellers(ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Generating reports for all sellers, period: {}", period);
 
-        return sellerRepository.findAll(0, Integer.MAX_VALUE)
+        return sellerRepository.findAll(0, 1000)
                 .flatMap(seller -> generateReport(seller.getSellerId(), period, startDate, endDate))
                 .limitRate(10);
     }
@@ -207,8 +226,9 @@ public class SellerReportService {
     public Flux<SellerReport> generateReportsForActiveSellers(ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Generating reports for active sellers, period: {}", period);
 
-        return sellerRepository.findActiveSellers(0, Integer.MAX_VALUE)
-                .flatMap(seller -> generateReport(seller.getSellerId(), period, startDate, endDate));
+        return sellerRepository.findActiveSellers(0, 1000)
+                .flatMap(seller -> generateReport(seller.getSellerId(), period, startDate, endDate))
+                .limitRate(10);
     }
 
     private Mono<SellerReport> getOrCreateReport(SellerId sellerId, ReportPeriod period, LocalDateTime startDate, LocalDateTime endDate) {

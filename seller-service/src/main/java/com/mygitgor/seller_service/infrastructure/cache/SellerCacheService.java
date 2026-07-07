@@ -108,4 +108,20 @@ public class SellerCacheService {
                 redisTemplate.delete(SELLER_AUTH_PREFIX + seller.getEmail().value())
         );
     }
+
+    public Mono<Void> evictUserDashboardCache(SellerId sellerId) {
+        if (sellerId == null) {
+            return Mono.empty();
+        }
+
+        String dashboardKey = "seller:dashboard:" + sellerId.toString();
+        String globalStatsKey = "seller:stats:global";
+
+        log.debug("Evicting cache for seller dashboard: {} and global statistics", dashboardKey);
+
+        return redisTemplate.delete(dashboardKey, globalStatsKey)
+                .doOnSuccess(count -> log.trace("Successfully evicted {} cache keys from Redis", count))
+                .doOnError(err -> log.error("Failed to evict cache keys from Redis for seller: {}", sellerId, err))
+                .then();
+    }
 }

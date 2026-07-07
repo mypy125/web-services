@@ -6,6 +6,7 @@ import com.mygitgor.seller_service.application.dto.response.ProductResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
 import com.mygitgor.seller_service.domain.port.outgoing.ProductPort;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
+import com.mygitgor.seller_service.infrastructure.cache.SellerCacheService;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;
 import com.mygitgor.seller_service.infrastructure.mapper.ProductMapper;
 import com.mygitgor.seller_service.shared.exception.DomainException;
@@ -29,6 +30,7 @@ import reactor.core.scheduler.Schedulers;
 @RequiredArgsConstructor
 public class SellerProductService {
     private final ProductPort productPort;
+    private final SellerCacheService cacheService;
     private final SellerRepositoryPort sellerRepository;
     private final SellerEventProducer eventProducer;
     private final ProductMapper productMapper;
@@ -53,7 +55,8 @@ public class SellerProductService {
                             log.error("Failed to send ProductCreatedEvent for product: {}", response.id(), err);
                             return Mono.empty();
                         })
-                        .then(Mono.just(response))
+                        .then(cacheService.evictUserDashboardCache(sellerId))
+                        .thenReturn(response)
                 )
                 .doOnSuccess(product -> log.info("Product created successfully for seller: {}, product: {}", sellerId, product.id()))
                 .doOnError(error -> log.error("Failed to create product for seller: {}", sellerId, error));
@@ -69,7 +72,10 @@ public class SellerProductService {
 
         return validateSellerCanAddProducts(sellerId)
                 .flatMapMany(seller -> Flux.fromIterable(requests)
-                        .concatMap(request -> createProduct(sellerId, request)));
+                        .concatMap(request -> createProduct(sellerId, request)))
+                .collectList()
+                .flatMap(products -> cacheService.evictUserDashboardCache(sellerId).thenReturn(products))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Transactional
@@ -85,7 +91,8 @@ public class SellerProductService {
                 .flatMap(response -> eventProducer.sendProductUpdatedEvent(sellerId, response)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> Mono.empty())
-                        .then(Mono.just(response))
+                        .then(cacheService.evictUserDashboardCache(sellerId))
+                        .thenReturn(response)
                 )
                 .doOnSuccess(product -> log.info("Product updated successfully: {}", productId));
     }
@@ -104,7 +111,8 @@ public class SellerProductService {
                 .flatMap(response -> eventProducer.sendProductPriceUpdatedEvent(sellerId, response)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> Mono.empty())
-                        .then(Mono.just(response))
+                        .then(cacheService.evictUserDashboardCache(sellerId))
+                        .thenReturn(response)
                 );
     }
 
@@ -122,7 +130,8 @@ public class SellerProductService {
                 .flatMap(response -> eventProducer.sendProductQuantityUpdatedEvent(sellerId, response)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> Mono.empty())
-                        .then(Mono.just(response))
+                        .then(cacheService.evictUserDashboardCache(sellerId))
+                        .thenReturn(response)
                 );
     }
 
@@ -143,7 +152,8 @@ public class SellerProductService {
                 .flatMap(response -> eventProducer.sendProductStatusUpdatedEvent(sellerId, response)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> Mono.empty())
-                        .then(Mono.just(response))
+                        .then(cacheService.evictUserDashboardCache(sellerId))
+                        .thenReturn(response)
                 );
     }
 
@@ -211,7 +221,7 @@ public class SellerProductService {
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> Mono.empty())
                 )
-                .then();
+                .then(cacheService.evictUserDashboardCache(sellerId));
     }
 
     @Transactional
@@ -224,7 +234,7 @@ public class SellerProductService {
 
         return Flux.fromIterable(productIds)
                 .flatMap(productId -> deleteProduct(sellerId, productId))
-                .then();
+                .then(cacheService.evictUserDashboardCache(sellerId));
     }
 
     @Transactional
@@ -233,7 +243,7 @@ public class SellerProductService {
 
         return deleteNextBatch(sellerId)
                 .expand(hasMoreData -> hasMoreData ? deleteNextBatch(sellerId) : Mono.empty())
-                .then();
+                .then(cacheService.evictUserDashboardCache(sellerId));
     }
 
     private Mono<Boolean> deleteNextBatch(SellerId sellerId) {
@@ -252,7 +262,10 @@ public class SellerProductService {
             return Flux.error(new DomainException("Cannot update more than " + MAX_BATCH_SIZE + " products at once"));
         }
         return Flux.fromIterable(productIds)
-                .flatMap(productId -> updateProductStatus(sellerId, productId, status));
+                .flatMap(productId -> updateProductStatus(sellerId, productId, status))
+                .collectList()
+                .flatMap(products -> cacheService.evictUserDashboardCache(sellerId).thenReturn(products))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Transactional
@@ -267,7 +280,10 @@ public class SellerProductService {
                         update.mrpPrice(),
                         update.sellingPrice(),
                         update.discountPercent()
-                ));
+                ))
+                .collectList()
+                .flatMap(products -> cacheService.evictUserDashboardCache(sellerId).thenReturn(products))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Transactional
@@ -280,7 +296,10 @@ public class SellerProductService {
                         sellerId,
                         new ProductId(update.productId()),
                         update.quantity()
-                ));
+                ))
+                .collectList()
+                .flatMap(products -> cacheService.evictUserDashboardCache(sellerId).thenReturn(products))
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Transactional
@@ -291,7 +310,8 @@ public class SellerProductService {
                     return product;
                 })
                 .flatMap(productPort::updateProduct)
-                .map(productMapper::toResponse);
+                .map(productMapper::toResponse)
+                .flatMap(res -> cacheService.evictUserDashboardCache(sellerId).thenReturn(res));
     }
 
     @Transactional
@@ -302,7 +322,8 @@ public class SellerProductService {
                     return product;
                 })
                 .flatMap(productPort::updateProduct)
-                .map(productMapper::toResponse);
+                .map(productMapper::toResponse)
+                .flatMap(res -> cacheService.evictUserDashboardCache(sellerId).thenReturn(res));
     }
 
     @Transactional
@@ -313,7 +334,8 @@ public class SellerProductService {
                     return product;
                 })
                 .flatMap(productPort::updateProduct)
-                .map(productMapper::toResponse);
+                .map(productMapper::toResponse)
+                .flatMap(res -> cacheService.evictUserDashboardCache(sellerId).thenReturn(res));
     }
 
     @Transactional
@@ -324,13 +346,16 @@ public class SellerProductService {
                     return product;
                 })
                 .flatMap(productPort::updateProduct)
-                .map(productMapper::toResponse);
+                .map(productMapper::toResponse)
+                .flatMap(res -> cacheService.evictUserDashboardCache(sellerId).thenReturn(res));
     }
 
 
     private Mono<Seller> validateSellerCanAddProducts(SellerId sellerId) {
-        return sellerRepository.findById(sellerId)
-                .switchIfEmpty(Mono.error(new DomainException("Seller not found: " + sellerId)))
+        return cacheService.getCachedSellerById(sellerId)
+                .switchIfEmpty(Mono.defer(() -> sellerRepository.findById(sellerId)
+                        .switchIfEmpty(Mono.error(new DomainException("Seller not found: " + sellerId)))
+                        .flatMap(seller -> cacheService.cacheSellerById(seller).thenReturn(seller))))
                 .flatMap(seller -> {
                     if (!seller.canAddProducts()) {
                         return Mono.error(new DomainException("Seller cannot add products. Status: " + seller.getAccountStatus()));

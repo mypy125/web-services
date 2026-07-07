@@ -4,6 +4,7 @@ import com.mygitgor.seller_service.application.dto.request.RegisterSellerRequest
 import com.mygitgor.seller_service.application.dto.request.UploadDocumentRequest;
 import com.mygitgor.seller_service.application.dto.response.SellerRegistrationResponse;
 import com.mygitgor.seller_service.domain.model.Seller;
+import com.mygitgor.seller_service.infrastructure.cache.SellerCacheService;
 import com.mygitgor.seller_service.shared.exception.DomainException;
 import com.mygitgor.seller_service.shared.exception.SellerNotFoundException;
 import com.mygitgor.seller_service.shared.valueobject.Email;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 public class SellerRegistrationService {
     private final SellerRepositoryPort sellerRepository;
+    private final SellerCacheService cacheService;
     private final SellerDomainService sellerDomainService;
     private final SellerEventProducer eventProducer;
     private final SellerMapper mapper;
@@ -49,6 +51,9 @@ public class SellerRegistrationService {
                             request.pickupAddress()
                     )))
                 .flatMap(sellerRepository::save)
+                .flatMap(seller -> cacheService.cacheSellerById(seller)
+                        .then(cacheService.evictUserDashboardCache(seller.getSellerId()))
+                        .thenReturn(seller))
                 .flatMap(seller ->eventProducer.sendSellerRegisteredEvent(seller)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> {
@@ -74,6 +79,9 @@ public class SellerRegistrationService {
                         .then(Mono.fromRunnable(seller::verifyEmail))
                         .then(sellerRepository.save(seller))
                 )
+                .flatMap(seller -> cacheService.cacheSellerById(seller)
+                        .then(cacheService.evictUserDashboardCache(seller.getSellerId()))
+                        .thenReturn(seller))
                 .flatMap(seller -> eventProducer.sendEmailVerifiedEvent(seller)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> {
@@ -90,13 +98,14 @@ public class SellerRegistrationService {
 
         return sellerRepository.findByEmail(new Email(emailStr))
                 .switchIfEmpty(Mono.error(new SellerNotFoundException(emailStr)))
-                .doOnNext(seller -> {
+                .flatMap(seller -> {
                     if (seller.isEmailVerified()) {
-                        throw new DomainException("Email is already verified");
+                        return Mono.error(new DomainException("Email is already verified"));
                     }
+                    return eventProducer.sendEmailVerificationRequestedEvent(seller)
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .thenReturn(seller);
                 })
-                .flatMap(eventProducer::sendEmailVerificationRequestedEvent)
-                .subscribeOn(Schedulers.boundedElastic())
                 .then();
     }
 
@@ -122,6 +131,9 @@ public class SellerRegistrationService {
                     return seller;
                 })
                 .flatMap(sellerRepository::save)
+                .flatMap(seller -> cacheService.cacheSellerById(seller)
+                        .then(cacheService.evictUserDashboardCache(seller.getSellerId()))
+                        .thenReturn(seller))
                 .flatMap(seller -> eventProducer.sendDocumentsUploadedEvent(seller)
                         .subscribeOn(Schedulers.boundedElastic())
                         .onErrorResume(err -> {
