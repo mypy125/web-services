@@ -5,8 +5,6 @@ import com.mygitgor.seller_service.application.dto.external.TransactionStatistic
 import com.mygitgor.seller_service.application.dto.request.CreateCommissionCommand;
 import com.mygitgor.seller_service.application.dto.request.CreateRefundCommand;
 import com.mygitgor.seller_service.application.dto.request.CreateSaleCommand;
-import com.mygitgor.seller_service.domain.model.status.TransactionStatus;
-import com.mygitgor.seller_service.domain.model.type.TransactionType;
 import com.mygitgor.seller_service.domain.port.outgoing.TransactionPort;
 import com.mygitgor.seller_service.domain.repository.SellerRepositoryPort;
 import com.mygitgor.seller_service.infrastructure.kafka.producer.SellerEventProducer;

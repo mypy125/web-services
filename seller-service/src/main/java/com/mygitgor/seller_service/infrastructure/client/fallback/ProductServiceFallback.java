@@ -1,8 +1,11 @@
 package com.mygitgor.seller_service.infrastructure.client.fallback;
 
+import com.mygitgor.seller_service.application.dto.external.CategorySummaryDto;
 import com.mygitgor.seller_service.application.dto.external.ProductDetailsDto;
 import com.mygitgor.seller_service.application.dto.external.ProductStatisticsDto;
 import com.mygitgor.seller_service.application.dto.external.ProductSummaryDto;
+import com.mygitgor.seller_service.domain.model.Product;
+import com.mygitgor.seller_service.infrastructure.client.exception.ProductServiceException;
 import com.mygitgor.seller_service.shared.valueobject.id.ProductId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import lombok.extern.slf4j.Slf4j;
@@ -10,155 +13,130 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Map;
+
 @Slf4j
 @Component
 public class ProductServiceFallback {
 
     public Mono<ProductDetailsDto> getProductDetails(ProductId productId) {
-        log.warn("Fallback: Returning empty product details for: {}", productId);
-        return Mono.empty();
-    }
-
-    public Mono<ProductDetailsDto> getProductDetailsWithDefault(ProductId productId) {
-        log.warn("Fallback: Returning default product details for: {}", productId);
+        log.warn("ProductService is down. Returning safe placeholder for details of product: {}", productId);
         return Mono.just(ProductDetailsDto.builder()
-                .id(productId != null ? productId.toString() : "unknown")
-                .name("Product Unavailable")
-                .description("Product details currently unavailable")
-                .category("Uncategorized")
+                .id(productId.toString())
+                .sellerId("UNKNOWN")
+                .name("Temporary Unavailable Product")
+                .description("Product details are currently not available.")
+                .category("N/A")
+                .subCategory("N/A")
+                .brand("N/A")
                 .price(0.0)
+                .compareAtPrice(0.0)
+                .costPerItem(0.0)
+                .profitMargin(0.0)
+                .currency(null)
                 .availableQuantity(0)
+                .totalQuantitySold(0)
+                .totalRevenue(0.0)
+                .averageRating(0.0)
+                .totalReviews(0)
                 .isActive(false)
                 .inStock(false)
+                .isFeatured(false)
+                .sku("N/A")
+                .barcode("N/A")
+                .weight(0.0)
+                .dimensions("N/A")
+                .mainImageUrl(null)
+                .imageUrls(Collections.emptyList())
+                .videoUrl(null)
+                .tags(Collections.emptyList())
+                .specifications(Collections.emptyMap())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .publishedAt(null)
+                .shippingInfo("N/A")
+                .returnPolicy("N/A")
+                .warranty("N/A")
                 .build());
     }
 
-    public Flux<ProductSummaryDto> getProductsBySellerId(SellerId sellerId, int page, int size) {
-        log.warn("Fallback: Returning empty products for seller: {}, page: {}, size: {}", sellerId, page, size);
-        return Flux.empty();
+    public Mono<Product> getProductById(ProductId productId) {
+        log.warn("ProductService is down. Breaking flow with 503 for domain root entity fetch: {}", productId);
+        return Mono.error(ProductServiceException.unavailable("GET_PRODUCT_BY_ID"));
     }
 
-    public Flux<ProductSummaryDto> getProductsBySellerIdWithDefaults(SellerId sellerId, int page, int size) {
-        log.warn("Fallback: Returning default products for seller: {}", sellerId);
-        return Flux.just(ProductSummaryDto.builder()
-                .id("default-product-1")
-                .sellerId(sellerId != null ? sellerId.toString() : "unknown")
-                .name("Product Unavailable")
-                .category("Uncategorized")
-                .price(0.0)
-                .availableQuantity(0)
-                .isActive(false)
-                .inStock(false)
-                .build());
-    }
-
-    public Flux<ProductSummaryDto> getActiveProductsBySellerId(SellerId sellerId, int page, int size) {
-        log.warn("Fallback: Returning empty active products for seller: {}", sellerId);
+    public Flux<ProductSummaryDto> getProductsBySellerId(SellerId sellerId) {
+        log.warn("ProductService is down. Dropping out into an empty stream for seller list requests: {}", sellerId);
         return Flux.empty();
     }
 
     public Mono<ProductStatisticsDto> getProductStatistics(SellerId sellerId) {
-        log.warn("Fallback: Returning empty product statistics for seller: {}", sellerId);
-        return Mono.empty();
+        log.warn("ProductService is down. Instantiating baseline clean-zeros statistics blueprint for seller: {}", sellerId);
+        return Mono.just(buildZeroedStatistics(sellerId.toString(), null, null));
     }
 
-    public Mono<ProductStatisticsDto> getProductStatisticsWithDefaults(SellerId sellerId) {
-        log.warn("Fallback: Returning default product statistics for seller: {}", sellerId);
-        return Mono.just(ProductStatisticsDto.builder()
-                .sellerId(sellerId != null ? sellerId.toString() : "unknown")
+    public Mono<ProductStatisticsDto> getProductStatistics(SellerId sellerId, LocalDateTime startDate, LocalDateTime endDate) {
+        log.warn("ProductService is down. Instantiating baseline clean-zeros range statistics blueprint for seller: {}", sellerId);
+        return Mono.just(buildZeroedStatistics(sellerId.toString(), startDate, endDate));
+    }
+
+    public Mono<Map<String, Long>> getMapStatistics(SellerId sellerId) {
+        log.warn("ProductService is down. Evacuating map metrics context to an empty structure map for: {}", sellerId);
+        return Mono.just(Collections.emptyMap());
+    }
+
+    public Flux<CategorySummaryDto> getCategoriesBySellerId(SellerId sellerId) {
+        log.warn("ProductService is down. Returning empty stream backoff for categories overview context: {}", sellerId);
+        return Flux.empty();
+    }
+
+    // Внутренний хелпер для сборки чистой статистики без null-pointer рисков по типам данных
+    private ProductStatisticsDto buildZeroedStatistics(String sellerId, LocalDateTime start, LocalDateTime end) {
+        return ProductStatisticsDto.builder()
+                .sellerId(sellerId)
                 .totalProducts(0)
                 .activeProducts(0)
                 .inactiveProducts(0)
                 .outOfStockProducts(0)
-                .totalRevenue(0.0)
-                .averagePrice(0.0)
+                .featuredProducts(0)
                 .totalProductViews(0L)
                 .totalProductSales(0L)
-                .calculatedAt(java.time.LocalDateTime.now())
-                .build());
-    }
-
-    public Mono<Long> countProductsBySellerId(SellerId sellerId) {
-        log.warn("Fallback: Returning 0 products count for seller: {}", sellerId);
-        return Mono.just(0L);
-    }
-
-    public Mono<Long> countActiveProductsBySellerId(SellerId sellerId) {
-        log.warn("Fallback: Returning 0 active products count for seller: {}", sellerId);
-        return Mono.just(0L);
-    }
-
-    public Mono<Boolean> hasProducts(SellerId sellerId) {
-        log.warn("Fallback: Returning false for hasProducts for seller: {}", sellerId);
-        return Mono.just(false);
-    }
-
-    public Mono<Boolean> isProductBelongsToSeller(ProductId productId, SellerId sellerId) {
-        log.warn("Fallback: Returning false for product belongs to seller: {}", productId);
-        return Mono.just(false);
-    }
-
-    public Flux<ProductSummaryDto> getTopProductsBySellerId(SellerId sellerId, int limit) {
-        log.warn("Fallback: Returning empty top products for seller: {}, limit: {}", sellerId, limit);
-        return Flux.empty();
-    }
-
-    public Flux<ProductSummaryDto> getTopProductsBySellerIdWithDefaults(SellerId sellerId, int limit) {
-        log.warn("Fallback: Returning default top products for seller: {}", sellerId);
-        return Flux.just(ProductSummaryDto.builder()
-                .id("default-top-product")
-                .sellerId(sellerId != null ? sellerId.toString() : "unknown")
-                .name("Product Unavailable")
-                .category("Uncategorized")
-                .price(0.0)
-                .totalQuantitySold(0)
                 .totalRevenue(0.0)
-                .averageRating(0.0)
-                .build());
-    }
-
-    public Mono<Boolean> isValidCategory(String category) {
-        log.warn("Fallback: Returning true for isValidCategory: {}", category);
-        return Mono.just(true);
-    }
-
-    public Flux<String> getCategories() {
-        log.warn("Fallback: Returning empty categories list");
-        return Flux.empty();
-    }
-
-    public Flux<String> getCategoriesWithDefaults() {
-        log.warn("Fallback: Returning default categories");
-        return Flux.just("Uncategorized", "General");
-    }
-
-    public Flux<ProductSummaryDto> getProductsByIds(java.util.List<String> productIds) {
-        log.warn("Fallback: Returning empty products for IDs: {}", productIds);
-        return Flux.empty();
-    }
-
-    public Flux<ProductDetailsDto> getProductDetailsByIds(java.util.List<String> productIds) {
-        log.warn("Fallback: Returning empty product details for IDs: {}", productIds);
-        return Flux.empty();
-    }
-
-    public Flux<ProductSummaryDto> searchProducts(String searchTerm, int page, int size) {
-        log.warn("Fallback: Returning empty products for search term: {}", searchTerm);
-        return Flux.empty();
-    }
-
-    public Flux<ProductSummaryDto> searchProductsBySellerId(SellerId sellerId, String searchTerm, int page, int size) {
-        log.warn("Fallback: Returning empty products for seller: {}, search term: {}", sellerId, searchTerm);
-        return Flux.empty();
-    }
-
-    public Mono<Boolean> checkStockAvailability(ProductId productId, int quantity) {
-        log.warn("Fallback: Returning false for stock availability for product: {}, quantity: {}", productId, quantity);
-        return Mono.just(false);
-    }
-
-    public Mono<Integer> getAvailableQuantity(ProductId productId) {
-        log.warn("Fallback: Returning 0 available quantity for product: {}", productId);
-        return Mono.just(0);
+                .averagePrice(0.0)
+                .minimumPrice(0.0)
+                .maximumPrice(0.0)
+                .mostSoldCategory("None")
+                .mostSoldCategoryCount(0)
+                .categoryDistribution(Collections.emptyMap())
+                .topCategories(Collections.emptyList())
+                .bestSellingProductId(null)
+                .bestSellingProductName("N/A")
+                .bestSellingProductSales(0)
+                .highestRatedProductId(null)
+                .highestRatedProductName("N/A")
+                .highestRating(0.0)
+                .mostViewedProductId(null)
+                .mostViewedProductName("N/A")
+                .mostViewedCount(0L)
+                .totalInventoryValue(0.0)
+                .averageInventoryValue(0.0)
+                .lowStockProducts(0)
+                .restockNeededProducts(0)
+                .inventoryTurnRatio(0.0)
+                .averageRatingOverall(0.0)
+                .productsWithNoReviews(0)
+                .productsWithGoodReviews(0)
+                .productsWithPoorReviews(0)
+                .newProductsThisMonth(0)
+                .productsSoldThisMonth(0)
+                .revenueThisMonth(0.0)
+                .productsAddedLast7Days(0)
+                .productViewsLast7Days(0L)
+                .calculatedAt(LocalDateTime.now())
+                .periodStart(start)
+                .periodEnd(end)
+                .build();
     }
 }

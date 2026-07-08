@@ -58,13 +58,12 @@ public class Payout {
     private String failureReason;
     private Map<String, String> metadata;
 
-    public static Payout create(
-            SellerId sellerId,
-            Double amount,
-            String paymentMethod,
-            String bankName,
-            String accountNumber,
-            String accountHolderName
+    public static Payout create(SellerId sellerId,
+                                Double amount,
+                                String paymentMethod,
+                                String bankName,
+                                String accountNumber,
+                                String accountHolderName
     ) {
         LocalDateTime now = LocalDateTime.now();
         Double fee = calculateFee(amount);
@@ -90,10 +89,9 @@ public class Payout {
                 .build();
     }
 
-    public static Payout createCommissionPayout(
-            SellerId sellerId,
-            Double amount,
-            String description
+    public static Payout createCommissionPayout(SellerId sellerId,
+                                                Double amount,
+                                                String description
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -113,10 +111,9 @@ public class Payout {
                 .build();
     }
 
-    public static Payout createBonusPayout(
-            SellerId sellerId,
-            Double amount,
-            String reason
+    public static Payout createBonusPayout(SellerId sellerId,
+                                           Double amount,
+                                           String reason
     ) {
         LocalDateTime now = LocalDateTime.now();
 

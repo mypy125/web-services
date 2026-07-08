@@ -53,15 +53,14 @@ public class Transaction {
     private String userAgent;
     private Map<String, String> metadata;
 
-    public static Transaction createSale(
-            SellerId sellerId,
-            UserId customerId,
-            OrderId orderId,
-            Double amount,
-            Double tax,
-            Double commission,
-            Double shippingCost,
-            Double discount
+    public static Transaction createSale(SellerId sellerId,
+                                         UserId customerId,
+                                         OrderId orderId,
+                                         Double amount,
+                                         Double tax,
+                                         Double commission,
+                                         Double shippingCost,
+                                         Double discount
     ) {
         LocalDateTime now = LocalDateTime.now();
         Double netAmount = amount - tax - commission - shippingCost - discount;
@@ -85,12 +84,11 @@ public class Transaction {
                 .build();
     }
 
-    public static Transaction createRefund(
-            SellerId sellerId,
-            UserId customerId,
-            OrderId orderId,
-            Double amount,
-            String reason
+    public static Transaction createRefund(SellerId sellerId,
+                                           UserId customerId,
+                                           OrderId orderId,
+                                           Double amount,
+                                           String reason
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -110,11 +108,10 @@ public class Transaction {
                 .build();
     }
 
-    public static Transaction createCommission(
-            SellerId sellerId,
-            OrderId orderId,
-            Double amount,
-            String description
+    public static Transaction createCommission(SellerId sellerId,
+                                               OrderId orderId,
+                                               Double amount,
+                                               String description
     ) {
         LocalDateTime now = LocalDateTime.now();
 

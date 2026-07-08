@@ -119,4 +119,12 @@ public class ProductServiceException extends ServiceClientException {
         return new ProductServiceException(operation, 408,
                 "Product service timeout for operation: " + operation);
     }
+
+    public static ProductServiceException unavailable(String operation) {
+        return new ProductServiceException(
+                operation,
+                503,
+                "Product Service is down or failing to respond"
+        );
+    }
 }

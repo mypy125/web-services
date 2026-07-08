@@ -74,12 +74,11 @@ public class Reconciliation {
     private String processedBy;
     private Map<String, String> metadata;
 
-    public static Reconciliation create(
-            SellerId sellerId,
-            ReconciliationType type,
-            String period,
-            LocalDateTime periodStart,
-            LocalDateTime periodEnd
+    public static Reconciliation create(SellerId sellerId,
+                                        ReconciliationType type,
+                                        String period,
+                                        LocalDateTime periodStart,
+                                        LocalDateTime periodEnd
     ) {
         LocalDateTime now = LocalDateTime.now();
 
