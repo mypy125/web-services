@@ -1,6 +1,8 @@
 package com.mygitgor.seller_service.application.dto.response;
 
 import lombok.Builder;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -26,12 +28,12 @@ public record TransactionResponse(
 
     @Builder
     public record FinancialBreakdownResponse(
-            Double amount,
-            Double tax,
-            Double commission,
-            Double shippingCost,
-            Double discount,
-            Double netAmount
+            BigDecimal amount,
+            BigDecimal tax,
+            BigDecimal commission,
+            BigDecimal shippingCost,
+            BigDecimal discount,
+            BigDecimal netAmount
     ) {}
 
     @Builder

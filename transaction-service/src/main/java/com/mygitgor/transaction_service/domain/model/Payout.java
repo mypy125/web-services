@@ -8,9 +8,10 @@ import com.mygitgor.transaction_service.shared.valueobject.SellerId;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Builder
@@ -19,12 +20,12 @@ public class Payout {
     private final SellerId sellerId;
 
     // TODO: Payment Details
-    private PayoutType type;
+    private final PayoutType type;
     private PayoutStatus status;
-    private Double amount;
-    private Double fee;
-    private Double netAmount;
-    private String currency;
+    private final BigDecimal amount;
+    private final BigDecimal fee;
+    private final BigDecimal netAmount;
+    private final String currency;
     private String description;
     private String referenceNumber;
 
@@ -37,7 +38,7 @@ public class Payout {
     private String upiId;
 
     // TODO: transaction References
-    private String transactionIds;
+    private Set<String> transactionIds;
     private String settlementId;
 
     // TODO: Bank Payment Gateway
@@ -46,7 +47,7 @@ public class Payout {
     private String gatewayResponse;
 
     // TODO: Timestamp
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime processedAt;
     private LocalDateTime completedAt;
@@ -58,16 +59,45 @@ public class Payout {
     private String failureReason;
     private Map<String, String> metadata;
 
+    @Builder(access = lombok.AccessLevel.PRIVATE)
+    private Payout(PayoutId payoutId, SellerId sellerId, PayoutType type,
+                   PayoutStatus status, BigDecimal amount, BigDecimal fee,
+                   BigDecimal netAmount, String currency, String description,
+                   String paymentMethod, String bankName, String accountNumber,
+                   String accountHolderName, LocalDateTime createdAt, LocalDateTime updatedAt
+    ) {
+        this.payoutId = Objects.requireNonNull(payoutId, "PayoutId cannot be null");
+        this.sellerId = Objects.requireNonNull(sellerId, "SellerId cannot be null");
+        this.type = Objects.requireNonNull(type, "PayoutType cannot be null");
+        this.status = Objects.requireNonNull(status, "PayoutStatus cannot be null");
+        this.amount = amount;
+        this.fee = fee;
+        this.netAmount = netAmount;
+        this.currency = currency != null ? currency : "USD";
+        this.description = description;
+        this.paymentMethod = paymentMethod;
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolderName = accountHolderName;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.transactionIds = new LinkedHashSet<>();
+        this.metadata = new HashMap<>();
+    }
+
     public static Payout create(SellerId sellerId,
-                                Double amount,
+                                BigDecimal amount,
                                 String paymentMethod,
                                 String bankName,
                                 String accountNumber,
                                 String accountHolderName
     ) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Payout amount must be positive");
+        }
         LocalDateTime now = LocalDateTime.now();
-        Double fee = calculateFee(amount);
-        Double netAmount = amount - fee;
+        BigDecimal fee = calculateFee(amount);
+        BigDecimal netAmount = amount.subtract(fee);
 
         return Payout.builder()
                 .payoutId(new PayoutId())
@@ -85,14 +115,16 @@ public class Payout {
                 .description("Payout to seller")
                 .createdAt(now)
                 .updatedAt(now)
-                .metadata(new HashMap<>())
                 .build();
     }
 
     public static Payout createCommissionPayout(SellerId sellerId,
-                                                Double amount,
+                                                BigDecimal amount,
                                                 String description
     ) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Commission amount must be positive");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         return Payout.builder()
@@ -101,20 +133,22 @@ public class Payout {
                 .type(PayoutType.COMMISSION_PAYOUT)
                 .status(PayoutStatus.PENDING)
                 .amount(amount)
-                .fee(0.0)
+                .fee(BigDecimal.ZERO)
                 .netAmount(amount)
                 .currency("USD")
                 .description(description != null ? description : "Commission payout")
                 .createdAt(now)
                 .updatedAt(now)
-                .metadata(new HashMap<>())
                 .build();
     }
 
     public static Payout createBonusPayout(SellerId sellerId,
-                                           Double amount,
+                                           BigDecimal amount,
                                            String reason
     ) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Bonus amount must be positive");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         return Payout.builder()
@@ -123,25 +157,19 @@ public class Payout {
                 .type(PayoutType.BONUS_PAYOUT)
                 .status(PayoutStatus.PENDING)
                 .amount(amount)
-                .fee(0.0)
+                .fee(BigDecimal.ZERO)
                 .netAmount(amount)
                 .currency("USD")
                 .description("Bonus payout: " + reason)
                 .createdAt(now)
                 .updatedAt(now)
-                .metadata(new HashMap<>())
                 .build();
     }
 
     public void process(String processedBy) {
+        ensureNotTerminalStatus("process");
         if (this.status == PayoutStatus.PROCESSED) {
             throw new DomainException("Payout already processed");
-        }
-        if (this.status == PayoutStatus.COMPLETED) {
-            throw new DomainException("Cannot process completed payout");
-        }
-        if (this.status == PayoutStatus.FAILED) {
-            throw new DomainException("Cannot process failed payout");
         }
 
         this.status = PayoutStatus.PROCESSED;
@@ -151,12 +179,7 @@ public class Payout {
     }
 
     public void complete(String gatewayTransactionId, String gatewayResponse) {
-        if (this.status == PayoutStatus.COMPLETED) {
-            throw new DomainException("Payout already completed");
-        }
-        if (this.status == PayoutStatus.FAILED) {
-            throw new DomainException("Cannot complete failed payout");
-        }
+        ensureNotTerminalStatus("complete");
 
         this.status = PayoutStatus.COMPLETED;
         this.completedAt = LocalDateTime.now();
@@ -166,8 +189,8 @@ public class Payout {
     }
 
     public void fail(String reason) {
-        if (this.status == PayoutStatus.COMPLETED) {
-            throw new DomainException("Cannot fail completed payout");
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot fail a payout that is already in a terminal state");
         }
 
         this.status = PayoutStatus.FAILED;
@@ -177,11 +200,8 @@ public class Payout {
     }
 
     public void cancel(String reason) {
-        if (this.status == PayoutStatus.COMPLETED) {
-            throw new DomainException("Cannot cancel completed payout");
-        }
-        if (this.status == PayoutStatus.CANCELLED) {
-            throw new DomainException("Payout already cancelled");
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot cancel a payout that is already in a terminal state");
         }
 
         this.status = PayoutStatus.CANCELLED;
@@ -190,11 +210,11 @@ public class Payout {
     }
 
     public void addTransaction(String transactionId) {
-        if (this.transactionIds == null || this.transactionIds.isEmpty()) {
-            this.transactionIds = transactionId;
-        } else {
-            this.transactionIds = this.transactionIds + "," + transactionId;
+        if (transactionId == null || transactionId.isBlank()) return;
+        if (this.transactionIds == null) {
+            this.transactionIds = new LinkedHashSet<>();
         }
+        this.transactionIds.add(transactionId);
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -206,15 +226,27 @@ public class Payout {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateBankDetails(String bankName, String accountNumber, String accountHolderName, String ifscCode) {
-        if (this.status == PayoutStatus.COMPLETED) {
-            throw new DomainException("Cannot update bank details for completed payout");
+    public void updateBankDetails(String bankName,
+                                  String accountNumber,
+                                  String accountHolderName,
+                                  String ifscCode
+    ) {
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot update bank details for a payout in terminal state");
         }
         if (bankName != null) this.bankName = bankName;
         if (accountNumber != null) this.accountNumber = accountNumber;
         if (accountHolderName != null) this.accountHolderName = accountHolderName;
         if (ifscCode != null) this.ifscCode = ifscCode;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public Map<String, String> getMetadata() {
+        return metadata == null ? Collections.emptyMap() : Collections.unmodifiableMap(metadata);
+    }
+
+    public Set<String> getTransactionIds() {
+        return transactionIds == null ? Collections.emptySet() : Collections.unmodifiableSet(transactionIds);
     }
 
     public boolean isPending() {
@@ -238,23 +270,27 @@ public class Payout {
     }
 
     public boolean isActive() {
-        return this.status == PayoutStatus.PENDING || this.status == PayoutStatus.PROCESSED;
+        return this.status.isActive();
     }
 
     public boolean isTerminal() {
-        return this.status == PayoutStatus.COMPLETED ||
-                this.status == PayoutStatus.FAILED ||
-                this.status == PayoutStatus.CANCELLED;
+        return this.status.isTerminal();
     }
 
-    public Double getNetAmount() {
-        return this.netAmount != null ? this.netAmount : this.amount;
+
+    private void ensureNotTerminalStatus(String action) {
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot perform action '" + action + "' because payout is in terminal state: " + this.status);
+        }
     }
 
-    private static Double calculateFee(Double amount) {
-        if (amount == null || amount <= 0) return 0.0;
-        double fee = amount * 0.005;
-        return Math.min(fee, 5.0);
+    private static BigDecimal calculateFee(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
+
+        BigDecimal fee = amount.multiply(BigDecimal.valueOf(0.005));
+        BigDecimal maxFee = BigDecimal.valueOf(5.0);
+
+        return fee.compareTo(maxFee) > 0 ? maxFee.setScale(2, RoundingMode.HALF_UP) : fee.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override

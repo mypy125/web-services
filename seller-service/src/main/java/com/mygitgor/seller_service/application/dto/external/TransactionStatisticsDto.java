@@ -1,6 +1,8 @@
 package com.mygitgor.seller_service.application.dto.external;
 
 import lombok.Builder;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Builder
@@ -11,11 +13,11 @@ public record TransactionStatisticsDto(
         Long failedTransactions,
         Long refundedTransactions,
         Long cancelledTransactions,
-        Double totalAmount,
-        Double totalCommission,
-        Double totalRefunds,
-        Double totalNetAmount,
-        Double averageTransactionAmount,
+        BigDecimal totalAmount,
+        BigDecimal totalCommission,
+        BigDecimal totalRefunds,
+        BigDecimal totalNetAmount,
+        BigDecimal averageTransactionAmount,
         LocalDateTime calculatedAt
 ) {
     public TransactionStatisticsDto {

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -129,11 +130,11 @@ public class SellerTransactionService {
         return transactionPort.getTransactionStatistics(sellerId, startDate, endDate);
     }
 
-    public Mono<Double> getTotalAmountBySellerId(SellerId sellerId) {
+    public Mono<BigDecimal> getTotalAmountBySellerId(SellerId sellerId) {
         return transactionPort.getTransactionStatistics(sellerId).map(TransactionStatisticsDto::totalAmount);
     }
 
-    public Mono<Double> getTotalAmountBySellerIdAndType(SellerId sellerId) {
+    public Mono<BigDecimal> getTotalAmountBySellerIdAndType(SellerId sellerId) {
         return transactionPort.getTransactionStatistics(sellerId).map(TransactionStatisticsDto::totalCommission);
     }
 

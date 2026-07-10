@@ -4,16 +4,16 @@ import com.mygitgor.transaction_service.domain.model.valueobject.SettlementStatu
 import com.mygitgor.transaction_service.domain.model.valueobject.SettlementType;
 import com.mygitgor.transaction_service.domain.model.valueobject.TransactionType;
 import com.mygitgor.transaction_service.shared.exception.DomainException;
+import com.mygitgor.transaction_service.shared.valueobject.PayoutId;
+import com.mygitgor.transaction_service.shared.valueobject.ReconciliationId;
 import com.mygitgor.transaction_service.shared.valueobject.SellerId;
 import com.mygitgor.transaction_service.shared.valueobject.SettlementId;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Builder
@@ -22,26 +22,26 @@ public class Settlement {
     private final SellerId sellerId;
 
     // TODO: Settlement Details
-    private SettlementType type;
+    private final SettlementType type;
     private SettlementStatus status;
-    private String referenceNumber;
+    private final String referenceNumber;
     private String description;
 
     // TODO: Financial Summary
-    private Double totalAmount;
-    private Double totalCommission;
-    private Double totalTax;
-    private Double totalShipping;
-    private Double totalDiscount;
-    private Double totalRefunds;
-    private Double netAmount;
-    private Double adjustmentAmount;
-    private String currency;
+    private BigDecimal totalAmount;
+    private BigDecimal totalCommission;
+    private BigDecimal totalTax;
+    private BigDecimal totalShipping;
+    private BigDecimal totalDiscount;
+    private BigDecimal totalRefunds;
+    private BigDecimal netAmount;
+    private BigDecimal adjustmentAmount;
+    private final String currency;
 
     // TODO: Transaction References
-    private List<String> transactionIds;
-    private List<String> payoutIds;
-    private List<String> refundIds;
+    private Set<String> transactionIds;
+    private Set<String> payoutIds;
+    private Set<String> refundIds;
     private String reconciliationId;
 
     // TODO: Payment Details
@@ -58,25 +58,54 @@ public class Settlement {
     private String gatewayResponse;
     private String gatewayReference;
 
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime processedAt;
     private LocalDateTime completedAt;
     private LocalDateTime failedAt;
     private LocalDateTime settledAt;
 
-    private String notes;
+    private List<String> notes;
     private String processedBy;
     private String failureReason;
     private Map<String, String> metadata;
 
+    @Builder(access = lombok.AccessLevel.PRIVATE)
+    private Settlement(SettlementId settlementId, SellerId sellerId, SettlementType type,
+                       SettlementStatus status, String referenceNumber, String description,
+                       String currency, LocalDateTime createdAt, LocalDateTime updatedAt
+    ) {
+        this.settlementId = Objects.requireNonNull(settlementId, "SettlementId cannot be null");
+        this.sellerId = Objects.requireNonNull(sellerId, "SellerId cannot be null");
+        this.type = Objects.requireNonNull(type, "SettlementType cannot be null");
+        this.status = Objects.requireNonNull(status, "SettlementStatus cannot be null");
+        this.referenceNumber = referenceNumber;
+        this.description = description;
+        this.currency = currency != null ? currency : "USD";
+        this.totalAmount = BigDecimal.ZERO;
+        this.totalCommission = BigDecimal.ZERO;
+        this.totalTax = BigDecimal.ZERO;
+        this.totalShipping = BigDecimal.ZERO;
+        this.totalDiscount = BigDecimal.ZERO;
+        this.totalRefunds = BigDecimal.ZERO;
+        this.netAmount = BigDecimal.ZERO;
+        this.adjustmentAmount = BigDecimal.ZERO;
+
+        this.transactionIds = new LinkedHashSet<>();
+        this.payoutIds = new LinkedHashSet<>();
+        this.refundIds = new LinkedHashSet<>();
+        this.notes = new ArrayList<>();
+        this.metadata = new HashMap<>();
+
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
     public static Settlement create(SellerId sellerId,
                                     SettlementType type,
                                     String description
     ) {
         LocalDateTime now = LocalDateTime.now();
-
         return Settlement.builder()
                 .settlementId(new SettlementId())
                 .sellerId(sellerId)
@@ -84,97 +113,65 @@ public class Settlement {
                 .status(SettlementStatus.PENDING)
                 .referenceNumber(generateReferenceNumber())
                 .description(description)
-                .totalAmount(0.0)
-                .totalCommission(0.0)
-                .totalTax(0.0)
-                .totalShipping(0.0)
-                .totalDiscount(0.0)
-                .totalRefunds(0.0)
-                .netAmount(0.0)
-                .adjustmentAmount(0.0)
-                .currency("USD")
-                .transactionIds(new ArrayList<>())
-                .payoutIds(new ArrayList<>())
-                .refundIds(new ArrayList<>())
-                .metadata(new HashMap<>())
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
     }
 
-    public static Settlement createRegular(SellerId sellerId,
-                                           SettlementType type,
-                                           List<String> transactionIds
-    ) {
-        Settlement settlement = create(
-                sellerId,
-                type,
-                type.getDisplayName() + " settlement for seller"
-        );
-
+    public static Settlement createRegular(SellerId sellerId, SettlementType type, List<String> transactionIds) {
+        Settlement settlement = create(sellerId, type, type.getDisplayName() + " settlement for seller");
         if (transactionIds != null) {
-            settlement.transactionIds = new ArrayList<>(transactionIds);
+            settlement.transactionIds.addAll(transactionIds);
         }
-
         return settlement;
     }
 
-    public static Settlement createManual(SellerId sellerId,
-                                          Double amount,
-                                          String description
-    ) {
-        Settlement settlement = create(
-                sellerId,
-                SettlementType.MANUAL,
-                description != null ? description : "Manual settlement"
-        );
+    public static Settlement createManual(SellerId sellerId, BigDecimal amount, String description) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Manual settlement amount must be positive");
+        }
+        Settlement settlement = create(sellerId, SettlementType.MANUAL, description != null ? description : "Manual settlement");
         settlement.totalAmount = amount;
         settlement.netAmount = amount;
-
         return settlement;
     }
 
-    public void addTransaction(Transaction transaction) {
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot add transaction to completed/settled settlement");
-        }
+    public void addTransaction(BigDecimal amount, BigDecimal commission,
+                               BigDecimal shipping, BigDecimal discount,
+                               BigDecimal tax, String txnId, boolean isRefund
+    ) {
+        ensureActiveState("add transaction");
 
-        this.totalAmount = (this.totalAmount != null ? this.totalAmount : 0.0) + transaction.getAmount();
-        this.totalCommission = (this.totalCommission != null ? this.totalCommission : 0.0) + transaction.getCommission();
-        this.totalTax = (this.totalTax != null ? this.totalTax : 0.0) + transaction.getTax();
-        this.totalShipping = (this.totalShipping != null ? this.totalShipping : 0.0) + transaction.getShippingCost();
-        this.totalDiscount = (this.totalDiscount != null ? this.totalDiscount : 0.0) + transaction.getDiscount();
+        this.totalAmount = this.totalAmount.add(amount != null ? amount : BigDecimal.ZERO);
+        this.totalCommission = this.totalCommission.add(commission != null ? commission : BigDecimal.ZERO);
+        this.totalTax = this.totalTax.add(tax != null ? tax : BigDecimal.ZERO);
+        this.totalShipping = this.totalShipping.add(shipping != null ? shipping : BigDecimal.ZERO);
+        this.totalDiscount = this.totalDiscount.add(discount != null ? discount : BigDecimal.ZERO);
 
-        if (transaction.getType() == TransactionType.REFUND) {
-            this.totalRefunds = (this.totalRefunds != null ? this.totalRefunds : 0.0) + transaction.getAmount();
-            if (this.refundIds == null) this.refundIds = new ArrayList<>();
-            this.refundIds.add(transaction.getTransactionId().toString());
+        if (isRefund) {
+            this.totalRefunds = this.totalRefunds.add(amount != null ? amount : BigDecimal.ZERO);
+            this.refundIds.add(txnId);
         } else {
-            if (this.transactionIds == null) this.transactionIds = new ArrayList<>();
-            this.transactionIds.add(transaction.getTransactionId().toString());
+            this.transactionIds.add(txnId);
         }
 
         this.netAmount = calculateNetAmount();
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void addPayout(Payout payout) {
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot add payout to completed/settled settlement");
+    public void addPayout(PayoutId payoutId) {
+        ensureActiveState("add payout link");
+        if (payoutId != null) {
+            this.payoutIds.add(payoutId.toString());
+            this.updatedAt = LocalDateTime.now();
         }
-
-        if (this.payoutIds == null) this.payoutIds = new ArrayList<>();
-        this.payoutIds.add(payout.getPayoutId().toString());
-        this.updatedAt = LocalDateTime.now();
     }
 
-    public void addAdjustment(Double amount, String reason) {
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot add adjustment to completed/settled settlement");
-        }
-
-        this.adjustmentAmount = (this.adjustmentAmount != null ? this.adjustmentAmount : 0.0) + amount;
-        this.notes = (this.notes != null ? this.notes + " | " : "") + "Adjustment: " + reason + " (" + amount + ")";
+    public void addAdjustment(BigDecimal amount, String reason) {
+        ensureActiveState("add adjustment");
+        BigDecimal val = amount != null ? amount : BigDecimal.ZERO;
+        this.adjustmentAmount = this.adjustmentAmount.add(val);
+        this.notes.add("Adjustment: " + reason + " (" + val + ")");
         this.netAmount = calculateNetAmount();
         this.updatedAt = LocalDateTime.now();
     }
@@ -183,15 +180,10 @@ public class Settlement {
         if (this.status == SettlementStatus.PROCESSED) {
             throw new DomainException("Settlement already processed");
         }
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot process completed/settled settlement");
-        }
-        if (this.status == SettlementStatus.FAILED) {
-            throw new DomainException("Cannot process failed settlement");
-        }
+        ensureActiveState("process");
 
-        if (this.netAmount == null || this.netAmount <= 0) {
-            throw new DomainException("Cannot process settlement with zero or negative amount");
+        if (this.netAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Cannot process settlement with zero or negative net amount");
         }
 
         this.status = SettlementStatus.PROCESSED;
@@ -202,7 +194,7 @@ public class Settlement {
 
     public void complete(String gatewayTransactionId, String gatewayResponse) {
         if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Settlement already completed/settled");
+            throw new DomainException("Settlement already closed");
         }
         if (this.status == SettlementStatus.FAILED) {
             throw new DomainException("Cannot complete failed settlement");
@@ -217,10 +209,10 @@ public class Settlement {
 
     public void settle() {
         if (this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Settlement already settled");
+            throw new DomainException("Settlement already finalized as settled");
         }
         if (this.status != SettlementStatus.COMPLETED) {
-            throw new DomainException("Settlement must be completed before settling");
+            throw new DomainException("Settlement must be COMPLETED before switching to SETTLED status");
         }
 
         this.status = SettlementStatus.SETTLED;
@@ -229,8 +221,8 @@ public class Settlement {
     }
 
     public void fail(String reason) {
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot fail completed/settled settlement");
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot fail a settlement that is already in terminal state");
         }
 
         this.status = SettlementStatus.FAILED;
@@ -240,23 +232,13 @@ public class Settlement {
     }
 
     public void cancel(String reason) {
-        if (this.status == SettlementStatus.COMPLETED || this.status == SettlementStatus.SETTLED) {
-            throw new DomainException("Cannot cancel completed/settled settlement");
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot cancel a settlement that is already in terminal state");
         }
 
         this.status = SettlementStatus.CANCELLED;
-        this.notes = reason;
+        this.notes.add("Cancelled reason: " + reason);
         this.updatedAt = LocalDateTime.now();
-    }
-
-    private Double calculateNetAmount() {
-        return (this.totalAmount != null ? this.totalAmount : 0.0)
-                - (this.totalCommission != null ? this.totalCommission : 0.0)
-                - (this.totalTax != null ? this.totalTax : 0.0)
-                - (this.totalShipping != null ? this.totalShipping : 0.0)
-                - (this.totalDiscount != null ? this.totalDiscount : 0.0)
-                - (this.totalRefunds != null ? this.totalRefunds : 0.0)
-                + (this.adjustmentAmount != null ? this.adjustmentAmount : 0.0);
     }
 
     public void recalculate() {
@@ -264,18 +246,18 @@ public class Settlement {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updatePaymentDetails(
-            String paymentMethod,
-            String bankName,
-            String accountNumber,
-            String accountHolderName,
-            String ifscCode
+    public void updatePaymentDetails(String paymentMethod,
+                                     String bankName, String accountNumber,
+                                     String accountHolderName, String ifscCode
     ) {
-        if (this.paymentMethod != null) this.paymentMethod = paymentMethod;
-        if (this.bankName != null) this.bankName = bankName;
-        if (this.accountNumber != null) this.accountNumber = accountNumber;
-        if (this.accountHolderName != null) this.accountHolderName = accountHolderName;
-        if (this.ifscCode != null) this.ifscCode = ifscCode;
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot update banking data on terminal settlement entity");
+        }
+        if (paymentMethod != null) this.paymentMethod = paymentMethod;
+        if (bankName != null) this.bankName = bankName;
+        if (accountNumber != null) this.accountNumber = accountNumber;
+        if (accountHolderName != null) this.accountHolderName = accountHolderName;
+        if (ifscCode != null) this.ifscCode = ifscCode;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -283,6 +265,67 @@ public class Settlement {
         if (gatewayReference != null) this.gatewayReference = gatewayReference;
         if (gatewayTransactionId != null) this.gatewayTransactionId = gatewayTransactionId;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void bindReconciliation(ReconciliationId recId) {
+        if (recId != null) {
+            this.reconciliationId = recId.toString();
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
+
+    public void addMetadata(String key, String value) {
+        this.metadata.put(key, value);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void addNote(String note) {
+        if (note != null && !note.isBlank()) {
+            this.notes.add(note);
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
+
+    private BigDecimal calculateNetAmount() {
+        return this.totalAmount
+                .subtract(this.totalCommission)
+                .subtract(this.totalTax)
+                .subtract(this.totalShipping)
+                .subtract(this.totalDiscount)
+                .subtract(this.totalRefunds)
+                .add(this.adjustmentAmount);
+    }
+
+    private void ensureActiveState(String operation) {
+        if (this.status.isTerminal()) {
+            throw new DomainException("Action '" + operation + "' denied. Settlement is in terminal state: " + this.status);
+        }
+    }
+
+    private static String generateReferenceNumber() {
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String random = String.format("%04d", (int) (Math.random() * 10000));
+        return "SET-" + timestamp.substring(timestamp.length() - 8) + "-" + random;
+    }
+
+    public Set<String> getTransactionIds() {
+        return Collections.unmodifiableSet(transactionIds);
+    }
+
+    public Set<String> getPayoutIds() {
+        return Collections.unmodifiableSet(payoutIds);
+    }
+
+    public Set<String> getRefundIds() {
+        return Collections.unmodifiableSet(refundIds);
+    }
+
+    public List<String> getNotes() {
+        return Collections.unmodifiableList(notes);
+    }
+
+    public Map<String, String> getMetadata() {
+        return Collections.unmodifiableMap(metadata);
     }
 
     public boolean isPending() {
@@ -310,14 +353,11 @@ public class Settlement {
     }
 
     public boolean isActive() {
-        return this.status == SettlementStatus.PENDING || this.status == SettlementStatus.PROCESSED;
+        return this.status.isActive();
     }
 
     public boolean isTerminal() {
-        return this.status == SettlementStatus.COMPLETED ||
-                this.status == SettlementStatus.SETTLED ||
-                this.status == SettlementStatus.FAILED ||
-                this.status == SettlementStatus.CANCELLED;
+        return this.status.isTerminal();
     }
 
     public boolean canSettle() {
@@ -325,42 +365,19 @@ public class Settlement {
     }
 
     public boolean isBalanced() {
-        return this.netAmount != null && this.netAmount == 0.0;
+        return this.netAmount.compareTo(BigDecimal.ZERO) == 0;
     }
 
-    public Double getNetAmount() {
-        return this.netAmount != null ? this.netAmount : 0.0;
+    public int getTransactionCount() {
+        return this.transactionIds.size();
     }
 
-    public Integer getTransactionCount() {
-        return this.transactionIds != null ? this.transactionIds.size() : 0;
+    public int getPayoutCount() {
+        return this.payoutIds.size();
     }
 
-    public Integer getPayoutCount() {
-        return this.payoutIds != null ? this.payoutIds.size() : 0;
-    }
-
-    public Integer getRefundCount() {
-        return this.refundIds != null ? this.refundIds.size() : 0;
-    }
-
-    public void addMetadata(String key, String value) {
-        if (this.metadata == null) {
-            this.metadata = new HashMap<>();
-        }
-        this.metadata.put(key, value);
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void addNote(String note) {
-        this.notes = (this.notes != null ? this.notes + " | " : "") + note;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    private static String generateReferenceNumber() {
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String random = String.format("%04d", (int) (Math.random() * 10000));
-        return "SET-" + timestamp.substring(timestamp.length() - 8) + "-" + random;
+    public int getRefundCount() {
+        return this.refundIds.size();
     }
 
     @Override

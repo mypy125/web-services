@@ -3,18 +3,19 @@ package com.mygitgor.transaction_service.domain.model;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
 public class ReconciliationStatistics {
-    private Long totalReconciliations;
-    private Long reconciledCount;
-    private Long pendingCount;
-    private Long rejectedCount;
-    private Long cancelledCount;
-    private Double totalNetSettlement;
-    private Double totalDiscrepancyAmount;
-    private Double averageReconciliationTimeHours;
-    private LocalDateTime calculatedAt;
+    private final Long totalReconciliations;
+    private final Long reconciledCount;
+    private final Long pendingCount;
+    private final Long rejectedCount;
+    private final Long cancelledCount;
+    private final BigDecimal totalNetSettlement;
+    private final BigDecimal totalDiscrepancyAmount;
+    private final Double averageReconciliationTimeHours;
+    private final LocalDateTime calculatedAt;
 }

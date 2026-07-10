@@ -8,11 +8,9 @@ import com.mygitgor.transaction_service.shared.valueobject.SellerId;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Builder
@@ -21,22 +19,22 @@ public class Reconciliation {
     private final SellerId sellerId;
 
     // TODO: Reconciliation Details
-    private ReconciliationType type;
+    private final ReconciliationType type;
     private ReconciliationStatus status;
-    private String period;
-    private LocalDateTime periodStart;
-    private LocalDateTime periodEnd;
+    private final String period;
+    private final LocalDateTime periodStart;
+    private final LocalDateTime periodEnd;
 
     // TODO: Financial Summaries
-    private Double totalSales;
-    private Double totalRefunds;
-    private Double totalCommission;
-    private Double totalShipping;
-    private Double totalDiscount;
-    private Double totalTax;
-    private Double totalPayouts;
-    private Double totalAdjustments;
-    private Double netSettlement;
+    private BigDecimal totalSales;
+    private BigDecimal totalRefunds;
+    private BigDecimal totalCommission;
+    private BigDecimal totalShipping;
+    private BigDecimal totalDiscount;
+    private BigDecimal totalTax;
+    private BigDecimal totalPayouts;
+    private BigDecimal totalAdjustments;
+    private BigDecimal netSettlement;
 
     // TODO: Transaction Counts
     private Integer totalTransactions;
@@ -46,17 +44,17 @@ public class Reconciliation {
     private Integer adjustmentsCount;
 
     // TODO: Discrepancies
-    private Double discrepancyAmount;
+    private BigDecimal discrepancyAmount;
     private String discrepancyReason;
     private Integer discrepancyCount;
-    private Map<String, Double> discrepanciesByType;
+    private Map<String, BigDecimal> discrepanciesByType;
 
     // TODO: Bank Pg Data
     private String bankStatementReference;
     private String paymentGatewayReference;
-    private Double bankTotal;
-    private Double gatewayTotal;
-    private Double difference;
+    private BigDecimal bankTotal;
+    private BigDecimal gatewayTotal;
+    private BigDecimal difference;
 
     // TODO: Resolution
     private String resolvedBy;
@@ -65,14 +63,60 @@ public class Reconciliation {
     private List<String> resolutionActions;
 
     // TODO: Timestamp
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime reconciledAt;
 
     // TODO: Metadata
-    private String notes;
+    private List<String> notes;
     private String processedBy;
     private Map<String, String> metadata;
+
+    @Builder(access = lombok.AccessLevel.PRIVATE)
+    private Reconciliation(ReconciliationId reconciliationId,
+                           SellerId sellerId, ReconciliationType type,
+                           ReconciliationStatus status, String period,
+                           LocalDateTime periodStart, LocalDateTime periodEnd,
+                           LocalDateTime createdAt, LocalDateTime updatedAt
+    ) {
+        this.reconciliationId = Objects.requireNonNull(reconciliationId, "ReconciliationId cannot be null");
+        this.sellerId = Objects.requireNonNull(sellerId, "SellerId cannot be null");
+        this.type = Objects.requireNonNull(type, "ReconciliationType cannot be null");
+        this.status = Objects.requireNonNull(status, "ReconciliationStatus cannot be null");
+        this.period = period;
+        this.periodStart = periodStart;
+        this.periodEnd = periodEnd;
+        this.totalSales = BigDecimal.ZERO;
+        this.totalRefunds = BigDecimal.ZERO;
+        this.totalCommission = BigDecimal.ZERO;
+        this.totalShipping = BigDecimal.ZERO;
+        this.totalDiscount = BigDecimal.ZERO;
+        this.totalTax = BigDecimal.ZERO;
+        this.totalPayouts = BigDecimal.ZERO;
+        this.totalAdjustments = BigDecimal.ZERO;
+        this.netSettlement = BigDecimal.ZERO;
+
+        this.totalTransactions = 0;
+        this.salesCount = 0;
+        this.refundsCount = 0;
+        this.payoutsCount = 0;
+        this.adjustmentsCount = 0;
+
+        this.discrepancyAmount = BigDecimal.ZERO;
+        this.discrepancyCount = 0;
+        this.discrepanciesByType = new HashMap<>();
+
+        this.bankTotal = BigDecimal.ZERO;
+        this.gatewayTotal = BigDecimal.ZERO;
+        this.difference = BigDecimal.ZERO;
+
+        this.resolutionActions = new ArrayList<>();
+        this.notes = new ArrayList<>();
+        this.metadata = new HashMap<>();
+
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
     public static Reconciliation create(SellerId sellerId,
                                         ReconciliationType type,
@@ -81,7 +125,6 @@ public class Reconciliation {
                                         LocalDateTime periodEnd
     ) {
         LocalDateTime now = LocalDateTime.now();
-
         return Reconciliation.builder()
                 .reconciliationId(new ReconciliationId())
                 .sellerId(sellerId)
@@ -90,134 +133,114 @@ public class Reconciliation {
                 .period(period)
                 .periodStart(periodStart)
                 .periodEnd(periodEnd)
-                .totalSales(0.0)
-                .totalRefunds(0.0)
-                .totalCommission(0.0)
-                .totalShipping(0.0)
-                .totalDiscount(0.0)
-                .totalTax(0.0)
-                .totalPayouts(0.0)
-                .totalAdjustments(0.0)
-                .netSettlement(0.0)
-                .totalTransactions(0)
-                .salesCount(0)
-                .refundsCount(0)
-                .payoutsCount(0)
-                .adjustmentsCount(0)
-                .discrepancyAmount(0.0)
-                .discrepancyCount(0)
-                .discrepanciesByType(new HashMap<>())
-                .difference(0.0)
-                .resolutionActions(new ArrayList<>())
                 .createdAt(now)
                 .updatedAt(now)
-                .metadata(new HashMap<>())
                 .build();
     }
 
     public static Reconciliation createDaily(SellerId sellerId, LocalDateTime date) {
-        LocalDateTime start = date.withHour(0).withMinute(0).withSecond(0);
-        LocalDateTime end = date.withHour(23).withMinute(59).withSecond(59);
+        LocalDateTime start = date.withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = date.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         String period = date.toLocalDate().toString();
-
         return create(sellerId, ReconciliationType.DAILY, period, start, end);
     }
 
     public static Reconciliation createMonthly(SellerId sellerId, int year, int month) {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.withDayOfMonth(start.getMonth().length(start.toLocalDate().isLeapYear()))
-                .withHour(23).withMinute(59).withSecond(59);
+                .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         String period = String.format("%d-%02d", year, month);
-
         return create(sellerId, ReconciliationType.MONTHLY, period, start, end);
     }
 
-    public void addSale(Double amount, Double commission, Double shipping, Double discount, Double tax) {
-        this.totalSales = (this.totalSales != null ? this.totalSales : 0.0) + amount;
-        this.totalCommission = (this.totalCommission != null ? this.totalCommission : 0.0) + commission;
-        this.totalShipping = (this.totalShipping != null ? this.totalShipping : 0.0) + shipping;
-        this.totalDiscount = (this.totalDiscount != null ? this.totalDiscount : 0.0) + discount;
-        this.totalTax = (this.totalTax != null ? this.totalTax : 0.0) + tax;
-        this.salesCount = (this.salesCount != null ? this.salesCount : 0) + 1;
-        this.totalTransactions = (this.totalTransactions != null ? this.totalTransactions : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
+    public void addSale(BigDecimal amount,
+                        BigDecimal commission,
+                        BigDecimal shipping,
+                        BigDecimal discount,
+                        BigDecimal tax
+    ) {
+        ensureActiveState("add sale transaction");
+        this.totalSales = this.totalSales.add(amount != null ? amount : BigDecimal.ZERO);
+        this.totalCommission = this.totalCommission.add(commission != null ? commission : BigDecimal.ZERO);
+        this.totalShipping = this.totalShipping.add(shipping != null ? shipping : BigDecimal.ZERO);
+        this.totalDiscount = this.totalDiscount.add(discount != null ? discount : BigDecimal.ZERO);
+        this.totalTax = this.totalTax.add(tax != null ? tax : BigDecimal.ZERO);
+
+        this.salesCount++;
+        this.totalTransactions++;
         calculateNetSettlement();
     }
 
-    public void addRefund(Double amount) {
-        this.totalRefunds = (this.totalRefunds != null ? this.totalRefunds : 0.0) + amount;
-        this.refundsCount = (this.refundsCount != null ? this.refundsCount : 0) + 1;
-        this.totalTransactions = (this.totalTransactions != null ? this.totalTransactions : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
+    public void addRefund(BigDecimal amount) {
+        ensureActiveState("add refund transaction");
+        this.totalRefunds = this.totalRefunds.add(amount != null ? amount : BigDecimal.ZERO);
+        this.refundsCount++;
+        this.totalTransactions++;
         calculateNetSettlement();
     }
 
-    public void addPayout(Double amount) {
-        this.totalPayouts = (this.totalPayouts != null ? this.totalPayouts : 0.0) + amount;
-        this.payoutsCount = (this.payoutsCount != null ? this.payoutsCount : 0) + 1;
-        this.totalTransactions = (this.totalTransactions != null ? this.totalTransactions : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
+    public void addPayout(BigDecimal amount) {
+        ensureActiveState("add payout transaction");
+        this.totalPayouts = this.totalPayouts.add(amount != null ? amount : BigDecimal.ZERO);
+        this.payoutsCount++;
+        this.totalTransactions++;
         calculateNetSettlement();
     }
 
-    public void addAdjustment(Double amount, String reason) {
-        this.totalAdjustments = (this.totalAdjustments != null ? this.totalAdjustments : 0.0) + amount;
-        this.adjustmentsCount = (this.adjustmentsCount != null ? this.adjustmentsCount : 0) + 1;
-        this.totalTransactions = (this.totalTransactions != null ? this.totalTransactions : 0) + 1;
-        if (reason != null) {
+    public void addAdjustment(BigDecimal amount, String reason) {
+        ensureActiveState("add adjustment transaction");
+        this.totalAdjustments = this.totalAdjustments.add(amount != null ? amount : BigDecimal.ZERO);
+        this.adjustmentsCount++;
+        this.totalTransactions++;
+        if (reason != null && !reason.isBlank()) {
             addDiscrepancy(reason, amount);
         }
-        this.updatedAt = LocalDateTime.now();
         calculateNetSettlement();
     }
 
-    public void addDiscrepancy(String type, Double amount) {
-        if (this.discrepanciesByType == null) {
-            this.discrepanciesByType = new HashMap<>();
-        }
-        this.discrepanciesByType.put(type,
-                this.discrepanciesByType.getOrDefault(type, 0.0) + amount);
-        this.discrepancyCount = (this.discrepancyCount != null ? this.discrepancyCount : 0) + 1;
-        this.discrepancyAmount = (this.discrepancyAmount != null ? this.discrepancyAmount : 0.0) + amount;
+    public void addDiscrepancy(String errorType, BigDecimal amount) {
+        ensureActiveState("add discrepancy log");
+        BigDecimal val = amount != null ? amount : BigDecimal.ZERO;
+        this.discrepanciesByType.put(errorType, this.discrepanciesByType.getOrDefault(errorType, BigDecimal.ZERO).add(val));
+        this.discrepancyCount++;
+        this.discrepancyAmount = this.discrepancyAmount.add(val);
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void addBankData(String bankStatementReference, Double bankTotal) {
+    public void addBankData(String bankStatementReference, BigDecimal bankTotal) {
+        ensureActiveState("bind bank statement data");
         this.bankStatementReference = bankStatementReference;
-        this.bankTotal = bankTotal;
-        this.updatedAt = LocalDateTime.now();
+        this.bankTotal = bankTotal != null ? bankTotal : BigDecimal.ZERO;
         calculateDifference();
     }
 
-    public void addGatewayData(String paymentGatewayReference, Double gatewayTotal) {
+    public void addGatewayData(String paymentGatewayReference, BigDecimal gatewayTotal) {
+        ensureActiveState("bind gateway reports data");
         this.paymentGatewayReference = paymentGatewayReference;
-        this.gatewayTotal = gatewayTotal;
-        this.updatedAt = LocalDateTime.now();
+        this.gatewayTotal = gatewayTotal != null ? gatewayTotal : BigDecimal.ZERO;
         calculateDifference();
     }
 
     private void calculateNetSettlement() {
-        this.netSettlement = (this.totalSales != null ? this.totalSales : 0.0)
-                - (this.totalRefunds != null ? this.totalRefunds : 0.0)
-                - (this.totalCommission != null ? this.totalCommission : 0.0)
-                - (this.totalShipping != null ? this.totalShipping : 0.0)
-                - (this.totalDiscount != null ? this.totalDiscount : 0.0)
-                - (this.totalTax != null ? this.totalTax : 0.0)
-                - (this.totalPayouts != null ? this.totalPayouts : 0.0)
-                + (this.totalAdjustments != null ? this.totalAdjustments : 0.0);
+        this.netSettlement = this.totalSales
+                .subtract(this.totalRefunds)
+                .subtract(this.totalCommission)
+                .subtract(this.totalShipping)
+                .subtract(this.totalDiscount)
+                .subtract(this.totalTax)
+                .subtract(this.totalPayouts)
+                .add(this.totalAdjustments);
         this.updatedAt = LocalDateTime.now();
     }
 
     private void calculateDifference() {
-        if (this.bankTotal != null && this.gatewayTotal != null) {
-            this.difference = this.bankTotal - this.gatewayTotal;
-        }
+        this.difference = this.bankTotal.subtract(this.gatewayTotal);
         this.updatedAt = LocalDateTime.now();
     }
 
     public void start() {
         if (this.status != ReconciliationStatus.PENDING) {
-            throw new DomainException("Reconciliation is not in pending state");
+            throw new DomainException("Reconciliation is not in PENDING state");
         }
         this.status = ReconciliationStatus.IN_PROGRESS;
         this.updatedAt = LocalDateTime.now();
@@ -225,10 +248,10 @@ public class Reconciliation {
 
     public void reconcile(String resolvedBy) {
         if (this.status == ReconciliationStatus.RECONCILED) {
-            throw new DomainException("Reconciliation already reconciled");
+            throw new DomainException("Reconciliation is already finalized and reconciled");
         }
         if (this.status == ReconciliationStatus.CANCELLED) {
-            throw new DomainException("Cannot reconcile cancelled reconciliation");
+            throw new DomainException("Cannot finalize a cancelled reconciliation loop");
         }
 
         this.status = ReconciliationStatus.RECONCILED;
@@ -240,7 +263,7 @@ public class Reconciliation {
 
     public void reject(String reason) {
         if (this.status == ReconciliationStatus.RECONCILED) {
-            throw new DomainException("Cannot reject reconciled reconciliation");
+            throw new DomainException("Cannot reject an already verified and reconciled ledger");
         }
 
         this.status = ReconciliationStatus.REJECTED;
@@ -250,28 +273,40 @@ public class Reconciliation {
 
     public void cancel(String reason) {
         if (this.status == ReconciliationStatus.RECONCILED) {
-            throw new DomainException("Cannot cancel reconciled reconciliation");
+            throw new DomainException("Cannot cancel an already completed reconciliation");
         }
 
         this.status = ReconciliationStatus.CANCELLED;
-        this.notes = reason;
+        this.notes.add("Cancelled: " + reason);
         this.updatedAt = LocalDateTime.now();
     }
 
     public void addResolutionAction(String action) {
-        if (this.resolutionActions == null) {
-            this.resolutionActions = new ArrayList<>();
-        }
+        if (action == null || action.isBlank()) return;
         this.resolutionActions.add(action);
         this.updatedAt = LocalDateTime.now();
     }
 
     public void addNote(String note) {
-        if (this.notes == null) {
-            this.notes = "";
-        }
-        this.notes += note + " | ";
+        if (note == null || note.isBlank()) return;
+        this.notes.add(note);
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public Map<String, BigDecimal> getDiscrepanciesByType() {
+        return Collections.unmodifiableMap(discrepanciesByType);
+    }
+
+    public List<String> getResolutionActions() {
+        return Collections.unmodifiableList(resolutionActions);
+    }
+
+    public List<String> getNotes() {
+        return Collections.unmodifiableList(notes);
+    }
+
+    public Map<String, String> getMetadata() {
+        return Collections.unmodifiableMap(metadata);
     }
 
     public boolean isPending() {
@@ -295,29 +330,30 @@ public class Reconciliation {
     }
 
     public boolean hasDiscrepancies() {
-        return this.discrepancyAmount != null && this.discrepancyAmount != 0.0;
+        return this.discrepancyAmount.compareTo(BigDecimal.ZERO) != 0;
     }
 
     public boolean isBalanced() {
-        return this.difference == null || this.difference == 0.0;
+        return this.difference.compareTo(BigDecimal.ZERO) == 0;
     }
 
-    public Double getNetSettlement() {
-        return this.netSettlement != null ? this.netSettlement : 0.0;
+    public BigDecimal getTotalIncome() {
+        return this.totalSales.add(this.totalAdjustments);
     }
 
-    public Double getTotalIncome() {
-        return (this.totalSales != null ? this.totalSales : 0.0)
-                + (this.totalAdjustments != null ? this.totalAdjustments : 0.0);
+    public BigDecimal getTotalExpenses() {
+        return this.totalRefunds
+                .add(this.totalCommission)
+                .add(this.totalShipping)
+                .add(this.totalDiscount)
+                .add(this.totalTax)
+                .add(this.totalPayouts);
     }
 
-    public Double getTotalExpenses() {
-        return (this.totalRefunds != null ? this.totalRefunds : 0.0)
-                + (this.totalCommission != null ? this.totalCommission : 0.0)
-                + (this.totalShipping != null ? this.totalShipping : 0.0)
-                + (this.totalDiscount != null ? this.totalDiscount : 0.0)
-                + (this.totalTax != null ? this.totalTax : 0.0)
-                + (this.totalPayouts != null ? this.totalPayouts : 0.0);
+    private void ensureActiveState(String operation) {
+        if (this.status.isTerminal()) {
+            throw new DomainException("Forbidden: cannot execute operation '" + operation + "' on terminal ledger state: " + this.status);
+        }
     }
 
     @Override

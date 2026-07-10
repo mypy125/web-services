@@ -1,6 +1,8 @@
 package com.mygitgor.seller_service.application.dto.external;
 
 import lombok.Builder;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -12,12 +14,12 @@ public record TransactionDto(
         String orderId,
         String type,
         String status,
-        Double amount,
-        Double tax,
-        Double commission,
-        Double shippingCost,
-        Double discount,
-        Double netAmount,
+        BigDecimal amount,
+        BigDecimal tax,
+        BigDecimal commission,
+        BigDecimal shippingCost,
+        BigDecimal discount,
+        BigDecimal netAmount,
         String currency,
         String description,
         String referenceNumber,
