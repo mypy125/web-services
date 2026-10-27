@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -272,6 +273,38 @@ public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
         UUID sellerUuid = UUID.fromString(sellerId.toString());
 
         return Mono.zip(
+                results -> {
+                    Long total = (Long) results[0];
+                    Long completed = (Long) results[1];
+                    Long pending = (Long) results[2];
+                    Long failed = (Long) results[3];
+                    Long refunded = (Long) results[4];
+                    Long cancelled = (Long) results[5];
+
+                    BigDecimal totalAmount = toBigDecimal(results[6]);
+                    BigDecimal totalCommission = toBigDecimal(results[7]);
+                    BigDecimal totalRefunds = toBigDecimal(results[8]);
+                    BigDecimal totalNetAmount = toBigDecimal(results[9]);
+
+                    BigDecimal avgAmount = (total != null && total > 0)
+                            ? totalAmount.divide(BigDecimal.valueOf(total), 2, java.math.RoundingMode.HALF_UP)
+                            : BigDecimal.ZERO;
+
+                    return TransactionStatistics.builder()
+                            .totalTransactions(total)
+                            .completedTransactions(completed)
+                            .pendingTransactions(pending)
+                            .failedTransactions(failed)
+                            .refundedTransactions(refunded)
+                            .cancelledTransactions(cancelled)
+                            .totalAmount(totalAmount)
+                            .totalCommission(totalCommission)
+                            .totalRefunds(totalRefunds)
+                            .totalNetAmount(totalNetAmount)
+                            .averageTransactionAmount(avgAmount)
+                            .calculatedAt(LocalDateTime.now())
+                            .build();
+                },
                 repository.countBySellerId(sellerUuid),
                 repository.countBySellerIdAndStatus(sellerUuid, TransactionStatus.COMPLETED.name()),
                 repository.countBySellerIdAndStatus(sellerUuid, TransactionStatus.PENDING.name()),
@@ -282,20 +315,6 @@ public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
                 repository.sumCommissionBySellerId(sellerUuid).defaultIfEmpty(0.0),
                 repository.sumRefundsBySellerId(sellerUuid, TransactionType.REFUND.name()).defaultIfEmpty(0.0),
                 repository.sumNetAmountBySellerId(sellerUuid).defaultIfEmpty(0.0)
-        ).map(tuple -> TransactionStatistics.builder()
-                .totalTransactions(tuple.getT1())
-                .completedTransactions(tuple.getT2())
-                .pendingTransactions(tuple.getT3())
-                .failedTransactions(tuple.getT4())
-                .refundedTransactions(tuple.getT5())
-                .cancelledTransactions(tuple.getT6())
-                .totalAmount(tuple.getT7())
-                .totalCommission(tuple.getT8())
-                .totalRefunds(tuple.getT9())
-                .totalNetAmount(tuple.getT10())
-                .averageTransactionAmount(tuple.getT1() > 0 ? tuple.getT7() / tuple.getT1() : 0.0)
-                .calculatedAt(LocalDateTime.now())
-                .build()
         );
     }
 
@@ -308,14 +327,34 @@ public class TransactionRepositoryAdapter implements TransactionRepositoryPort {
                 repository.sumAmountBySellerIdAndCreatedAtBetween(sellerUuid, startDate, endDate).defaultIfEmpty(0.0),
                 repository.sumCommissionBySellerIdAndCreatedAtBetween(sellerUuid, startDate, endDate).defaultIfEmpty(0.0),
                 repository.sumNetAmountBySellerIdAndCreatedAtBetween(sellerUuid, startDate, endDate).defaultIfEmpty(0.0)
-        ).map(tuple -> TransactionStatistics.builder()
-                .totalTransactions(tuple.getT1())
-                .totalAmount(tuple.getT2())
-                .totalCommission(tuple.getT3())
-                .totalNetAmount(tuple.getT4())
-                .averageTransactionAmount(tuple.getT1() > 0 ? tuple.getT2() / tuple.getT1() : 0.0)
-                .calculatedAt(LocalDateTime.now())
-                .build()
-        );
+        ).map(tuple -> {
+            Long total = tuple.getT1();
+            BigDecimal totalAmount = toBigDecimal(tuple.getT2());
+            BigDecimal totalCommission = toBigDecimal(tuple.getT3());
+            BigDecimal totalNetAmount = toBigDecimal(tuple.getT4());
+
+            BigDecimal avgAmount = total > 0
+                    ? totalAmount.divide(BigDecimal.valueOf(total), 2, java.math.RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            return TransactionStatistics.builder()
+                    .totalTransactions(total)
+                    .totalAmount(totalAmount)
+                    .totalCommission(totalCommission)
+                    .totalNetAmount(totalNetAmount)
+                    .averageTransactionAmount(avgAmount)
+                    .calculatedAt(LocalDateTime.now())
+                    .build();
+        });
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        return switch (value) {
+            case null -> BigDecimal.ZERO;
+            case BigDecimal bigDecimal -> bigDecimal;
+            case Double v -> BigDecimal.valueOf(v);
+            case Long l -> BigDecimal.valueOf(l);
+            default -> new BigDecimal(value.toString());
+        };
     }
 }
