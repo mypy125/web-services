@@ -12,7 +12,6 @@ import com.mygitgor.transaction_service.shared.valueobject.SellerId;
 import com.mygitgor.transaction_service.shared.valueobject.TransactionId;
 import com.mygitgor.transaction_service.shared.valueobject.UserId;
 import org.mapstruct.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
