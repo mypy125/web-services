@@ -1,11 +1,13 @@
 package com.mygitgor.seller_service.infrastructure.persistence.entity;
 
+import lombok.With;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@With
 @Table("sellers")
 public record SellerEntity(
         @Id UUID id,
