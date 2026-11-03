@@ -8,15 +8,15 @@ import com.mygitgor.seller_service.domain.model.ReportPeriod;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerId;
 import com.mygitgor.seller_service.shared.valueobject.id.SellerReportId;
 import com.mygitgor.seller_service.infrastructure.persistence.entity.SellerReportEntity;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        imports = {UUID.class, ReportPeriod.class})
 public interface SellerReportPersistenceMapper {
     ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

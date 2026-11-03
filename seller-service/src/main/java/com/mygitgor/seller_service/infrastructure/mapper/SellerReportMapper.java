@@ -28,3 +28,4 @@ public interface SellerReportMapper {
         return sellerId != null ? sellerId.toString() : null;
     }
 }
+
