@@ -112,9 +112,18 @@ CREATE TABLE IF NOT EXISTS seller_addresses (
     latitude DECIMAL(10, 7),
     longitude DECIMAL(10, 7),
     address_type VARCHAR(50) NOT NULL DEFAULT 'WAREHOUSE',
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT seller_addresses_type_check CHECK (address_type IN ('PICKUP', 'RETURN', 'WAREHOUSE', 'OFFICE'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_seller_addresses_default
+ON seller_addresses(seller_id, address_type, is_default);
+
+CREATE INDEX IF NOT EXISTS idx_seller_addresses_seller_id
+ON seller_addresses(seller_id);
 
 CREATE TABLE IF NOT EXISTS seller_reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

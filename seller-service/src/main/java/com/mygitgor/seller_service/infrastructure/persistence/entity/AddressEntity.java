@@ -1,10 +1,14 @@
 package com.mygitgor.seller_service.infrastructure.persistence.entity;
 
+import lombok.With;
 import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+@With
 @Table("seller_addresses")
 public record AddressEntity(
         @Id UUID id,
@@ -20,5 +24,8 @@ public record AddressEntity(
         String landmark,
         Double latitude,
         Double longitude,
-        @Column("address_type") String addressType
+        @Column("address_type") String addressType,
+        @Column("is_default") boolean isDefault,
+        @Column("created_at") LocalDateTime createdAt,
+        @Column("updated_at") LocalDateTime updatedAt
 ) {}
