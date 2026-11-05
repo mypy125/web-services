@@ -8,4 +8,5 @@ public interface KafkaEventPort {
     Mono<Void> sendTransactionCreatedEvent(Transaction transaction);
     Mono<Void> sendTransactionCompletedEvent(Transaction transaction);
     Mono<Void> sendTransactionRefundedEvent(Transaction transaction);
+    Mono<Void> sendTransactionFailedEvent(Transaction transaction);
 }

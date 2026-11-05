@@ -79,8 +79,8 @@ public class Transaction {
         this.netAmount = netAmount != null ? netAmount : BigDecimal.ZERO;
         this.currency = currency != null ? currency : "USD";
         this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+        this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
+        this.updatedAt = updatedAt != null ? updatedAt : LocalDateTime.now();
         this.completedAt = completedAt;
         this.metadata = new HashMap<>();
     }
@@ -89,12 +89,27 @@ public class Transaction {
                                          BigDecimal amount, BigDecimal tax, BigDecimal commission,
                                          BigDecimal shippingCost, BigDecimal discount
     ) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainException("Amount must be positive");
+        }
+        if (tax != null && tax.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException("Tax cannot be negative");
+        }
+        if (discount != null && discount.compareTo(amount) > 0) {
+            throw new DomainException("Discount cannot exceed amount");
+        }
+
         LocalDateTime now = LocalDateTime.now();
 
         BigDecimal netAmount = amount
                 .subtract(tax != null ? tax : BigDecimal.ZERO)
                 .subtract(commission != null ? commission : BigDecimal.ZERO)
-                .subtract(shippingCost != null ? shippingCost : BigDecimal.ZERO);
+                .subtract(shippingCost != null ? shippingCost : BigDecimal.ZERO)
+                .subtract(discount != null ? discount : BigDecimal.ZERO);
+
+        if (netAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new DomainException("Net amount cannot be negative. Check deductions.");
+        }
 
         return Transaction.builder()
                 .transactionId(new TransactionId())
@@ -161,9 +176,6 @@ public class Transaction {
     }
 
     public void complete() {
-        if (this.status == TransactionStatus.COMPLETED) {
-            throw new DomainException("Transaction is already in COMPLETED state");
-        }
         if (this.status.isTerminal()) {
             throw new DomainException("Cannot complete transaction from terminal state: " + this.status);
         }
@@ -197,7 +209,14 @@ public class Transaction {
         if (!isRefundable()) {
             throw new DomainException("This transaction context does not allow emitting a refund payload");
         }
-        return createRefund(this.sellerId, this.customerId, this.orderId, this.amount, reason);
+        if (reason == null || reason.isBlank()) {
+            throw new DomainException("Refund reason is required");
+        }
+        Transaction refund = createRefund(this.sellerId, this.customerId,
+                this.orderId, this.amount, reason);
+        refund.addMetadata("originalTransactionId", this.transactionId.toString());
+        refund.addMetadata("refundReason", reason);
+        return refund;
     }
 
     public void updatePaymentDetails(String paymentMethod,
@@ -234,5 +253,14 @@ public class Transaction {
         return this.type == TransactionType.SALE &&
                 this.status == TransactionStatus.COMPLETED &&
                 this.refundedAt == null;
+    }
+
+    public void cancel(String reason) {
+        if (this.status.isTerminal()) {
+            throw new DomainException("Cannot cancel terminal transaction");
+        }
+        this.status = TransactionStatus.CANCELLED;
+        this.notes = reason;
+        this.updatedAt = LocalDateTime.now();
     }
 }
